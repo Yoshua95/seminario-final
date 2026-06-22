@@ -22,6 +22,8 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
+  --color-surface: var(--surface);
+  --color-emerald: var(--emerald);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
@@ -49,39 +51,43 @@
 }
 
 :root {
-  color-scheme: light;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
+  color-scheme: dark;
+  /* LogiChina — Craftsman UI dark palette */
+  --background: #07070a;
+  --foreground: #ffffff;
+  --card: #0c0d12;
+  --card-foreground: #ffffff;
+  --popover: #0c0d12;
+  --popover-foreground: #ffffff;
+  --primary: #10b981;
+  --primary-foreground: #03110b;
+  --secondary: #111219;
+  --secondary-foreground: #ffffff;
+  --muted: #111219;
+  --muted-foreground: #8a8b94;
+  --accent: #10b981;
+  --accent-foreground: #03110b;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #1f2029;
+  --input: #1f2029;
+  --ring: #10b981;
+  --surface: #0c0d12;
+  --emerald: #10b981;
+  --emerald-soft: rgba(16, 185, 129, 0.12);
+  --chart-1: #10b981;
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.5rem;
+  --sidebar: #0c0d12;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #03110b;
+  --sidebar-accent: #111219;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1f2029;
+  --sidebar-ring: #10b981;
 }
 
 .dark {
