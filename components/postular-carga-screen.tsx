@@ -1,311 +1,181 @@
 "use client"
 
-import React, { useState } from "react"
-import { ArrowLeft, Upload, AlertTriangle, ShieldCheck, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import type React from "react"
+import { useState } from "react"
+import { ArrowLeft, ChevronDown, Box, Weight, Boxes, Tag } from "lucide-react"
 
-// Listado oficial de agentes según el alcance acordado
-const AGENTES_DISPONIBLES = ["CSSBuy", "Kakobuy", "Alibaba"]
-
-// Lista de mercancías sensibles obligatorias
-const MERCANCIAS_SENSIBLES = [
-  { id: "baterias", label: "Baterías de Litio / Celdas de energía" },
-  { id: "imanes", label: "Imanes / Componentes magnéticos" },
-  { id: "liquidos", label: "Líquidos / Polvos químicos" }
+const depositos = [
+  { value: "cssbuy", label: "Depósito CSSBuy", ciudad: "Shenzhen, GD" },
+  { value: "superbuy", label: "Depósito Superbuy", ciudad: "Guangzhou, GD" },
+  { value: "pandabuy", label: "Depósito Pandabuy", ciudad: "Dongguan, GD" },
 ]
 
-export default function PostularCargaScreen() {
-  // Estados para el selector de origen y descripción propia
-  const [agenteSeleccionado, setAgenteSeleccionado] = useState("")
-  const [esParticular, setEsParticular] = useState(false)
-  const [descripcionPropiaAgente, setDescripcionPropiaAgente] = useState("")
+const categorias = [
+  "Electrónica y Tecnología",
+  "Indumentaria y Calzado",
+  "Hogar y Decoración",
+  "Repuestos y Autopartes",
+  "Juguetes y Hobbies",
+]
 
-  // Estados para el desglose multi-rubro simultáneo
-  const [rubros, setRubros] = useState({
-    indumentaria: false,
-    tecnologia: false,
-    otros: false
-  })
-  const [valoresFOB, setValoresFOB] = useState({
-    indumentaria: "",
-    tecnologia: "",
-    otros: ""
-  })
-
-  // Estado para mercancías sensibles
-  const [sensiblesSeleccionados, setSensiblesSeleccionados] = useState<string[]>([])
-
-  // Datos generales de la carga
-  const [peso, setPeso] = useState("")
-  const [dimensiones, setDimensiones] = useState({ alto: "", ancho: "", largo: "" })
-
-  const handleRubroToggle = (rubro: keyof typeof rubros) => {
-    setRubros(prev => ({ ...prev, [rubro]: !prev[rubro] }))
-  }
-
-  const handleFOBChange = (rubro: string, value: string) => {
-    setValoresFOB(prev => ({ ...prev, [rubro]: value }))
-  }
-
-  const handleSensibleToggle = (id: string) => {
-    setSensiblesSeleccionados(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    )
-  }
-
-  const handleAgenteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value
-    setAgenteSeleccionado(value)
-    if (value !== "otro") {
-      setDescripcionPropiaAgente("")
-    }
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const payload = {
-      origen: esParticular ? "Particular" : (agenteSeleccionado === "otro" ? descripcionPropiaAgente : agenteSeleccionado),
-      desgloseRubros: Object.keys(rubros).filter(k => rubros[k as keyof typeof rubros]).map(k => ({
-        rubro: k,
-        valorFOB: valoresFOB[k as keyof typeof valoresFOB]
-      })),
-      mercanciasSensibles: sensiblesSeleccionados,
-      especificaciones: { peso, dimensiones }
-    }
-    console.log("Datos listos para enviar a FastAPI:", payload)
-  }
+export function PostularCargaScreen() {
+  const [deposito, setDeposito] = useState(depositos[0].value)
+  const [categoria, setCategoria] = useState(categorias[0])
+  const [peso, setPeso] = useState("96")
+  const [volumen, setVolumen] = useState("2.18")
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-12 font-sans text-slate-900">
-      {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center gap-4 border-b bg-white px-4 py-4 shadow-sm">
-        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-lg font-bold tracking-tight">Nueva Postulación de Carga</h1>
-          <p className="text-xs text-slate-500">LogiChina Ecosistema Transaccional</p>
-        </div>
-      </header>
+    <div className="flex min-h-dvh w-full items-center justify-center bg-[#050507] p-0 sm:p-8">
+      {/* Marco tipo iPhone 15 Pro */}
+      <div className="relative w-full max-w-[400px] sm:rounded-[3.2rem] sm:border sm:border-[#1f2029] sm:bg-[#0a0a0e] sm:p-2 sm:shadow-[0_40px_120px_-20px_rgba(0,0,0,0.9)]">
+        {/* Pantalla */}
+        <div className="relative flex min-h-dvh w-full flex-col overflow-hidden bg-background sm:min-h-[844px] sm:rounded-[2.6rem]">
+          {/* Dynamic Island */}
+          <div className="pointer-events-none absolute left-1/2 top-3 z-20 hidden h-7 w-28 -translate-x-1/2 rounded-full bg-black sm:block" />
 
-      <main className="mx-auto max-w-md px-4 mt-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Header */}
+          <header className="flex items-center justify-between px-6 pb-2 pt-8 sm:pt-14">
+            <button
+              type="button"
+              aria-label="Volver atrás"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+            >
+              <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </button>
+            <span className="text-sm font-medium text-muted-foreground">Nueva Postulación</span>
+            <div className="h-9 w-9" aria-hidden />
+          </header>
 
-          {/* SECCIÓN 1: ORIGEN / AGENTE CONSOLIDADO */}
-          <section className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">1. Depósito de Origen en China</h2>
-
-            <div className="flex gap-4 p-1 bg-slate-100 rounded-lg">
-              <button
-                type="button"
-                onClick={() => { setEsParticular(false); setAgenteSeleccionado(""); }}
-                className={`flex-1 text-center py-2 text-sm font-medium rounded-md transition-all ${!esParticular ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600'}`}
-              >
-                Agente de Compra
-              </button>
-              <button
-                type="button"
-                onClick={() => { setEsParticular(true); setAgenteSeleccionado(""); }}
-                className={`flex-1 text-center py-2 text-sm font-medium rounded-md transition-all ${esParticular ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600'}`}
-              >
-                Particular
-              </button>
+          {/* Contenido */}
+          <div className="flex flex-1 flex-col px-6 pt-8">
+            {/* Sección principal */}
+            <div className="flex flex-col gap-2">
+              <h1 className="text-pretty text-[28px] font-semibold leading-tight tracking-tight text-foreground">
+                ¿Qué estás importando?
+              </h1>
+              <p className="text-[15px] leading-relaxed text-muted-foreground">
+                Declará los datos de tu carga en China
+              </p>
             </div>
 
-            {!esParticular && (
-              <div className="space-y-3">
-                <label className="block text-xs font-medium text-slate-600">Seleccionar Operador / Warehouse</label>
-                <select
-                  value={agenteSeleccionado}
-                  onChange={handleAgenteChange}
-                  className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="" disabled>-- Seleccionar Agente --</option>
-                  {AGENTES_DISPONIBLES.map(agente => (
-                    <option key={agente} value={agente}>{agente}</option>
-                  ))}
-                  <option value="otro">Otro agente / No figura en la lista</option>
-                </select>
-
-                {agenteSeleccionado === "otro" && (
-                  <div className="space-y-1.5 animate-fadeIn">
-                    <label className="block text-xs font-medium text-slate-500">Especificar nombre del Agente propio</label>
-                    <input
-                      type="text"
-                      value={descripcionPropiaAgente}
-                      onChange={(e) => setDescripcionPropiaAgente(e.target.value)}
-                      placeholder="Ej. MyChinaLogistics"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </section>
-
-          {/* SECCIÓN 2: DESGLOSE MULTI-RUBRO SIMULTÁNEO Y VALOR FOB */}
-          <section className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">2. Contenido y Desglose Multi-Rubro</h2>
-            <p className="text-xs text-slate-500">Podés marcar múltiples rubros si tu paquete consolidado contiene mercancía mixta.</p>
-
-            <div className="space-y-4">
-              {/* Checkbox Indumentaria */}
-              <div className="border rounded-xl p-3 transition-colors duration-200 border-slate-200">
-                <label className="flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={rubros.indumentaria}
-                      onChange={() => handleRubroToggle("indumentaria")}
-                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-medium">Indumentaria / Textil</span>
-                  </div>
-                </label>
-                {rubros.indumentaria && (
-                  <div className="mt-3 flex items-center gap-2 pl-7 animate-slideDown">
-                    <span className="text-xs text-slate-500 font-medium">Valor FOB (USD):</span>
-                    <input
-                      type="number"
-                      value={valoresFOB.indumentaria}
-                      onChange={(e) => handleFOBChange("indumentaria", e.target.value)}
-                      placeholder="0.00"
-                      className="w-32 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Checkbox Tecnología */}
-              <div className="border rounded-xl p-3 transition-colors duration-200 border-slate-200">
-                <label className="flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={rubros.tecnologia}
-                      onChange={() => handleRubroToggle("tecnologia")}
-                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-medium">Tecnología / Electrónica</span>
-                  </div>
-                </label>
-                {rubros.tecnologia && (
-                  <div className="mt-3 flex items-center gap-2 pl-7 animate-slideDown">
-                    <span className="text-xs text-slate-500 font-medium">Valor FOB (USD):</span>
-                    <input
-                      type="number"
-                      value={valoresFOB.tecnologia}
-                      onChange={(e) => handleFOBChange("tecnologia", e.target.value)}
-                      placeholder="0.00"
-                      className="w-32 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* SECCIÓN 3: DECLARACIÓN OBLIGATORIA DE MERCANCÍAS SENSIBLES */}
-          <section className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center gap-2 text-amber-600">
-              <AlertTriangle className="h-5 w-5 shrink-0" />
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700">3. Declaración de Sensibles</h2>
-            </div>
-            <p className="text-xs text-slate-500">Requerido por normativas de Courier / AFIP. Seleccioná si aplica:</p>
-
-            <div className="space-y-2.5">
-              {MERCANCIAS_SENSIBLES.map(item => {
-                const isSelected = sensiblesSeleccionados.includes(item.id)
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => handleSensibleToggle(item.id)}
-                    className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${isSelected ? 'border-amber-500 bg-amber-50/60 text-amber-900 font-medium' : 'border-slate-200 text-slate-600'}`}
+            {/* Formulario */}
+            <form className="mt-9 flex flex-1 flex-col gap-5">
+              {/* Depósito de origen */}
+              <Field label="Depósito de Origen (China)" icon={<Box className="h-4 w-4" strokeWidth={1.75} />}>
+                <div className="relative">
+                  <select
+                    value={deposito}
+                    onChange={(e) => setDeposito(e.target.value)}
+                    className="peer w-full appearance-none rounded-lg border border-border bg-surface px-4 py-3.5 pr-11 text-[15px] font-medium text-foreground outline-none transition-colors focus:border-primary/50"
                   >
-                    <span className="text-xs">{item.label}</span>
-                    <div className={`h-5 w-5 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'bg-amber-500 border-amber-500 text-white' : 'border-slate-300 bg-white'}`}>
-                      {isSelected && <Check className="h-3 w-3 -[3]stroke" />}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
+                    {depositos.map((d) => (
+                      <option key={d.value} value={d.value} className="bg-[#0c0d12] text-foreground">
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                  {/* Punto verde indicador */}
+                  <span className="pointer-events-none absolute right-10 top-1/2 -translate-y-1/2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                    </span>
+                  </span>
+                  <ChevronDown
+                    className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    strokeWidth={1.75}
+                  />
+                </div>
+              </Field>
 
-          {/* SECCIÓN 4: MEDIDAS Y PESO TÉCNICO */}
-          <section className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">4. Peso y Dimensiones Técnicas</h2>
+              {/* Fila doble: Peso + Volumen */}
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Peso Total" icon={<Weight className="h-4 w-4" strokeWidth={1.75} />}>
+                  <div className="relative">
+                    <input
+                      value={peso}
+                      onChange={(e) => setPeso(e.target.value)}
+                      inputMode="decimal"
+                      className="w-full rounded-lg border border-border bg-surface px-4 py-3.5 pr-11 font-mono text-[15px] text-foreground outline-none transition-colors focus:border-primary/50"
+                    />
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-mono text-[13px] text-muted-foreground">
+                      kg
+                    </span>
+                  </div>
+                </Field>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">Peso bruto total (kg)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={peso}
-                  onChange={(e) => setPeso(e.target.value)}
-                  placeholder="Ej: 4.50"
-                  className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+                <Field label="Volumen" icon={<Boxes className="h-4 w-4" strokeWidth={1.75} />}>
+                  <div className="relative">
+                    <input
+                      value={volumen}
+                      onChange={(e) => setVolumen(e.target.value)}
+                      inputMode="decimal"
+                      className="w-full rounded-lg border border-border bg-surface px-4 py-3.5 pr-12 font-mono text-[15px] text-foreground outline-none transition-colors focus:border-primary/50"
+                    />
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-mono text-[13px] text-muted-foreground">
+                      m³
+                    </span>
+                  </div>
+                </Field>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 pt-1">
-                <div>
-                  <label className="block text-center text-[11px] font-medium text-slate-500 mb-1">Alto (cm)</label>
-                  <input
-                    type="number"
-                    value={dimensiones.alto}
-                    onChange={(e) => setDimensiones(prev => ({ ...prev, alto: e.target.value }))}
-                    placeholder="0"
-                    className="w-full text-center bg-white border border-slate-300 rounded-xl py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
+              {/* Categoría */}
+              <Field label="Categoría de Mercadería" icon={<Tag className="h-4 w-4" strokeWidth={1.75} />}>
+                <div className="relative">
+                  <select
+                    value={categoria}
+                    onChange={(e) => setCategoria(e.target.value)}
+                    className="w-full appearance-none rounded-lg border border-border bg-surface px-4 py-3.5 pr-11 text-[15px] font-medium text-foreground outline-none transition-colors focus:border-primary/50"
+                  >
+                    {categorias.map((c) => (
+                      <option key={c} value={c} className="bg-[#0c0d12] text-foreground">
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    strokeWidth={1.75}
                   />
                 </div>
-                <div>
-                  <label className="block text-center text-[11px] font-medium text-slate-500 mb-1">Ancho (cm)</label>
-                  <input
-                    type="number"
-                    value={dimensiones.ancho}
-                    onChange={(e) => setDimensiones(prev => ({ ...prev, ancho: e.target.value }))}
-                    placeholder="0"
-                    className="w-full text-center bg-white border border-slate-300 rounded-xl py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-center text-[11px] font-medium text-slate-500 mb-1">Largo (cm)</label>
-                  <input
-                    type="number"
-                    value={dimensiones.largo}
-                    onChange={(e) => setDimensiones(prev => ({ ...prev, largo: e.target.value }))}
-                    placeholder="0"
-                    className="w-full text-center bg-white border border-slate-300 rounded-xl py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
+              </Field>
 
-          {/* BOTÓN PRINCIPAL DE POSTULACIÓN TRASACCIONAL */}
-          <div className="pt-2">
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
-              <ShieldCheck className="h-5 w-5" />
-              Publicar en Panel de Licitación Ciega
-            </Button>
-            <p className="text-center text-[10px] text-slate-400 mt-3 px-6">
-              Al publicar, su carga queda disponible de forma anónima para cotizaciones de operadores autorizados por AFIP/Aduana.
-            </p>
+              {/* CTA */}
+              <div className="mt-auto flex flex-col gap-4 pb-10 pt-6">
+                <button
+                  type="submit"
+                  className="group relative w-full overflow-hidden rounded-lg bg-primary py-4 text-[15px] font-semibold tracking-tight text-primary-foreground transition-all hover:brightness-110 active:scale-[0.99]"
+                >
+                  <span className="relative z-10">Publicar Licitación Anónima</span>
+                </button>
+                <p className="text-center text-[12px] leading-relaxed text-muted-foreground">
+                  Tu identidad permanece oculta hasta concretar el pago Escrow
+                </p>
+              </div>
+            </form>
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-        </form>
-      </main>
+function Field({
+  label,
+  icon,
+  children,
+}: {
+  label: string
+  icon: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <span className="text-muted-foreground/70">{icon}</span>
+        <label className="text-[13px] font-medium">{label}</label>
+      </div>
+      {children}
     </div>
   )
 }
