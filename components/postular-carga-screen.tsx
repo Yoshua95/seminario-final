@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, ChevronDown, Box, Weight, Boxes, Tag, AlertTriangle, X, HelpCircle, Hash, FileText, Upload, ChevronRight, CheckCircle2, AlertCircle, Loader2, RefreshCw, Calculator, Check } from "lucide-react"
 
 const agentesDisponibles = [
@@ -49,6 +50,8 @@ interface DetalleRubro {
 }
 
 export function PostularCargaScreen() {
+  const router = useRouter()
+
   // ESTADOS DEL FORMULARIO
   const [agente, setAgente] = useState(agentesDisponibles[0].value)
   const [agentePropio, setAgentePropio] = useState("")
@@ -374,6 +377,16 @@ export function PostularCargaScreen() {
       window.removeEventListener("touchmove", handleGlobalTouchMove)
     }
   }, [isDragging, dragX, isCalcDragging, calcDragX, isLoading, isSuccess, medidasConfirmadas, alto, ancho, profundidad, peso])
+
+  // Redirigir al dashboard después de 1.5s cuando se muestre el check verde
+  useEffect(() => {
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        router.push('/dashboard')
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [isSuccess, router])
 
   const handleSelectRubroCustom = (id: string) => {
     if (!rubrosSeleccionados.includes(id)) {
