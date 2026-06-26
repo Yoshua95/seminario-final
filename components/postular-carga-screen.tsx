@@ -49,7 +49,11 @@ interface DetalleRubro {
   pesoIndividual: string
 }
 
-export function PostularCargaScreen() {
+interface PostularCargaScreenProps {
+  onSuccess?: () => void
+}
+
+export function PostularCargaScreen({ onSuccess }: PostularCargaScreenProps) {
   const router = useRouter()
 
   // ESTADOS DEL FORMULARIO
@@ -382,11 +386,12 @@ export function PostularCargaScreen() {
   useEffect(() => {
     if (isSuccess) {
       const timer = setTimeout(() => {
+        onSuccess?.()
         router.push('/dashboard')
       }, 1500)
       return () => clearTimeout(timer)
     }
-  }, [isSuccess, router])
+  }, [isSuccess, router, onSuccess])
 
   const handleSelectRubroCustom = (id: string) => {
     if (!rubrosSeleccionados.includes(id)) {
