@@ -48,7 +48,11 @@ interface DetalleRubro {
   pesoIndividual: string
 }
 
-export function PostularCargaScreen() {
+interface PostularCargaScreenProps {
+  onSuccess?: () => void
+}
+
+export function PostularCargaScreen({ onSuccess }: PostularCargaScreenProps) {
   // ESTADOS DEL FORMULARIO
   const [agente, setAgente] = useState(agentesDisponibles[0].value)
   const [agentePropio, setAgentePropio] = useState("")
@@ -374,6 +378,16 @@ export function PostularCargaScreen() {
       window.removeEventListener("touchmove", handleGlobalTouchMove)
     }
   }, [isDragging, dragX, isCalcDragging, calcDragX, isLoading, isSuccess, medidasConfirmadas, alto, ancho, profundidad, peso])
+
+  // Disparar callback onSuccess después de 1500ms cuando el slider se completa
+  useEffect(() => {
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        onSuccess?.()
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [isSuccess, onSuccess])
 
   const handleSelectRubroCustom = (id: string) => {
     if (!rubrosSeleccionados.includes(id)) {
