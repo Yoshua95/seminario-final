@@ -75,6 +75,13 @@ export type OperationDetail = {
     location: string;
     createdAt: string;
   }>;
+  messages: Array<{
+    id: string;
+    senderId: string;
+    senderName: string;
+    body: string;
+    createdAt: string;
+  }>;
 };
 
 export type AccountProfile = {
@@ -314,11 +321,12 @@ export async function getOperationDetail(operationId: string): Promise<Operation
     .maybeSingle();
   if (!operation) return null;
 
-  const [{ data: cargo }, { data: offer }, { data: guarantee }, { data: events }] = await Promise.all([
+  const [{ data: cargo }, { data: offer }, { data: guarantee }, { data: events }, { data: messages }] = await Promise.all([
     supabase.from("cargo_requests").select("title, origin, destination").eq("id", operation.cargo_id).single(),
     supabase.from("offers").select("mode, total_usd").eq("id", operation.accepted_offer_id).single(),
     supabase.from("payment_guarantees").select("amount_usd, commission_usd, status").eq("operation_id", operation.id).single(),
-    supabase.from("tracking_events").select("id, status, title, description, location, created_at").eq("operation_id", operation.id).order("created_at", { ascending: false })
+    supabase.from("tracking_events").select("id, status, title, description, location, created_at").eq("operation_id", operation.id).order("created_at", { ascending: false }),
+    supabase.from("messages").select("id, sender_id, body, created_at, profiles(full_name)").eq("operation_id", operation.id).order("created_at", { ascending: true })
   ]);
 
   if (!cargo || !offer || !guarantee) return null;
@@ -339,6 +347,16 @@ export async function getOperationDetail(operationId: string): Promise<Operation
       description: event.description ?? "Sin observaciones adicionales",
       location: event.location ?? "Sin ubicación informada",
       createdAt: event.created_at
-    }))
+    })),
+    messages: (messages ?? []).map((message) => {
+      const sender = Array.isArray(message.profiles) ? message.profiles[0] : message.profiles;
+      return {
+        id: message.id,
+        senderId: message.sender_id,
+        senderName: sender?.full_name ?? "Participante",
+        body: message.body,
+        createdAt: message.created_at
+      };
+    })
   };
 }
