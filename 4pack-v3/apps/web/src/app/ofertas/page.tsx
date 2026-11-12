@@ -28,7 +28,7 @@ export default async function OffersPage() {
               <div><span className="code">{offer.id.slice(0, 8).toUpperCase()}</span><h3>{offer.cargoTitle}</h3><p>{modeLabel[offer.mode]} · {offer.estimatedDays} días</p></div>
               <div className="row-value"><small>Total cotizado</small><strong>USD {offer.totalUsd.toLocaleString("es-AR")}</strong></div>
               <span className={offer.status === "rejected" || offer.status === "expired" ? "tag warning" : "tag"}>{statusLabel[offer.status] ?? offer.status}</span>
-              <button className="link">Ver detalle →</button>
+              {role === "importer" ? <Link className="link" href={`/ofertas/${offer.cargoId}`}>Comparar →</Link> : <span className="link">Detalle disponible</span>}
             </article>
           );
         })}

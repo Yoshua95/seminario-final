@@ -55,6 +55,7 @@ h2 { margin: 0 0 6px; font-size: 21px; }
 .cargo dd { margin: 0; font-size: 13px; font-weight: 800; }
 .cargo footer span { color: var(--muted); font-size: 11px; }
 .link { background: none; border: 0; color: var(--accent); font-weight: 800; font-size: 12px; }
+.link:is(a) { text-decoration: none; }
 .list-panel { display: grid; gap: 14px; margin-top: 40px; }
 .list-row, .operation { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
 .list-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px 120px 120px; align-items: center; gap: 20px; }
@@ -107,6 +108,17 @@ h2 { margin: 0 0 6px; font-size: 21px; }
 .review-actions button { background: var(--ink); border: 0; border-radius: 9px; color: white; font-weight: 800; padding: 11px 15px; }
 .review-actions button.secondary { background: white; border: 1px solid var(--line); color: var(--ink); }
 .review-actions button:disabled { opacity: .55; }
+.comparison-grid { display: grid; gap: 16px; margin-top: 34px; }
+.comparison-card { background: white; border: 1px solid var(--line); border-radius: 15px; display: grid; grid-template-columns: minmax(200px, 1.4fr) repeat(4, minmax(100px, .7fr)) auto; gap: 18px; align-items: center; padding: 24px; }
+.comparison-card.best { border-color: #f3b38f; box-shadow: 0 8px 30px #ff6b2c12; }
+.comparison-card h3 { font-size: 17px; margin: 8px 0 5px; }
+.comparison-card p, .comparison-card small { color: var(--muted); font-size: 11px; margin: 0; }
+.comparison-value span, .comparison-value strong { display: block; }
+.comparison-value span { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .5px; margin-bottom: 7px; text-transform: uppercase; }
+.comparison-value strong { font-size: 13px; }
+.award-button { background: var(--ink); border: 0; border-radius: 9px; color: white; font-weight: 800; padding: 12px 16px; white-space: nowrap; }
+.award-button:disabled { cursor: wait; opacity: .55; }
+.comparison-notice { background: #fff5e6; border: 1px solid #f1d29d; border-radius: 11px; color: #8a5200; font-size: 12px; margin-top: 24px; padding: 15px; }
 .access-shell { min-height: 100vh; display: grid; grid-template-columns: 1.2fr 0.8fr; background: #07070a; color: white; }
 .access-intro { padding: 48px 7vw; display: flex; flex-direction: column; justify-content: space-between; gap: 70px; }
 .access-intro h1 { max-width: 760px; font-size: clamp(44px, 6vw, 78px); line-height: 0.98; margin: 14px 0 20px; }
@@ -138,6 +150,8 @@ h2 { margin: 0 0 6px; font-size: 21px; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .wide { grid-column: auto; }
   .review-card { align-items: stretch; flex-direction: column; }
+  .comparison-card { grid-template-columns: 1fr 1fr; }
+  .comparison-card > div:first-child, .comparison-card .award-button { grid-column: 1 / -1; }
   .access-shell { grid-template-columns: 1fr; }
   .access-intro { padding: 36px 24px; gap: 36px; }
   .access-intro h1 { font-size: 42px; }

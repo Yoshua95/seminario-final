@@ -16,11 +16,38 @@ export type CargoSummary = {
 
 export type OfferSummary = {
   id: string;
+  cargoId: string;
   cargoTitle: string;
   mode: TransportMode;
   totalUsd: number;
   estimatedDays: number;
   status: string;
+};
+
+export type OfferComparison = {
+  id: string;
+  operatorName: string;
+  companyName: string;
+  rating: number;
+  completedOperations: number;
+  mode: TransportMode;
+  freightUsd: number;
+  customsUsd: number;
+  otherCostsUsd: number;
+  totalUsd: number;
+  estimatedDays: number;
+  includesCustoms: boolean;
+  terms: string;
+  validUntil: string;
+  status: string;
+};
+
+export type CargoOfferComparison = {
+  id: string;
+  title: string;
+  route: string;
+  status: CargoStatus;
+  offers: OfferComparison[];
 };
 
 export type OperationSummary = {
@@ -65,17 +92,18 @@ type CargoRow = {
 
 type OfferRow = {
   id: string;
+  cargo_id: string;
   mode: TransportMode;
   total_usd: number;
   estimated_days: number;
   status: string;
-  cargo_requests: Array<{ title: string }> | null;
+  cargo_requests: Array<{ title: string }> | { title: string } | null;
 };
 
 type OperationRow = {
   id: string;
   status: CargoStatus;
-  cargo_requests: Array<{ title: string; origin: string; destination: string }> | null;
+  cargo_requests: Array<{ title: string; origin: string; destination: string }> | { title: string; origin: string; destination: string } | null;
 };
 
 export async function getCurrentRole(): Promise<UserRole | null> {
@@ -166,17 +194,73 @@ export async function getOffers(): Promise<OfferSummary[]> {
 
   const { data } = await supabase
     .from("offers")
-    .select("id, mode, total_usd, estimated_days, status, cargo_requests(title)")
+    .select("id, cargo_id, mode, total_usd, estimated_days, status, cargo_requests(title)")
     .order("created_at", { ascending: false });
 
-  return ((data ?? []) as OfferRow[]).map((offer) => ({
-    id: offer.id,
-    cargoTitle: offer.cargo_requests?.[0]?.title ?? "Carga sin título",
-    mode: offer.mode,
-    totalUsd: offer.total_usd,
-    estimatedDays: offer.estimated_days,
-    status: offer.status
-  }));
+  return ((data ?? []) as OfferRow[]).map((offer) => {
+    const cargo = Array.isArray(offer.cargo_requests) ? offer.cargo_requests[0] : offer.cargo_requests;
+    return {
+      id: offer.id,
+      cargoId: offer.cargo_id,
+      cargoTitle: cargo?.title ?? "Carga sin título",
+      mode: offer.mode,
+      totalUsd: offer.total_usd,
+      estimatedDays: offer.estimated_days,
+      status: offer.status
+    };
+  });
+}
+
+export async function getCargoOfferComparison(cargoId: string): Promise<CargoOfferComparison | null> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return null;
+
+  const { data: cargo } = await supabase
+    .from("cargo_requests")
+    .select("id, title, origin, destination, status")
+    .eq("id", cargoId)
+    .maybeSingle();
+  if (!cargo) return null;
+
+  const { data: offers } = await supabase
+    .from("offers")
+    .select("id, operator_id, mode, freight_usd, customs_usd, other_costs_usd, total_usd, estimated_days, includes_customs, terms, valid_until, status")
+    .eq("cargo_id", cargoId)
+    .order("total_usd", { ascending: true });
+
+  const operatorIds = [...new Set((offers ?? []).map((offer) => offer.operator_id))];
+  const { data: profiles } = operatorIds.length > 0
+    ? await supabase.from("profiles").select("id, full_name, operator_profiles(company_name, rating, completed_operations)").in("id", operatorIds)
+    : { data: [] };
+  const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
+
+  return {
+    id: cargo.id,
+    title: cargo.title,
+    route: `${cargo.origin} → ${cargo.destination}`,
+    status: cargo.status as CargoStatus,
+    offers: (offers ?? []).map((offer) => {
+      const profile = profileById.get(offer.operator_id);
+      const operatorProfile = Array.isArray(profile?.operator_profiles) ? profile?.operator_profiles[0] : profile?.operator_profiles;
+      return {
+        id: offer.id,
+        operatorName: profile?.full_name ?? "Operador logístico",
+        companyName: operatorProfile?.company_name ?? "Empresa pendiente",
+        rating: Number(operatorProfile?.rating ?? 0),
+        completedOperations: Number(operatorProfile?.completed_operations ?? 0),
+        mode: offer.mode,
+        freightUsd: Number(offer.freight_usd),
+        customsUsd: Number(offer.customs_usd),
+        otherCostsUsd: Number(offer.other_costs_usd),
+        totalUsd: Number(offer.total_usd),
+        estimatedDays: offer.estimated_days,
+        includesCustoms: offer.includes_customs,
+        terms: offer.terms,
+        validUntil: offer.valid_until,
+        status: offer.status
+      };
+    })
+  };
 }
 
 export async function getOperations(): Promise<OperationSummary[]> {
@@ -188,12 +272,13 @@ export async function getOperations(): Promise<OperationSummary[]> {
     .select("id, status, cargo_requests(title, origin, destination)")
     .order("awarded_at", { ascending: false });
 
-  return ((data ?? []) as OperationRow[]).map((operation) => ({
-    id: operation.id,
-    cargoTitle: operation.cargo_requests?.[0]?.title ?? "Carga sin título",
-    route: operation.cargo_requests?.[0]
-      ? `${operation.cargo_requests[0].origin} → ${operation.cargo_requests[0].destination}`
-      : "Ruta no disponible",
-    status: operation.status
-  }));
+  return ((data ?? []) as OperationRow[]).map((operation) => {
+    const cargo = Array.isArray(operation.cargo_requests) ? operation.cargo_requests[0] : operation.cargo_requests;
+    return {
+      id: operation.id,
+      cargoTitle: cargo?.title ?? "Carga sin título",
+      route: cargo ? `${cargo.origin} → ${cargo.destination}` : "Ruta no disponible",
+      status: operation.status
+    };
+  });
 }
