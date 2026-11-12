@@ -37,6 +37,14 @@ header button, .header-action { border: 0; border-radius: 9px; background: var(-
 .metrics article { background: white; border: 1px solid var(--line); border-radius: 13px; padding: 22px; }
 .metrics span, .metrics small { display: block; color: var(--muted); font-size: 12px; }
 .metrics strong { display: block; font-size: 30px; margin: 11px 0 7px; }
+.admin-metrics { margin-bottom: 18px; }
+.admin-financial { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-financial article { background: var(--ink); border-radius: 14px; color: white; padding: 24px; }
+.admin-financial span, .admin-financial small { color: #9ca0a9; display: block; }
+.admin-financial span { font-size: 10px; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; }
+.admin-financial strong { display: block; font-size: 26px; margin: 12px 0 7px; }
+.admin-financial small { font-size: 10px; }
+.admin-operation-link { display: block; margin-top: 12px; }
 .section-title { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; }
 h2 { margin: 0 0 6px; font-size: 21px; }
 .section-title p { font-size: 12px; }
@@ -191,6 +199,7 @@ h2 { margin: 0 0 6px; font-size: 21px; }
   .profile { display: none; }
   .content { padding: 34px 22px 60px; }
   .metrics, .cards { grid-template-columns: 1fr; }
+  .admin-financial { grid-template-columns: 1fr; }
   .list-row, .documents-row { grid-template-columns: 1fr; align-items: start; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .wide { grid-column: auto; }

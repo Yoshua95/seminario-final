@@ -25,8 +25,8 @@
 - [x] Comparador, adjudicación y operación.
 - [x] Garantía de pago simulada.
 - [x] Tracking por hitos y mensajería.
-- [ ] Documentos, reputación y panel administrativo.
-- [ ] Completar circuito principal en APK.
+- [x] Documentos, reputación y panel administrativo.
+- [x] Completar circuito principal en APK.
 
 ## Sprint 3 — 30 de noviembre al 3 de diciembre
 

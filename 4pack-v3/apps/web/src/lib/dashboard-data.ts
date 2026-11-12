@@ -97,6 +97,25 @@ export type DocumentSummary = {
 
 export type DocumentTarget = { id: string; type: "cargo" | "operation"; label: string };
 
+export type AdminDashboard = {
+  pendingOperators: number;
+  activeOperations: number;
+  deliveredOperations: number;
+  documentsCount: number;
+  securedVolumeUsd: number;
+  commissionUsd: number;
+  guarantees: Array<{
+    id: string;
+    operationId: string;
+    cargoTitle: string;
+    operationStatus: CargoStatus;
+    guaranteeStatus: GuaranteeStatus;
+    amountUsd: number;
+    commissionUsd: number;
+    createdAt: string;
+  }>;
+};
+
 export type AccountProfile = {
   id: string;
   fullName: string;
@@ -202,6 +221,46 @@ export async function getOperatorReviews(): Promise<OperatorReview[]> {
       verificationStatus: operator.verification_status
     };
   });
+}
+
+export async function getAdminDashboard(): Promise<AdminDashboard | null> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return null;
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) return null;
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", authData.user.id).single();
+  if (profile?.role !== "admin") return null;
+
+  const [{ data: operators }, { data: operations }, { data: guarantees }, { count: documentsCount }] = await Promise.all([
+    supabase.from("operator_profiles").select("verification_status"),
+    supabase.from("operations").select("id, status"),
+    supabase.from("payment_guarantees").select("id, operation_id, amount_usd, commission_usd, status, created_at, operations(status, cargo_requests(title))").order("created_at", { ascending: false }).limit(8),
+    supabase.from("documents").select("id", { count: "exact", head: true })
+  ]);
+
+  const guaranteeRows = guarantees ?? [];
+  return {
+    pendingOperators: (operators ?? []).filter((operator) => operator.verification_status === "pending").length,
+    activeOperations: (operations ?? []).filter((operation) => !["delivered", "cancelled"].includes(operation.status)).length,
+    deliveredOperations: (operations ?? []).filter((operation) => operation.status === "delivered").length,
+    documentsCount: documentsCount ?? 0,
+    securedVolumeUsd: guaranteeRows.reduce((total, guarantee) => total + Number(guarantee.amount_usd), 0),
+    commissionUsd: guaranteeRows.reduce((total, guarantee) => total + Number(guarantee.commission_usd), 0),
+    guarantees: guaranteeRows.map((guarantee) => {
+      const operation = Array.isArray(guarantee.operations) ? guarantee.operations[0] : guarantee.operations;
+      const cargo = Array.isArray(operation?.cargo_requests) ? operation?.cargo_requests[0] : operation?.cargo_requests;
+      return {
+        id: guarantee.id,
+        operationId: guarantee.operation_id,
+        cargoTitle: cargo?.title ?? "Carga sin título",
+        operationStatus: (operation?.status ?? "awarded") as CargoStatus,
+        guaranteeStatus: guarantee.status as GuaranteeStatus,
+        amountUsd: Number(guarantee.amount_usd),
+        commissionUsd: Number(guarantee.commission_usd),
+        createdAt: guarantee.created_at
+      };
+    })
+  };
 }
 
 export async function getOpenCargoRequests(): Promise<CargoSummary[]> {
