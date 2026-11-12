@@ -1,54 +1,9 @@
-import type { CargoRequest } from "@4pack/domain";
-
-const opportunities: CargoRequest[] = [
-  {
-    id: "CG-0241",
-    title: "Marroquinería — Guangzhou",
-    origin: "Guangzhou, China",
-    destination: "CABA, Argentina",
-    category: "Marroquinería",
-    weightKg: 18.4,
-    volumeM3: 0.31,
-    fobUsd: 1280,
-    status: "open",
-    hazmatReviewRequired: false,
-    offersCount: 4,
-    createdAt: "2026-11-12T18:00:00-03:00"
-  },
-  {
-    id: "CG-0242",
-    title: "Accesorios electrónicos — Shenzhen",
-    origin: "Shenzhen, China",
-    destination: "Rosario, Argentina",
-    category: "Electrónica",
-    weightKg: 12.8,
-    volumeM3: 0.18,
-    fobUsd: 940,
-    status: "open",
-    hazmatReviewRequired: true,
-    offersCount: 2,
-    createdAt: "2026-11-12T19:30:00-03:00"
-  }
-];
+import { DashboardShell } from "@/components/dashboard-shell";
+import { opportunities } from "@/data/demo";
 
 export default function Home() {
   return (
-    <main className="shell">
-      <aside className="sidebar">
-        <div className="brand">4PACK<span>●</span></div>
-        <nav>
-          <a className="active" href="#oportunidades">Oportunidades</a>
-          <a href="#ofertas">Mis ofertas</a>
-          <a href="#operaciones">Operaciones</a>
-          <a href="#documentos">Documentos</a>
-        </nav>
-        <div className="profile">
-          <div className="avatar">AR</div>
-          <div><strong>Arbox Logistics</strong><small>Operador verificado</small></div>
-        </div>
-      </aside>
-
-      <section className="content" id="oportunidades">
+    <DashboardShell active="opportunities">
         <header>
           <div>
             <p className="eyebrow">MESA DE LICITACIONES</p>
@@ -89,7 +44,6 @@ export default function Home() {
             </article>
           ))}
         </div>
-      </section>
-    </main>
+    </DashboardShell>
   );
 }

@@ -12,7 +12,7 @@ body { margin: 0; color: var(--ink); background: var(--soft); font-family: Arial
 button { font: inherit; cursor: pointer; }
 .shell { min-height: 100vh; display: grid; grid-template-columns: 250px 1fr; }
 .sidebar { position: sticky; top: 0; height: 100vh; background: #111318; color: white; padding: 34px 24px 24px; display: flex; flex-direction: column; }
-.brand { font-size: 28px; font-weight: 900; letter-spacing: -1.5px; }
+.brand { color: white; text-decoration: none; font-size: 28px; font-weight: 900; letter-spacing: -1.5px; }
 .brand span { color: var(--accent); font-size: 16px; margin-left: 3px; }
 .sidebar nav { display: grid; gap: 8px; margin-top: 56px; }
 .sidebar nav a { color: #a8acb5; text-decoration: none; padding: 13px 14px; border-radius: 9px; font-size: 14px; }
@@ -50,6 +50,20 @@ h2 { margin: 0 0 6px; font-size: 21px; }
 .cargo dd { margin: 0; font-size: 13px; font-weight: 800; }
 .cargo footer span { color: var(--muted); font-size: 11px; }
 .link { background: none; border: 0; color: var(--accent); font-weight: 800; font-size: 12px; }
+.list-panel { display: grid; gap: 14px; margin-top: 40px; }
+.list-row, .operation { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.list-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px 120px 120px; align-items: center; gap: 20px; }
+.list-row h3, .operation h3 { margin: 7px 0 5px; font-size: 16px; }
+.list-row p, .operation p { margin: 0; color: var(--muted); font-size: 12px; }
+.row-value small, .row-value strong { display: block; }
+.row-value small { color: var(--muted); font-size: 10px; margin-bottom: 6px; }
+.row-value strong { font-size: 14px; }
+.operation-head, .operation footer { display: flex; justify-content: space-between; align-items: center; }
+.operation footer { margin-top: 12px; }
+.operation footer small { color: var(--muted); }
+.progress { height: 7px; overflow: hidden; background: var(--line); border-radius: 99px; margin-top: 22px; }
+.progress span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.documents-row { grid-template-columns: minmax(0, 1fr) 120px 100px; }
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar { position: static; height: auto; }
@@ -57,4 +71,5 @@ h2 { margin: 0 0 6px; font-size: 21px; }
   .profile { display: none; }
   .content { padding: 34px 22px 60px; }
   .metrics, .cards { grid-template-columns: 1fr; }
+  .list-row, .documents-row { grid-template-columns: 1fr; align-items: start; }
 }
