@@ -24,7 +24,7 @@ export default function AccessPage() {
 
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
-      setError("La conexión segura todavía no fue configurada. Podés ingresar a la vista de demostración.");
+      setError("La conexión segura todavía no fue configurada.");
       return;
     }
 
@@ -65,7 +65,6 @@ export default function AccessPage() {
             {error && <div className="form-error" role="alert">{error}</div>}
             <button className="access-submit" disabled={loading} type="submit">{loading ? "Validando…" : "Ingresar"}</button>
           </form>
-          <Link className="demo-link" href="/">Continuar con la demostración</Link>
         </div>
       </section>
     </main>

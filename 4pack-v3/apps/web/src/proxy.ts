@@ -19,7 +19,21 @@ export async function proxy(request: NextRequest) {
     }
   });
 
-  await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
+  const isAccessPage = request.nextUrl.pathname === "/acceso";
+
+  if (!data.user && !isAccessPage) {
+    const accessUrl = request.nextUrl.clone();
+    accessUrl.pathname = "/acceso";
+    return NextResponse.redirect(accessUrl);
+  }
+
+  if (data.user && isAccessPage) {
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = "/";
+    return NextResponse.redirect(homeUrl);
+  }
+
   return response;
 }
 

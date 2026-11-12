@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SessionProfile } from "@/components/session-profile";
 
 const navigation = [
   { key: "opportunities", href: "/", label: "Oportunidades" },
@@ -28,10 +29,7 @@ export function DashboardShell({
             </Link>
           ))}
         </nav>
-        <div className="profile">
-          <div className="avatar">AR</div>
-          <div><strong>Arbox Logistics</strong><small>Operador verificado</small></div>
-        </div>
+        <SessionProfile />
       </aside>
       <section className="content">{children}</section>
     </main>
