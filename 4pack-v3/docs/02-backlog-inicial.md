@@ -9,6 +9,7 @@
 - [x] Implementar esquema SQL y primera versión de RLS.
 - [x] Crear datos de demostración reproducibles.
 - [x] Prototipar navegación Web y Mobile.
+- [ ] Consolidar el sistema visual aprobado en Web y Mobile.
 
 ## Sprint 1 — 16 al 22 de noviembre
 
