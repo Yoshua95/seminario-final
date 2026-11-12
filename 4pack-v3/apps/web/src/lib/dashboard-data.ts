@@ -82,7 +82,20 @@ export type OperationDetail = {
     body: string;
     createdAt: string;
   }>;
+  ratingRecipient: { id: string; name: string } | null;
+  existingRating: { score: number; comment: string } | null;
 };
+
+export type DocumentSummary = {
+  id: string;
+  kind: "invoice" | "packing_list" | "msds" | "payment_proof" | "operator_credential" | "other";
+  storagePath: string;
+  originalName: string;
+  targetLabel: string;
+  createdAt: string;
+};
+
+export type DocumentTarget = { id: string; type: "cargo" | "operation"; label: string };
 
 export type AccountProfile = {
   id: string;
@@ -314,19 +327,23 @@ export async function getOperationDetail(operationId: string): Promise<Operation
   const supabase = await createSupabaseServerClient();
   if (!supabase) return null;
 
+  const { data: authData } = await supabase.auth.getUser();
   const { data: operation } = await supabase
     .from("operations")
-    .select("id, cargo_id, accepted_offer_id, status")
+    .select("id, cargo_id, accepted_offer_id, importer_id, operator_id, status")
     .eq("id", operationId)
     .maybeSingle();
   if (!operation) return null;
 
-  const [{ data: cargo }, { data: offer }, { data: guarantee }, { data: events }, { data: messages }] = await Promise.all([
+  const recipientId = authData.user?.id === operation.importer_id ? operation.operator_id : authData.user?.id === operation.operator_id ? operation.importer_id : null;
+  const [{ data: cargo }, { data: offer }, { data: guarantee }, { data: events }, { data: messages }, { data: recipient }, { data: rating }] = await Promise.all([
     supabase.from("cargo_requests").select("title, origin, destination").eq("id", operation.cargo_id).single(),
     supabase.from("offers").select("mode, total_usd").eq("id", operation.accepted_offer_id).single(),
     supabase.from("payment_guarantees").select("amount_usd, commission_usd, status").eq("operation_id", operation.id).single(),
     supabase.from("tracking_events").select("id, status, title, description, location, created_at").eq("operation_id", operation.id).order("created_at", { ascending: false }),
-    supabase.from("messages").select("id, sender_id, body, created_at, profiles(full_name)").eq("operation_id", operation.id).order("created_at", { ascending: true })
+    supabase.from("messages").select("id, sender_id, body, created_at, profiles(full_name)").eq("operation_id", operation.id).order("created_at", { ascending: true }),
+    recipientId ? supabase.from("profiles").select("id, full_name").eq("id", recipientId).maybeSingle() : Promise.resolve({ data: null }),
+    authData.user ? supabase.from("ratings").select("score, comment").eq("operation_id", operation.id).eq("author_id", authData.user.id).maybeSingle() : Promise.resolve({ data: null })
   ]);
 
   if (!cargo || !offer || !guarantee) return null;
@@ -357,6 +374,47 @@ export async function getOperationDetail(operationId: string): Promise<Operation
         body: message.body,
         createdAt: message.created_at
       };
-    })
+    }),
+    ratingRecipient: recipient ? { id: recipient.id, name: recipient.full_name } : null,
+    existingRating: rating ? { score: rating.score, comment: rating.comment ?? "" } : null
   };
+}
+
+export async function getDocuments(): Promise<DocumentSummary[]> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("documents")
+    .select("id, kind, storage_path, original_name, created_at, cargo_requests(title), operations(cargo_requests(title))")
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((document) => {
+    const cargo = Array.isArray(document.cargo_requests) ? document.cargo_requests[0] : document.cargo_requests;
+    const operation = Array.isArray(document.operations) ? document.operations[0] : document.operations;
+    const operationCargo = Array.isArray(operation?.cargo_requests) ? operation?.cargo_requests[0] : operation?.cargo_requests;
+    return {
+      id: document.id,
+      kind: document.kind,
+      storagePath: document.storage_path,
+      originalName: document.original_name,
+      targetLabel: cargo?.title ? `Carga · ${cargo.title}` : operationCargo?.title ? `Operación · ${operationCargo.title}` : "Registro vinculado",
+      createdAt: document.created_at
+    };
+  });
+}
+
+export async function getDocumentTargets(): Promise<DocumentTarget[]> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return [];
+  const [{ data: cargos }, { data: operations }] = await Promise.all([
+    supabase.from("cargo_requests").select("id, title").order("created_at", { ascending: false }),
+    supabase.from("operations").select("id, cargo_requests(title)").order("awarded_at", { ascending: false })
+  ]);
+  return [
+    ...(cargos ?? []).map((cargo) => ({ id: cargo.id, type: "cargo" as const, label: `Carga · ${cargo.title}` })),
+    ...(operations ?? []).map((operation) => {
+      const cargo = Array.isArray(operation.cargo_requests) ? operation.cargo_requests[0] : operation.cargo_requests;
+      return { id: operation.id, type: "operation" as const, label: `Operación · ${cargo?.title ?? operation.id.slice(0, 8)}` };
+    })
+  ];
 }

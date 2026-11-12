@@ -1,19 +1,13 @@
 import { DashboardShell } from "@/components/dashboard-shell";
-import { documents } from "@/data/demo";
+import { DocumentRepository } from "@/components/document-repository";
+import { getDocumentTargets, getDocuments } from "@/lib/dashboard-data";
 
-export default function DocumentsPage() {
+export default async function DocumentsPage() {
+  const [documents, targets] = await Promise.all([getDocuments(), getDocumentTargets()]);
   return (
     <DashboardShell active="documents">
-      <header><div><p className="eyebrow">REPOSITORIO</p><h1>Documentos</h1><p>Archivos vinculados con cargas y operaciones.</p></div><button>+ Subir documento</button></header>
-      <div className="list-panel">
-        {documents.map((document) => (
-          <article className="list-row documents-row" key={document.name}>
-            <div><h3>{document.name}</h3><p>{document.kind} · {document.operation}</p></div>
-            <span className={document.status === "Pendiente" ? "tag warning" : "tag"}>{document.status}</span>
-            <button className="link">Descargar</button>
-          </article>
-        ))}
-      </div>
+      <header><div><p className="eyebrow">REPOSITORIO SEGURO</p><h1>Documentos</h1><p>PDF privados vinculados con cargas y operaciones.</p></div></header>
+      <DocumentRepository documents={documents} targets={targets} />
     </DashboardShell>
   );
 }
