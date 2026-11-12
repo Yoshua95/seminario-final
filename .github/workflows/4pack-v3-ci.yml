@@ -1,0 +1,32 @@
+name: 4PACK v3 CI
+
+on:
+  push:
+    branches: [main, "codex/**"]
+    paths:
+      - "4pack-v3/**"
+      - ".github/workflows/4pack-v3-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "4pack-v3/**"
+      - ".github/workflows/4pack-v3-ci.yml"
+
+defaults:
+  run:
+    working-directory: 4pack-v3
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: 4pack-v3/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build:web
