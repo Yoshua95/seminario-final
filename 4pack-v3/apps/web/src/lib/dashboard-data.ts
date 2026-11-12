@@ -30,6 +30,26 @@ export type OperationSummary = {
   status: CargoStatus;
 };
 
+export type AccountProfile = {
+  id: string;
+  fullName: string;
+  phone: string;
+  role: UserRole;
+  companyName: string;
+  taxId: string;
+  description: string;
+  verificationStatus: "pending" | "approved" | "rejected" | null;
+};
+
+export type OperatorReview = {
+  userId: string;
+  fullName: string;
+  companyName: string;
+  taxId: string;
+  description: string;
+  verificationStatus: "pending" | "approved" | "rejected";
+};
+
 type CargoRow = {
   id: string;
   title: string;
@@ -67,6 +87,53 @@ export async function getCurrentRole(): Promise<UserRole | null> {
 
   const { data } = await supabase.from("profiles").select("role").eq("id", authData.user.id).single();
   return (data?.role as UserRole | undefined) ?? null;
+}
+
+export async function getAccountProfile(): Promise<AccountProfile | null> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return null;
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) return null;
+
+  const { data: profile } = await supabase.from("profiles").select("id, full_name, phone, role").eq("id", authData.user.id).single();
+  if (!profile) return null;
+
+  const { data: operator } = profile.role === "operator"
+    ? await supabase.from("operator_profiles").select("company_name, tax_id, description, verification_status").eq("user_id", profile.id).maybeSingle()
+    : { data: null };
+
+  return {
+    id: profile.id,
+    fullName: profile.full_name,
+    phone: profile.phone ?? "",
+    role: profile.role as UserRole,
+    companyName: operator?.company_name ?? "",
+    taxId: operator?.tax_id ?? "",
+    description: operator?.description ?? "",
+    verificationStatus: operator?.verification_status ?? null
+  };
+}
+
+export async function getOperatorReviews(): Promise<OperatorReview[]> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("operator_profiles")
+    .select("user_id, company_name, tax_id, description, verification_status, profiles(full_name)")
+    .order("verification_status", { ascending: false });
+
+  return (data ?? []).map((operator) => {
+    const relatedProfile = Array.isArray(operator.profiles) ? operator.profiles[0] : operator.profiles;
+    return {
+      userId: operator.user_id,
+      fullName: relatedProfile?.full_name ?? "Operador",
+      companyName: operator.company_name,
+      taxId: operator.tax_id,
+      description: operator.description ?? "Sin descripción",
+      verificationStatus: operator.verification_status
+    };
+  });
 }
 
 export async function getOpenCargoRequests(): Promise<CargoSummary[]> {
