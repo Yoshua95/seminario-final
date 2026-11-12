@@ -7,7 +7,7 @@
 - [x] Definir entidades y estados principales.
 - [ ] Crear proyecto Supabase y variables de entorno.
 - [x] Implementar esquema SQL y primera versión de RLS.
-- [ ] Crear datos de demostración reproducibles.
+- [x] Crear datos de demostración reproducibles.
 - [ ] Prototipar navegación Web y Mobile.
 
 ## Sprint 1 — 16 al 22 de noviembre
