@@ -1,0 +1,19 @@
+{
+  "name": "4pack-platform",
+  "version": "3.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@4pack/web",
+    "dev:mobile": "npm run start --workspace=@4pack/mobile",
+    "build:web": "npm run build --workspace=@4pack/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

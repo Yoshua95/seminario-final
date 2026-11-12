@@ -1,0 +1,60 @@
+:root {
+  --ink: #111318;
+  --muted: #6f7480;
+  --line: #e7e8eb;
+  --soft: #f5f6f8;
+  --accent: #ff6b2c;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--soft); }
+body { margin: 0; color: var(--ink); background: var(--soft); font-family: Arial, Helvetica, sans-serif; }
+button { font: inherit; cursor: pointer; }
+.shell { min-height: 100vh; display: grid; grid-template-columns: 250px 1fr; }
+.sidebar { position: sticky; top: 0; height: 100vh; background: #111318; color: white; padding: 34px 24px 24px; display: flex; flex-direction: column; }
+.brand { font-size: 28px; font-weight: 900; letter-spacing: -1.5px; }
+.brand span { color: var(--accent); font-size: 16px; margin-left: 3px; }
+.sidebar nav { display: grid; gap: 8px; margin-top: 56px; }
+.sidebar nav a { color: #a8acb5; text-decoration: none; padding: 13px 14px; border-radius: 9px; font-size: 14px; }
+.sidebar nav a.active, .sidebar nav a:hover { color: white; background: #272a31; }
+.profile { margin-top: auto; border-top: 1px solid #2c2f36; padding-top: 22px; display: flex; gap: 11px; align-items: center; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); font-weight: 800; font-size: 12px; }
+.profile strong, .profile small { display: block; }
+.profile strong { font-size: 12px; }
+.profile small { color: #8c919c; margin-top: 4px; font-size: 10px; }
+.content { padding: 54px 64px 80px; max-width: 1380px; width: 100%; margin: 0 auto; }
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 28px; }
+.eyebrow { color: var(--accent) !important; font-weight: 800; font-size: 11px; letter-spacing: 1.8px; }
+h1 { font-size: 40px; margin: 8px 0 7px; letter-spacing: -1.8px; }
+header p, .section-title p { color: var(--muted); margin: 0; }
+header button { border: 0; border-radius: 9px; background: var(--ink); color: white; padding: 13px 18px; font-weight: 700; }
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 40px 0 42px; }
+.metrics article { background: white; border: 1px solid var(--line); border-radius: 13px; padding: 22px; }
+.metrics span, .metrics small { display: block; color: var(--muted); font-size: 12px; }
+.metrics strong { display: block; font-size: 30px; margin: 11px 0 7px; }
+.section-title { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; }
+h2 { margin: 0 0 6px; font-size: 21px; }
+.section-title p { font-size: 12px; }
+.secondary { background: white; border: 1px solid var(--line); border-radius: 8px; padding: 9px 13px; }
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.cargo { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+.cargo-top, .cargo footer { display: flex; justify-content: space-between; align-items: center; }
+.code { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+.tag { background: #e9f8ef; color: #1c7540; border-radius: 99px; padding: 6px 9px; font-size: 10px; font-weight: 800; }
+.tag.warning { background: #fff1dc; color: #9a5a00; }
+.cargo h3 { margin: 24px 0 8px; font-size: 19px; }
+.cargo > p { color: var(--muted); font-size: 12px; }
+.cargo dl { display: grid; grid-template-columns: repeat(3, 1fr); margin: 24px 0; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.cargo dl div + div { border-left: 1px solid var(--line); padding-left: 16px; }
+.cargo dt { color: var(--muted); font-size: 10px; margin-bottom: 6px; }
+.cargo dd { margin: 0; font-size: 13px; font-weight: 800; }
+.cargo footer span { color: var(--muted); font-size: 11px; }
+.link { background: none; border: 0; color: var(--accent); font-weight: 800; font-size: 12px; }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; }
+  .sidebar nav { margin-top: 20px; grid-template-columns: repeat(2, 1fr); }
+  .profile { display: none; }
+  .content { padding: 34px 22px 60px; }
+  .metrics, .cards { grid-template-columns: 1fr; }
+}
