@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -11,7 +12,7 @@ type Profile = {
 
 const roleLabels: Record<Profile["role"], string> = {
   importer: "Importador",
-  operator: "Operador verificado",
+  operator: "Operador logístico",
   admin: "Administrador"
 };
 
@@ -50,7 +51,7 @@ export function SessionProfile() {
     <div className="profile">
       <div className="avatar">{initials}</div>
       <div className="profile-copy">
-        <strong>{name}</strong>
+        <Link href="/perfil"><strong>{name}</strong></Link>
         <small>{profile ? roleLabels[profile.role] : "Sesión segura"}</small>
         <button onClick={signOut} type="button">Cerrar sesión</button>
       </div>

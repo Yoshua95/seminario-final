@@ -6,7 +6,8 @@ const navigation = [
   { key: "opportunities", href: "/", label: "Oportunidades" },
   { key: "offers", href: "/ofertas", label: "Mis ofertas" },
   { key: "operations", href: "/operaciones", label: "Operaciones" },
-  { key: "documents", href: "/documentos", label: "Documentos" }
+  { key: "documents", href: "/documentos", label: "Documentos" },
+  { key: "profile", href: "/perfil", label: "Mi perfil" }
 ] as const;
 
 export type DashboardSection = (typeof navigation)[number]["key"];
