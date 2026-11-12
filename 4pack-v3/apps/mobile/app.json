@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "4PACK",
+    "slug": "4pack",
+    "version": "3.0.0",
+    "orientation": "portrait",
+    "scheme": "fourpack",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "com.yoshuachavez.fourpack"
+    },
+    "plugins": ["expo-router"]
+  }
+}
