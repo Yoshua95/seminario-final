@@ -3,6 +3,7 @@ node_modules/
 .expo/
 dist/
 coverage/
+.test-dist/
 .env
 .env.local
 *.log
