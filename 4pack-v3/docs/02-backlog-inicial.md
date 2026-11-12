@@ -17,8 +17,8 @@
 - [x] Autenticación y roles.
 - [ ] Perfiles de importador y operador.
 - [ ] Validación administrativa del operador.
-- [ ] Publicación de cargas y reglas HAZMAT.
-- [ ] Listado de oportunidades y ofertas.
+- [x] Publicación de cargas y reglas HAZMAT.
+- [x] Listado de oportunidades y ofertas.
 
 ## Sprint 2 — 23 al 29 de noviembre
 

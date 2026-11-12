@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getCurrentRole, getOffers } from "@/lib/dashboard-data";
 
@@ -18,7 +19,7 @@ export default async function OffersPage() {
     <DashboardShell active="offers">
       <header>
         <div><p className="eyebrow">LICITACIÓN INVERSA</p><h1>{title}</h1><p>Propuestas visibles según tu rol y participación.</p></div>
-        {role === "operator" && <button>+ Crear oferta</button>}
+        {role === "operator" && <Link className="header-action" href="/ofertas/nueva">+ Crear oferta</Link>}
       </header>
       <div className="list-panel">
         {offers.map((offer) => {

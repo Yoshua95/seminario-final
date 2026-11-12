@@ -78,6 +78,9 @@ h2 { margin: 0 0 6px; font-size: 21px; }
 .form-grid input, .form-grid select, .form-grid textarea { border: 1px solid #dfe1e5; border-radius: 9px; color: var(--ink); font: inherit; padding: 12px 13px; width: 100%; }
 .form-grid textarea { resize: vertical; }
 .form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus { border-color: var(--accent); outline: none; }
+.form-grid input[type="file"] { background: var(--soft); color: var(--muted); }
+.checkbox-field { align-content: center; align-items: center; display: flex !important; grid-template-columns: 18px 1fr; margin-top: 20px; }
+.checkbox-field input { accent-color: var(--accent); height: 17px; padding: 0; width: 17px; }
 .hazmat-alert { background: #edf8f1; border: 1px solid #cce9d7; border-radius: 11px; color: #1c7540; margin-top: 22px; padding: 16px; }
 .hazmat-alert.active { background: #fff5e6; border-color: #f1d29d; color: #8a5200; }
 .hazmat-alert strong { font-size: 12px; }
@@ -86,6 +89,7 @@ h2 { margin: 0 0 6px; font-size: 21px; }
 .form-actions button { border: 0; border-radius: 9px; background: var(--ink); color: white; font-weight: 800; padding: 12px 17px; }
 .form-actions button.secondary { background: white; border: 1px solid var(--line); color: var(--ink); }
 .form-actions button:disabled { opacity: 0.6; }
+.offer-error { margin-top: 20px; }
 .access-shell { min-height: 100vh; display: grid; grid-template-columns: 1.2fr 0.8fr; background: #07070a; color: white; }
 .access-intro { padding: 48px 7vw; display: flex; flex-direction: column; justify-content: space-between; gap: 70px; }
 .access-intro h1 { max-width: 760px; font-size: clamp(44px, 6vw, 78px); line-height: 0.98; margin: 14px 0 20px; }
