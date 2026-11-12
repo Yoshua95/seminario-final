@@ -6,6 +6,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
+    "build:apk": "npx eas-cli build --platform android --profile preview",
+    "export:android": "expo export --platform android --output-dir dist/android",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

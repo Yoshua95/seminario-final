@@ -1,5 +1,6 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { loadOperations, type MobileOperation } from "../../lib/dashboard";
 
@@ -30,12 +31,14 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
+    setLoading(true);
+    setError("");
     loadOperations()
       .then((operations) => setOperation(operations[0] ?? null))
       .catch(() => setError("No pudimos cargar la operación activa."))
       .finally(() => setLoading(false));
-  }, []);
+  }, []));
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -52,7 +55,7 @@ export default function HomeScreen() {
           <Text style={styles.cardTitle}>{operation.title}</Text>
           <Text style={styles.operator}>Operación adjudicada · seguimiento activo</Text>
           <View style={styles.timeline}>{milestones.map((item, index) => { const isCurrent = index === activeMilestone[operation.status]; const isComplete = index <= activeMilestone[operation.status]; return <View style={styles.milestone} key={item}><View style={[styles.circle, isComplete && styles.complete, isCurrent && styles.current]} /><Text style={[styles.milestoneText, isCurrent && styles.currentText]}>{item}</Text></View>; })}</View>
-          <TouchableOpacity style={styles.primary}><Text style={styles.primaryText}>Ver operación</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push(`/operation/${operation.id}`)} style={styles.primary}><Text style={styles.primaryText}>Ver operación</Text></TouchableOpacity>
         </View> : null}
         {!loading && !error && !operation ? <Text style={styles.message}>Todavía no hay una operación activa.</Text> : null}
       </ScrollView>
