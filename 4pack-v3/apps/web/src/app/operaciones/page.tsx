@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import type { CargoStatus } from "@4pack/domain";
 import { getOperations } from "@/lib/dashboard-data";
@@ -25,7 +26,7 @@ export default async function OperationsPage() {
             <article className="operation" key={operation.id}>
               <div className="operation-head"><div><span className="code">{operation.id.slice(0, 8).toUpperCase()}</span><h3>{operation.cargoTitle}</h3><p>{operation.route}</p></div><span className="tag">{detail.label}</span></div>
               <div className="progress"><span style={{ width: `${detail.progress}%` }} /></div>
-              <footer><small>{detail.progress}% del circuito registrado</small><button className="link">Abrir operación →</button></footer>
+              <footer><small>{detail.progress}% del circuito registrado</small><Link className="link" href={`/operaciones/${operation.id}`}>Abrir operación →</Link></footer>
             </article>
           );
         })}

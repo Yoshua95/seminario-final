@@ -1,4 +1,4 @@
-import type { CargoStatus, TransportMode, UserRole } from "@4pack/domain";
+import type { CargoStatus, GuaranteeStatus, TransportMode, UserRole } from "@4pack/domain";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type CargoSummary = {
@@ -55,6 +55,26 @@ export type OperationSummary = {
   cargoTitle: string;
   route: string;
   status: CargoStatus;
+};
+
+export type OperationDetail = {
+  id: string;
+  cargoTitle: string;
+  route: string;
+  status: CargoStatus;
+  mode: TransportMode;
+  totalUsd: number;
+  guaranteeAmountUsd: number;
+  commissionUsd: number;
+  guaranteeStatus: GuaranteeStatus;
+  events: Array<{
+    id: string;
+    status: CargoStatus;
+    title: string;
+    description: string;
+    location: string;
+    createdAt: string;
+  }>;
 };
 
 export type AccountProfile = {
@@ -281,4 +301,44 @@ export async function getOperations(): Promise<OperationSummary[]> {
       status: operation.status
     };
   });
+}
+
+export async function getOperationDetail(operationId: string): Promise<OperationDetail | null> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return null;
+
+  const { data: operation } = await supabase
+    .from("operations")
+    .select("id, cargo_id, accepted_offer_id, status")
+    .eq("id", operationId)
+    .maybeSingle();
+  if (!operation) return null;
+
+  const [{ data: cargo }, { data: offer }, { data: guarantee }, { data: events }] = await Promise.all([
+    supabase.from("cargo_requests").select("title, origin, destination").eq("id", operation.cargo_id).single(),
+    supabase.from("offers").select("mode, total_usd").eq("id", operation.accepted_offer_id).single(),
+    supabase.from("payment_guarantees").select("amount_usd, commission_usd, status").eq("operation_id", operation.id).single(),
+    supabase.from("tracking_events").select("id, status, title, description, location, created_at").eq("operation_id", operation.id).order("created_at", { ascending: false })
+  ]);
+
+  if (!cargo || !offer || !guarantee) return null;
+  return {
+    id: operation.id,
+    cargoTitle: cargo.title,
+    route: `${cargo.origin} → ${cargo.destination}`,
+    status: operation.status as CargoStatus,
+    mode: offer.mode as TransportMode,
+    totalUsd: Number(offer.total_usd),
+    guaranteeAmountUsd: Number(guarantee.amount_usd),
+    commissionUsd: Number(guarantee.commission_usd),
+    guaranteeStatus: guarantee.status as GuaranteeStatus,
+    events: (events ?? []).map((event) => ({
+      id: event.id,
+      status: event.status as CargoStatus,
+      title: event.title,
+      description: event.description ?? "Sin observaciones adicionales",
+      location: event.location ?? "Sin ubicación informada",
+      createdAt: event.created_at
+    }))
+  };
 }
