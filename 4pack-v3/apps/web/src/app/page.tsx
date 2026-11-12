@@ -1,7 +1,15 @@
 import { DashboardShell } from "@/components/dashboard-shell";
-import { opportunities } from "@/data/demo";
+import { getCurrentRole, getOpenCargoRequests } from "@/lib/dashboard-data";
 
-export default function Home() {
+const actionLabel = {
+  importer: "+ Nueva carga",
+  operator: "+ Nueva oferta",
+  admin: "Panel administrativo"
+};
+
+export default async function Home() {
+  const [opportunities, role] = await Promise.all([getOpenCargoRequests(), getCurrentRole()]);
+
   return (
     <DashboardShell active="opportunities">
         <header>
@@ -10,7 +18,7 @@ export default function Home() {
             <h1>Oportunidades disponibles</h1>
             <p>Solicitudes activas en la ruta China–Argentina.</p>
           </div>
-          <button>+ Nueva oferta</button>
+          <button>{role ? actionLabel[role] : "Acción principal"}</button>
         </header>
 
         <div className="metrics">
@@ -43,6 +51,7 @@ export default function Home() {
               <footer><span>{cargo.offersCount} ofertas recibidas</span><button className="link">Ver y cotizar →</button></footer>
             </article>
           ))}
+          {opportunities.length === 0 && <div className="empty-state"><h3>No hay cargas abiertas</h3><p>Las nuevas solicitudes aparecerán acá cuando estén publicadas.</p></div>}
         </div>
     </DashboardShell>
   );

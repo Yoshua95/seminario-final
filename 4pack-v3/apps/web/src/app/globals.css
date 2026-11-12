@@ -67,6 +67,9 @@ h2 { margin: 0 0 6px; font-size: 21px; }
 .progress { height: 7px; overflow: hidden; background: var(--line); border-radius: 99px; margin-top: 22px; }
 .progress span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
 .documents-row { grid-template-columns: minmax(0, 1fr) 120px 100px; }
+.empty-state { grid-column: 1 / -1; border: 1px dashed #d8dae0; background: #ffffff99; border-radius: 14px; padding: 32px; text-align: center; }
+.empty-state h3 { margin: 0 0 8px; }
+.empty-state p { color: var(--muted); font-size: 12px; margin: 0; }
 .access-shell { min-height: 100vh; display: grid; grid-template-columns: 1.2fr 0.8fr; background: #07070a; color: white; }
 .access-intro { padding: 48px 7vw; display: flex; flex-direction: column; justify-content: space-between; gap: 70px; }
 .access-intro h1 { max-width: 760px; font-size: clamp(44px, 6vw, 78px); line-height: 0.98; margin: 14px 0 20px; }

@@ -14,7 +14,7 @@
 
 ## Sprint 1 — 16 al 22 de noviembre
 
-- [ ] Autenticación y roles.
+- [x] Autenticación y roles.
 - [ ] Perfiles de importador y operador.
 - [ ] Validación administrativa del operador.
 - [ ] Publicación de cargas y reglas HAZMAT.
