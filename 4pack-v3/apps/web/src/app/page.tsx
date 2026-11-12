@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { getCurrentRole, getOpenCargoRequests } from "@/lib/dashboard-data";
+import { getCurrentRole, getOffers, getOpenCargoRequests, getOperations } from "@/lib/dashboard-data";
 
 const actionLabel = {
   importer: "+ Nueva carga",
@@ -8,7 +9,7 @@ const actionLabel = {
 };
 
 export default async function Home() {
-  const [opportunities, role] = await Promise.all([getOpenCargoRequests(), getCurrentRole()]);
+  const [opportunities, offers, operations, role] = await Promise.all([getOpenCargoRequests(), getOffers(), getOperations(), getCurrentRole()]);
 
   return (
     <DashboardShell active="opportunities">
@@ -18,13 +19,15 @@ export default async function Home() {
             <h1>Oportunidades disponibles</h1>
             <p>Solicitudes activas en la ruta China–Argentina.</p>
           </div>
-          <button>{role ? actionLabel[role] : "Acción principal"}</button>
+          {role === "importer" && <Link className="header-action" href="/cargas/nueva">{actionLabel.importer}</Link>}
+          {role === "operator" && <Link className="header-action" href="/ofertas">{actionLabel.operator}</Link>}
+          {role === "admin" && <span className="header-role">{actionLabel.admin}</span>}
         </header>
 
         <div className="metrics">
-          <article><span>Solicitudes abiertas</span><strong>12</strong><small>+3 esta semana</small></article>
-          <article><span>Ofertas enviadas</span><strong>08</strong><small>4 en evaluación</small></article>
-          <article><span>Operaciones activas</span><strong>03</strong><small>Sin demoras críticas</small></article>
+          <article><span>Solicitudes abiertas</span><strong>{opportunities.length}</strong><small>Visibles para tu cuenta</small></article>
+          <article><span>Ofertas disponibles</span><strong>{offers.length}</strong><small>Según tu participación</small></article>
+          <article><span>Operaciones activas</span><strong>{operations.length}</strong><small>Con seguimiento habilitado</small></article>
         </div>
 
         <div className="section-title">
