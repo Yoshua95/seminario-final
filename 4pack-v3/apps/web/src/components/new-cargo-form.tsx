@@ -36,6 +36,7 @@ export function NewCargoForm() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [msdsFile, setMsdsFile] = useState<File | null>(null);
 
   const hazmatReviewRequired = useMemo(
     () => requiresHazmatReview(`${form.title} ${form.description} ${form.category}`),
@@ -64,7 +65,13 @@ export function NewCargoForm() {
       return;
     }
 
-    const { error: insertError } = await supabase.from("cargo_requests").insert({
+    if (hazmatReviewRequired && (!msdsFile || msdsFile.type !== "application/pdf")) {
+      setError("Las cargas HAZMAT requieren una ficha MSDS en formato PDF.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: cargo, error: insertError } = await supabase.from("cargo_requests").insert({
       importer_id: authData.user.id,
       title: form.title.trim(),
       description: form.description.trim(),
@@ -79,12 +86,45 @@ export function NewCargoForm() {
       hazmat_review_required: hazmatReviewRequired,
       msds_required: hazmatReviewRequired,
       bidding_deadline: form.biddingDeadline ? new Date(form.biddingDeadline).toISOString() : null
-    });
+    }).select("id").single();
 
-    if (insertError) {
+    if (insertError || !cargo) {
       setError("No pudimos publicar la carga. Revisá los datos e intentá nuevamente.");
       setLoading(false);
       return;
+    }
+
+    if (hazmatReviewRequired && msdsFile) {
+      const safeName = msdsFile.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const storagePath = `${authData.user.id}/${cargo.id}/${crypto.randomUUID()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from("documents").upload(storagePath, msdsFile, {
+        contentType: "application/pdf",
+        upsert: false
+      });
+
+      if (uploadError) {
+        await supabase.from("cargo_requests").delete().eq("id", cargo.id);
+        setError("La carga no se publicó porque no pudimos guardar el archivo MSDS.");
+        setLoading(false);
+        return;
+      }
+
+      const { error: documentError } = await supabase.from("documents").insert({
+        cargo_id: cargo.id,
+        uploaded_by: authData.user.id,
+        kind: "msds",
+        storage_path: storagePath,
+        original_name: msdsFile.name,
+        mime_type: "application/pdf"
+      });
+
+      if (documentError) {
+        await supabase.storage.from("documents").remove([storagePath]);
+        await supabase.from("cargo_requests").delete().eq("id", cargo.id);
+        setError("La carga no se publicó porque el MSDS no pudo vincularse.");
+        setLoading(false);
+        return;
+      }
     }
 
     router.replace("/");
@@ -104,6 +144,7 @@ export function NewCargoForm() {
         <label>Valor FOB (USD)<input min="0" onChange={(event) => updateField("fobUsd", event.target.value)} required step="0.01" type="number" value={form.fobUsd} /></label>
         <label>Cierre de ofertas<input onChange={(event) => updateField("biddingDeadline", event.target.value)} type="datetime-local" value={form.biddingDeadline} /></label>
         <label className="wide">Descripción<textarea onChange={(event) => updateField("description", event.target.value)} required rows={5} value={form.description} /></label>
+        {hazmatReviewRequired && <label className="wide">Ficha MSDS (PDF, máximo 10 MB)<input accept="application/pdf" onChange={(event) => setMsdsFile(event.target.files?.[0] ?? null)} required type="file" /></label>}
       </div>
 
       <div className={hazmatReviewRequired ? "hazmat-alert active" : "hazmat-alert"}>
