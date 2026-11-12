@@ -21,7 +21,7 @@ export default async function Home() {
           </div>
           {role === "importer" && <Link className="header-action" href="/cargas/nueva">{actionLabel.importer}</Link>}
           {role === "operator" && <Link className="header-action" href="/ofertas">{actionLabel.operator}</Link>}
-          {role === "admin" && <Link className="header-action" href="/admin/operadores">{actionLabel.admin}</Link>}
+          {role === "admin" && <Link className="header-action" href="/admin">{actionLabel.admin}</Link>}
         </header>
 
         <div className="metrics">
