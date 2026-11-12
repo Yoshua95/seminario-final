@@ -5,7 +5,8 @@
 - [x] Crear monorepo Web/Mobile/Domain.
 - [x] Congelar alcance de diciembre.
 - [x] Definir entidades y estados principales.
-- [ ] Crear proyecto Supabase y variables de entorno.
+- [x] Crear proyecto Supabase.
+- [x] Conectar las variables de entorno de Web y Mobile.
 - [x] Implementar esquema SQL y primera versión de RLS.
 - [x] Crear datos de demostración reproducibles.
 - [x] Prototipar navegación Web y Mobile.

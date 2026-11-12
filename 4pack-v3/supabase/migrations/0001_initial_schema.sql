@@ -146,6 +146,45 @@ create index operations_participants_idx on public.operations(importer_id, opera
 create index tracking_events_operation_idx on public.tracking_events(operation_id, created_at);
 create index messages_operation_idx on public.messages(operation_id, created_at);
 
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger profiles_set_updated_at
+before update on public.profiles
+for each row execute function public.set_updated_at();
+
+create trigger cargo_requests_set_updated_at
+before update on public.cargo_requests
+for each row execute function public.set_updated_at();
+
+create or replace function public.create_profile_for_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name)
+  values (
+    new.id,
+    coalesce(nullif(new.raw_user_meta_data ->> 'full_name', ''), split_part(new.email, '@', 1))
+  );
+  return new;
+end;
+$$;
+
+create trigger create_profile_after_signup
+after insert on auth.users
+for each row execute function public.create_profile_for_new_user();
+
 create or replace function public.current_user_role()
 returns public.user_role
 language sql
@@ -254,4 +293,26 @@ create policy "operation participants view ratings"
 create policy "participants create one rating"
   on public.ratings for insert to authenticated
   with check (author_id = auth.uid() and public.is_operation_participant(operation_id));
+
+revoke all on function public.set_updated_at() from public;
+revoke all on function public.create_profile_for_new_user() from public;
+revoke all on function public.current_user_role() from public;
+revoke all on function public.is_operation_participant(uuid) from public;
+
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on
+  public.profiles,
+  public.operator_profiles,
+  public.cargo_requests,
+  public.offers,
+  public.operations,
+  public.payment_guarantees,
+  public.tracking_events,
+  public.messages,
+  public.documents,
+  public.ratings
+to authenticated;
+
+grant execute on function public.current_user_role() to authenticated;
+grant execute on function public.is_operation_participant(uuid) to authenticated;
 

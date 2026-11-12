@@ -1,83 +1,29 @@
 -- Datos reproducibles para la demo académica de 4PACK.
--- Todos los usuarios usan la contraseña local: Demo4pack!2026
+-- Las cuentas deben crearse previamente con Supabase Auth.
 
-insert into auth.users (
-  instance_id,
-  id,
-  aud,
-  role,
-  email,
-  encrypted_password,
-  email_confirmed_at,
-  raw_app_meta_data,
-  raw_user_meta_data,
-  created_at,
-  updated_at,
-  confirmation_token,
-  email_change,
-  email_change_token_new,
-  recovery_token
-)
-values
-  (
-    '00000000-0000-0000-0000-000000000000',
-    '10000000-0000-0000-0000-000000000001',
-    'authenticated',
-    'authenticated',
-    'importador@4pack.demo',
-    crypt('Demo4pack!2026', gen_salt('bf')),
-    now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Yoshua Importaciones"}',
-    now(),
-    now(),
-    '',
-    '',
-    '',
-    ''
-  ),
-  (
-    '00000000-0000-0000-0000-000000000000',
-    '20000000-0000-0000-0000-000000000002',
-    'authenticated',
-    'authenticated',
-    'operador@4pack.demo',
-    crypt('Demo4pack!2026', gen_salt('bf')),
-    now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Arbox Logistics"}',
-    now(),
-    now(),
-    '',
-    '',
-    '',
-    ''
-  ),
-  (
-    '00000000-0000-0000-0000-000000000000',
-    '30000000-0000-0000-0000-000000000003',
-    'authenticated',
-    'authenticated',
-    'admin@4pack.demo',
-    crypt('Demo4pack!2026', gen_salt('bf')),
-    now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Administración 4PACK"}',
-    now(),
-    now(),
-    '',
-    '',
-    '',
-    ''
-  )
-on conflict (id) do nothing;
+create temporary table demo_users as
+select auth_users.id, demo.email, demo.role::public.user_role, demo.full_name
+from (
+  values
+    ('importador@4pack.demo', 'importer', 'Yoshua Importaciones'),
+    ('operador@4pack.demo', 'operator', 'Arbox Logistics'),
+    ('admin@4pack.demo', 'admin', 'Administración 4PACK')
+) as demo(email, role, full_name)
+join auth.users auth_users on auth_users.email = demo.email;
+
+do $$
+begin
+  if (select count(*) from demo_users) <> 3 then
+    raise exception 'Faltan cuentas demo en Supabase Auth';
+  end if;
+end;
+$$;
 
 insert into public.profiles (id, role, full_name)
-values
-  ('10000000-0000-0000-0000-000000000001', 'importer', 'Yoshua Importaciones'),
-  ('20000000-0000-0000-0000-000000000002', 'operator', 'Arbox Logistics'),
-  ('30000000-0000-0000-0000-000000000003', 'admin', 'Administración 4PACK')
-on conflict (id) do nothing;
+select id, role, full_name from demo_users
+on conflict (id) do update
+set role = excluded.role,
+    full_name = excluded.full_name;
 
 insert into public.operator_profiles (
   user_id,
@@ -91,7 +37,7 @@ insert into public.operator_profiles (
   verified_by
 )
 values (
-  '20000000-0000-0000-0000-000000000002',
+  (select id from demo_users where role = 'operator'),
   'Arbox Logistics',
   '30-71234567-8',
   'Operador especializado en consolidación aérea China–Argentina.',
@@ -99,7 +45,7 @@ values (
   4.8,
   37,
   now(),
-  '30000000-0000-0000-0000-000000000003'
+  (select id from demo_users where role = 'admin')
 )
 on conflict (user_id) do nothing;
 
@@ -124,7 +70,7 @@ insert into public.cargo_requests (
 values
   (
     '41000000-0000-0000-0000-000000000001',
-    '10000000-0000-0000-0000-000000000001',
+    (select id from demo_users where role = 'importer'),
     'Marroquinería — Guangzhou',
     'Bolsos y accesorios terminados, carga general.',
     'Guangzhou, China',
@@ -142,7 +88,7 @@ values
   ),
   (
     '41000000-0000-0000-0000-000000000002',
-    '10000000-0000-0000-0000-000000000001',
+    (select id from demo_users where role = 'importer'),
     'Accesorios electrónicos — Shenzhen',
     'Accesorios con baterías de litio incluidas.',
     'Shenzhen, China',
@@ -177,7 +123,7 @@ insert into public.offers (
 values (
   '51000000-0000-0000-0000-000000000001',
   '41000000-0000-0000-0000-000000000001',
-  '20000000-0000-0000-0000-000000000002',
+  (select id from demo_users where role = 'operator'),
   'air',
   420,
   110,
@@ -203,8 +149,8 @@ values (
   '61000000-0000-0000-0000-000000000001',
   '41000000-0000-0000-0000-000000000001',
   '51000000-0000-0000-0000-000000000001',
-  '10000000-0000-0000-0000-000000000001',
-  '20000000-0000-0000-0000-000000000002',
+  (select id from demo_users where role = 'importer'),
+  (select id from demo_users where role = 'operator'),
   'in_transit',
   '2026-11-13T10:00:00-03:00'
 )
@@ -225,7 +171,7 @@ values (
   565,
   14.13,
   'held_simulated',
-  '30000000-0000-0000-0000-000000000003',
+  (select id from demo_users where role = 'admin'),
   '2026-11-13T12:00:00-03:00'
 )
 on conflict (id) do nothing;
@@ -248,7 +194,7 @@ values
     'Oferta adjudicada',
     'El importador seleccionó la propuesta de Arbox Logistics.',
     'CABA, Argentina',
-    '10000000-0000-0000-0000-000000000001',
+    (select id from demo_users where role = 'importer'),
     '2026-11-13T10:00:00-03:00'
   ),
   (
@@ -258,7 +204,7 @@ values
     'Carga recibida en origen',
     'El operador consolidó la carga para su salida aérea.',
     'Guangzhou, China',
-    '20000000-0000-0000-0000-000000000002',
+    (select id from demo_users where role = 'operator'),
     '2026-11-14T09:30:00+08:00'
   )
 on conflict (id) do nothing;
