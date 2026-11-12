@@ -10,6 +10,7 @@
     "dev:web": "npm run dev --workspace=@4pack/web",
     "dev:mobile": "npm run start --workspace=@4pack/mobile",
     "build:web": "npm run build --workspace=@4pack/web",
+    "build:mobile": "npm run export:android --workspace=@4pack/mobile",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },

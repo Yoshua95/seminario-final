@@ -1,6 +1,7 @@
 import type { CargoStatus } from "@4pack/domain";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { loadOperations, type MobileOperation } from "../../lib/dashboard";
 
 const statusDetails: Record<CargoStatus, { label: string; progress: number }> = {
@@ -18,14 +19,16 @@ export default function OperationsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
+    setLoading(true);
+    setError("");
     loadOperations()
       .then(setOperations)
       .catch(() => setError("No pudimos cargar las operaciones."))
       .finally(() => setLoading(false));
-  }, []);
+  }, []));
 
-  return <SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.container}><Text style={styles.kicker}>SEGUIMIENTO</Text><Text style={styles.title}>Operaciones</Text><Text style={styles.subtitle}>Hitos y documentación en un solo lugar.</Text>{loading && <ActivityIndicator color="#FF6B2C" style={styles.loader} />}{error ? <Text style={styles.message}>{error}</Text> : null}{operations.map((item) => { const detail = statusDetails[item.status]; return <View style={styles.card} key={item.id}><View style={styles.row}><Text style={styles.code}>{item.id.slice(0, 8).toUpperCase()}</Text><Text style={styles.status}>{detail.label}</Text></View><Text style={styles.cardTitle}>{item.title}</Text><Text style={styles.route}>{item.route}</Text><View style={styles.progress}><View style={[styles.progressValue, { width: `${detail.progress}%` }]} /></View><Text style={styles.caption}>{detail.progress}% del circuito registrado</Text></View>; })}{!loading && !error && operations.length === 0 ? <Text style={styles.message}>Todavía no hay operaciones adjudicadas.</Text> : null}</ScrollView></SafeAreaView>;
+  return <SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.container}><Text style={styles.kicker}>SEGUIMIENTO</Text><Text style={styles.title}>Operaciones</Text><Text style={styles.subtitle}>Hitos y mensajería en un solo lugar.</Text>{loading && <ActivityIndicator color="#FF6B2C" style={styles.loader} />}{error ? <Text style={styles.message}>{error}</Text> : null}{operations.map((item) => { const detail = statusDetails[item.status]; return <TouchableOpacity activeOpacity={0.78} onPress={() => router.push(`/operation/${item.id}`)} style={styles.card} key={item.id}><View style={styles.row}><Text style={styles.code}>{item.id.slice(0, 8).toUpperCase()}</Text><Text style={styles.status}>{detail.label}</Text></View><Text style={styles.cardTitle}>{item.title}</Text><Text style={styles.route}>{item.route}</Text><View style={styles.progress}><View style={[styles.progressValue, { width: `${detail.progress}%` }]} /></View><Text style={styles.caption}>{detail.progress}% del circuito registrado · Ver detalle</Text></TouchableOpacity>; })}{!loading && !error && operations.length === 0 ? <Text style={styles.message}>Todavía no hay operaciones adjudicadas.</Text> : null}</ScrollView></SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
