@@ -22,9 +22,9 @@
 
 ## Sprint 2 — 23 al 29 de noviembre
 
-- [ ] Comparador, adjudicación y operación.
-- [ ] Garantía de pago simulada.
-- [ ] Tracking por hitos y mensajería.
+- [x] Comparador, adjudicación y operación.
+- [x] Garantía de pago simulada.
+- [x] Tracking por hitos y mensajería.
 - [ ] Documentos, reputación y panel administrativo.
 - [ ] Completar circuito principal en APK.
 
