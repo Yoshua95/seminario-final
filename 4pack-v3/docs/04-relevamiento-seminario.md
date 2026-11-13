@@ -39,15 +39,15 @@ MVP web y APK Android funcionales; roles importador, operador y administrador; p
 | 6 | Prototipo de interfaz mobile | En curso |
 | 7 | Diagrama de clases de dominio | Pendiente |
 | 8 | Diagrama entidad-relación o tablas | En curso |
-| 9 | Definición de casos de prueba | En curso |
+| 9 | Definición de casos de prueba | Completo |
 | 10 | Documento de trazabilidad | Pendiente |
 | 11 | Diseño de arquitectura | En curso |
 | 12 | Diagrama de clases de diseño | Pendiente |
 | 13 | Diseño de componentes | En curso |
 | 14 | Diseño de interfaces entre sistemas | En curso |
-| 15 | Manual de instalación | Pendiente |
+| 15 | Manual de instalación | Completo |
 | 16 | Plan de tareas | En curso |
-| - | Manual de usuario | Pendiente |
+| - | Manual de usuario | Completo |
 | - | Material de presentación | Pendiente |
 
 Los estados deben actualizarse únicamente cuando cada entregable exista en el repositorio y haya sido revisado.

@@ -2,6 +2,7 @@
   "name": "4pack-platform",
   "version": "3.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -11,6 +12,8 @@
     "dev:mobile": "npm run start --workspace=@4pack/mobile",
     "build:web": "npm run build --workspace=@4pack/web",
     "build:mobile": "npm run export:android --workspace=@4pack/mobile",
+    "test": "npm run test:domain",
+    "test:domain": "tsc -p tests/tsconfig.json && node --test tests/domain.test.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },
