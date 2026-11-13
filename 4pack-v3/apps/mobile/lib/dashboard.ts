@@ -76,7 +76,7 @@ type CargoRow = {
 type OperationRow = {
   id: string;
   status: CargoStatus;
-  cargo_requests: Array<{ title: string; origin: string; destination: string }> | null;
+  cargo_requests: { title: string; origin: string; destination: string } | Array<{ title: string; origin: string; destination: string }> | null;
 };
 
 export async function loadCurrentProfile(): Promise<MobileProfile | null> {
@@ -140,7 +140,9 @@ export async function loadOperations(): Promise<MobileOperation[]> {
   if (error) throw error;
 
   return ((data ?? []) as unknown as OperationRow[]).map((operation) => {
-    const cargo = operation.cargo_requests?.[0];
+    const cargo = Array.isArray(operation.cargo_requests)
+      ? operation.cargo_requests[0]
+      : operation.cargo_requests;
     return {
       id: operation.id,
       title: cargo?.title ?? "Carga sin título",
