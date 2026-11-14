@@ -1,0 +1,449 @@
+"use client";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useId,
+  useTransition,
+} from "react";
+import type { ReactNode, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { operatorAction, documentUrl } from "./actions";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import type { ActionResult, Cargo, DocumentRecord } from "./types";
+import { money, modeLabel } from "./types";
+import { phaseLabels } from "@4pack/domain";
+import { Icon } from "./ui";
+const initial: ActionResult = { ok: false, message: "" };
+export function ActionForm({
+  demo,
+  command,
+  children,
+  label = "Guardar cambios",
+  confirm = false,
+  reset = false,
+  className = "",
+  summary,
+  variant = "primary",
+}: {
+  demo: boolean;
+  command: string;
+  children: ReactNode;
+  label?: string;
+  confirm?: boolean;
+  reset?: boolean;
+  className?: string;
+  summary?: ReactNode;
+  variant?: "primary" | "secondary" | "destructive";
+}) {
+  const [state, action, pending] = useActionState(
+    operatorAction.bind(null, demo, command),
+    initial,
+  );
+  const form = useRef<HTMLFormElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const confirmed = useRef(false);
+  const id = useId();
+  const [review, setReview] = useState<[string, string][]>([]);
+  useEffect(() => {
+    if (state.ok && reset) form.current?.reset();
+    if (state.message)
+      window.dispatchEvent(
+        new CustomEvent("fourpack:notice", { detail: { ok: state.ok } }),
+      );
+  }, [state, reset]);
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    if (confirm && !confirmed.current) {
+      event.preventDefault();
+      const values = [...new FormData(event.currentTarget).entries()]
+        .filter(
+          ([k, v]) =>
+            !["id", "target_type", "replaces_id"].includes(k) &&
+            !k.startsWith("$") &&
+            typeof v === "string" &&
+            v.length > 0,
+        )
+        .map(
+          ([k, v]) =>
+            [
+              (
+                {
+                  amount: "Tarifa / importe",
+                  days: "Días de entrega",
+                  mode: "Modalidad",
+                  terms: "Observaciones",
+                  documentation: "Documentación",
+                  currency: "Moneda",
+                  phase: "Nuevo estado",
+                } as Record<string, string>
+              )[k] ?? k,
+              k === "phase"
+                ? (phaseLabels[String(v) as keyof typeof phaseLabels] ??
+                  "Estado actualizado")
+                : k === "mode"
+                  ? modeLabel(String(v))
+                  : k === "amount"
+                    ? money(
+                        Number(v),
+                        String(
+                          new FormData(event.currentTarget).get("currency") ??
+                            "USD",
+                        ),
+                      )
+                    : String(v),
+            ] as [string, string],
+        );
+      setReview(values);
+      dialog.current?.showModal();
+    } else confirmed.current = false;
+  }
+  return (
+    <>
+      <form
+        id={id}
+        ref={form}
+        action={action}
+        onSubmit={onSubmit}
+        className={`op-form ${className}`}
+        aria-busy={pending}
+      >
+        {children}
+        {state.message && (
+          <div
+            key={state.message}
+            className={`op-notice ${state.ok ? "success" : "danger"}`}
+            role={state.ok ? "status" : "alert"}
+            aria-live={state.ok ? "polite" : "assertive"}
+          >
+            <Icon name={state.ok ? "check" : "alert"} />
+            <span>{state.message}</span>
+          </div>
+        )}
+        <button
+          className={`op-button ${variant}`}
+          disabled={pending}
+          type="submit"
+        >
+          <Icon
+            name={
+              command === "offer"
+                ? "eye"
+                : command === "message" || command === "support_message"
+                  ? "air"
+                  : "check"
+            }
+          />
+          {pending ? "Guardando…" : label}
+        </button>
+      </form>
+      {confirm && (
+        <dialog
+          ref={dialog}
+          className="op-modal"
+          aria-labelledby={`${id}-title`}
+        >
+          <div className="op-modal-head">
+            <h2 id={`${id}-title`}>Confirmá los datos</h2>
+            <button
+              aria-label="Cerrar confirmación"
+              className="op-icon-button"
+              onClick={() => dialog.current?.close()}
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+          {summary ?? (
+            <p>
+              Revisá la información antes de continuar. La acción quedará
+              registrada.
+            </p>
+          )}
+          <dl>
+            {review.map(([key, value], i) => (
+              <div className="op-fact" key={`${key}-${i}`}>
+                <dt>{key}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="op-modal-actions">
+            <button
+              className="op-button secondary"
+              onClick={() => dialog.current?.close()}
+            >
+              Volver
+            </button>
+            <button
+              className={`op-button ${variant}`}
+              onClick={() => {
+                confirmed.current = true;
+                dialog.current?.close();
+                form.current?.requestSubmit();
+              }}
+            >
+              Confirmar y continuar
+            </button>
+          </div>
+        </dialog>
+      )}
+    </>
+  );
+}
+export function OfferForm({
+  demo,
+  cargo,
+  alreadyOffered,
+}: {
+  demo: boolean;
+  cargo: Cargo;
+  alreadyOffered: boolean;
+}) {
+  const [mode, setMode] = useState("sea");
+  const [currency, setCurrency] = useState("USD");
+  return (
+    <aside className="op-quote">
+      <h2>Tu Oferta</h2>
+      <p>Cotizá a ciegas. No verás lo que ofertan los demás operadores.</p>
+      {alreadyOffered ? (
+        <div className="op-notice success">
+          <Icon name="lock" />
+          <span>
+            Tu oferta está presentada y sellada. Consultá su estado en Mis
+            Ofertas.
+          </span>
+        </div>
+      ) : (
+        <ActionForm
+          demo={demo}
+          command="offer"
+          label="Enviar Oferta Ciega"
+          confirm
+          summary={
+            <p>
+              Tu oferta quedará <strong>sellada</strong>: no podrás editarla
+              después de presentarla.
+            </p>
+          }
+        >
+          <input type="hidden" name="id" value={cargo.id} />
+          <input type="hidden" name="mode" value={mode} />
+          <fieldset className="op-mode-field">
+            <legend>Tipo de Envío</legend>
+            <div className="op-mode-selector">
+              {["sea", "air"].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={mode === m}
+                  className={mode === m ? "selected" : ""}
+                  onClick={() => setMode(m)}
+                >
+                  <Icon name={m === "sea" ? "ship" : "air"} />
+                  {modeLabel(m)}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <label>
+            Tarifa Ofertada ({currency})
+            <span className="op-input-icon">
+              <span>$</span>
+              <input
+                aria-label={`Tarifa ofertada en ${currency}`}
+                type="number"
+                name="amount"
+                placeholder="0,00"
+                min="0.01"
+                max="999999999"
+                step="0.01"
+                required
+              />
+            </span>
+          </label>
+          <label>
+            Tiempo Estimado de Entrega (Días)
+            <span className="op-input-icon">
+              <input
+                type="number"
+                name="days"
+                placeholder="0"
+                min="1"
+                max="365"
+                step="1"
+                required
+              />
+              <span>días</span>
+            </span>
+          </label>
+          <details className="op-offer-conditions">
+            <summary>
+              Observaciones y condiciones <Icon name="arrow" />
+            </summary>
+            <label>
+              Observaciones y alcance
+              <textarea
+                name="terms"
+                placeholder="Detallá el alcance de tu servicio…"
+                maxLength={2000}
+                required
+                rows={3}
+              />
+            </label>
+            <label>
+              Documentación / condiciones
+              <textarea
+                name="documentation"
+                placeholder="MSDS, UN38.3, packing list…"
+                maxLength={1000}
+                rows={2}
+              />
+            </label>
+            <label>
+              Moneda contractual
+              <select name="currency" value={currency} onChange={event=>setCurrency(event.target.value)}>
+                <option value="USD">USD · Dólares</option>
+                <option value="ARS">ARS · Pesos</option>
+              </select>
+            </label>
+          </details>
+        </ActionForm>
+      )}
+      <small className="op-quote-note">
+        <Icon name="lock" /> Una vez enviada, tu oferta quedará sellada hasta el
+        cierre de la mesa.
+      </small>
+    </aside>
+  );
+}
+export function DocumentButton({
+  demo,
+  document,
+}: {
+  demo: boolean;
+  document: DocumentRecord;
+}) {
+  const [result, setResult] = useState<ActionResult>(initial);
+  const [pending, start] = useTransition();
+  return (
+    <div>
+      <button
+        type="button"
+        className="op-button secondary small"
+        disabled={pending}
+        onClick={() =>
+          start(async () => setResult(await documentUrl(demo, document.id)))
+        }
+      >
+        <Icon name="download" />
+        {pending ? "Preparando…" : "Abrir documento"}
+      </button>
+      {result.url && (
+        <a
+          className="op-download-link"
+          href={result.url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Ver {document.original_name} ↗
+        </a>
+      )}
+      {result.message && !result.ok && (
+        <p role="alert" className="op-error-text">
+          {result.message}
+        </p>
+      )}
+    </div>
+  );
+}
+export function LiveUpdates({
+  demo,
+  operationId,
+}: {
+  demo: boolean;
+  operationId?: string;
+}) {
+  const router = useRouter();
+  const [status, setStatus] = useState(
+    demo ? "Actualización automática activa" : "Conectando…",
+  );
+  useEffect(() => {
+    if (demo) {
+      const timer = setInterval(() => {
+        if (document.visibilityState === "visible") router.refresh();
+      }, 5000);
+      return () => clearInterval(timer);
+    }
+    const client = createSupabaseBrowserClient();
+    if (!client) return;
+    const channel = client.channel(`operator-${operationId ?? "panel"}`);
+    for (const table of [
+      "messages",
+      "tracking_events",
+      "support_messages",
+      "offers",
+      "operator_profiles",
+    ])
+      channel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table,
+          ...(operationId && ["messages", "tracking_events"].includes(table)
+            ? { filter: `operation_id=eq.${operationId}` }
+            : {}),
+        },
+        () => router.refresh(),
+      );
+    channel.subscribe((state) =>
+      setStatus(
+        state === "SUBSCRIBED"
+          ? "Actualización en tiempo real"
+          : state === "CHANNEL_ERROR"
+            ? "Conexión interrumpida · reintentando"
+            : "Conectando…",
+      ),
+    );
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [demo, operationId, router]);
+  return (
+    <span className="op-live" role="status" aria-live="polite">
+      <i />
+      {status}
+    </span>
+  );
+}
+export function MarkRead({ demo, id }: { demo: boolean; id: string }) {
+  useEffect(() => {
+    const form = new FormData();
+    form.set("id", id);
+    void operatorAction(demo, "read", initial, form);
+  }, [demo, id]);
+  return null;
+}
+export function MessageList({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.scrollTo({
+      top: ref.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [children]);
+  return (
+    <div
+      className="op-messages"
+      ref={ref}
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+    >
+      {children}
+    </div>
+  );
+}
+export function MoneySummary({ amount }: { amount: number }) {
+  return <strong className="mono">{money(amount)}</strong>;
+}

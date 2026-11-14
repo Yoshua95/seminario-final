@@ -1,3 +1,5 @@
+export { operationTransitions, phaseLabels, milestoneTypes, documentTypes, canOperate, canTransition, validateOffer, validateDocument, reputation, simulatedNet } from "./operator.js";
+export type { OperatorStatus, OperationPhase } from "./operator.js";
 export type UserRole = "importer" | "operator" | "admin";
 
 export type CargoStatus =

@@ -16,12 +16,12 @@ export default async function OfferComparisonPage({ params }: { params: Promise<
       <header><div><p className="eyebrow">COMPARADOR DE OFERTAS</p><h1>{cargo.title}</h1><p>{cargo.route} · Propuestas ordenadas por costo total.</p></div></header>
       {!canAward && <div className="comparison-notice">Esta carga ya fue adjudicada y no admite nuevas selecciones.</div>}
       <div className="comparison-grid">
-        {cargo.offers.map((offer, index) => <article className={`comparison-card ${index === 0 ? "best" : ""}`} key={offer.id}>
-          <div>{index === 0 && <span className="tag">MEJOR PRECIO</span>}<h3>{offer.companyName}</h3><p>{offer.operatorName} · {offer.rating.toFixed(1)} ★ · {offer.completedOperations} operaciones</p><small>{offer.terms}</small></div>
+        {cargo.offers.map((offer, index) => <article className={`comparison-card ${index === 0 && cargo.offers.every(o => o.currency === offer.currency) ? "best" : ""}`} key={offer.id}>
+          <div>{index === 0 && cargo.offers.every(o => o.currency === offer.currency) && <span className="tag">MEJOR PRECIO</span>}<h3>{offer.companyName}</h3><p>{offer.operatorName} · {offer.rating === null ? "Sin historial" : offer.rating.toFixed(1) + " ★"} ({offer.ratingsCount} evaluaciones) · {offer.completedOperations} operaciones</p><small>{offer.terms}</small></div>
           <div className="comparison-value"><span>Modalidad</span><strong>{modeLabel[offer.mode]}</strong></div>
           <div className="comparison-value"><span>Entrega</span><strong>{offer.estimatedDays} días</strong></div>
           <div className="comparison-value"><span>Aduana</span><strong>{offer.includesCustoms ? "Incluida" : "No incluida"}</strong></div>
-          <div className="comparison-value"><span>Total</span><strong>USD {offer.totalUsd.toLocaleString("es-AR")}</strong></div>
+          <div className="comparison-value"><span>Total</span><strong>{offer.currency} {offer.totalUsd.toLocaleString("es-AR")}</strong></div>
           {canAward && offer.status === "submitted" ? <AwardOfferButton offerId={offer.id} /> : <span className="tag">{offer.status === "accepted" ? "ADJUDICADA" : "CERRADA"}</span>}
         </article>)}
         {cargo.offers.length === 0 && <div className="empty-state"><h3>Esta carga todavía no recibió ofertas</h3><p>Las propuestas aparecerán aquí para compararlas.</p></div>}

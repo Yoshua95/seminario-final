@@ -59,6 +59,7 @@ export default function AccessPage() {
           <p className="eyebrow">BIENVENIDO</p>
           <h2>Ingresá a 4PACK</h2>
           <p>Usá las credenciales asociadas con tu organización.</p>
+          {process.env.NODE_ENV !== 'production' && <p><Link href="/demo/acceso" className="op-text-link">Revisar demostración local persistente →</Link></p>}
           <form onSubmit={handleSubmit}>
             <label>Correo electrónico<input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
             <label>Contraseña<input autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>

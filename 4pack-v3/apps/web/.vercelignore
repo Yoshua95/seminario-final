@@ -1,0 +1,23 @@
+# Never upload environment files, credentials, or local demonstration state.
+.env
+.env.*
+**/.env
+**/.env.*
+.npmrc
+**/.npmrc
+*.pem
+*.key
+**/*.pem
+**/*.key
+.aws/**
+**/.aws/**
+.codex/**
+.agents/**
+.4pack-demo/**
+**/.4pack-demo/**
+.next/**
+.next-e2e/**
+node_modules/**
+**/node_modules/**
+*.log
+*.tsbuildinfo

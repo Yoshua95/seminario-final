@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getCurrentRole, getOffers, getOpenCargoRequests, getOperations } from "@/lib/dashboard-data";
 
@@ -15,6 +16,9 @@ const cargoAction = {
 };
 
 export default async function Home() {
+  const currentRole = await getCurrentRole();
+  if (!currentRole) redirect('/acceso');
+  if (currentRole === 'operator') redirect('/operador/oportunidades');
   const [opportunities, offers, operations, role] = await Promise.all([getOpenCargoRequests(), getOffers(), getOperations(), getCurrentRole()]);
 
   return (

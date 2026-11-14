@@ -31,8 +31,8 @@ export default async function AdminPage() {
     <div className="list-panel admin-ledger">
       {dashboard.guarantees.map((guarantee) => <article className="list-row" key={guarantee.id}>
         <div><span className="code">{guarantee.operationId.slice(0, 8).toUpperCase()}</span><h3>{guarantee.cargoTitle}</h3><p>{new Date(guarantee.createdAt).toLocaleString("es-AR")}</p></div>
-        <div className="row-value"><small>Garantía</small><strong>USD {guarantee.amountUsd.toLocaleString("es-AR")}</strong></div>
-        <div className="row-value"><small>Comisión</small><strong>USD {guarantee.commissionUsd.toLocaleString("es-AR")}</strong></div>
+        <div className="row-value"><small>Garantía</small><strong>{guarantee.currency} {guarantee.amountUsd.toLocaleString("es-AR")}</strong></div>
+        <div className="row-value"><small>Comisión</small><strong>{guarantee.currency} {guarantee.commissionUsd.toLocaleString("es-AR")}</strong></div>
         <div><span className="tag">{guaranteeLabels[guarantee.guaranteeStatus]}</span><Link className="link admin-operation-link" href={`/operaciones/${guarantee.operationId}`}>Abrir operación →</Link></div>
       </article>)}
       {dashboard.guarantees.length === 0 && <div className="empty-state"><h3>Sin garantías registradas</h3><p>Las operaciones adjudicadas aparecerán en este registro.</p></div>}

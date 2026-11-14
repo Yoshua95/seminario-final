@@ -1,49 +1,36 @@
 "use client";
-
-import type { CargoStatus, GuaranteeStatus, UserRole } from "@4pack/domain";
+import type { OperationPhase, GuaranteeStatus, UserRole } from "@4pack/domain";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-
-const nextStep: Partial<Record<CargoStatus, { status: CargoStatus; label: string; title: string }>> = {
-  awarded: { status: "in_transit", label: "Iniciar tránsito", title: "Carga en tránsito" },
-  in_transit: { status: "customs", label: "Registrar aduana", title: "Carga en aduana" },
-  customs: { status: "delivered", label: "Confirmar entrega", title: "Carga entregada" }
-};
-
-export function OperationControls({ operationId, role, status, guaranteeStatus }: { operationId: string; role: UserRole | null; status: CargoStatus; guaranteeStatus: GuaranteeStatus }) {
+export function OperationControls({ operationId, role, phase, guaranteeStatus }: {
+  operationId: string; role: UserRole | null; phase: OperationPhase; guaranteeStatus: GuaranteeStatus;
+}) {
   const router = useRouter();
-  const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const step = nextStep[status];
-
-  async function runRpc(name: "simulate_guarantee" | "advance_operation", args: Record<string, string | null>) {
-    setLoading(true);
-    setError("");
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) {
-      setLoading(false);
-      setError("No hay conexión disponible.");
-      return;
-    }
-    const { error: rpcError } = await supabase.rpc(name, args);
-    setLoading(false);
-    if (rpcError) {
-      setError("No pudimos actualizar la operación. Revisá el estado actual.");
-      return;
-    }
-    setLocation("");
-    router.refresh();
+  async function runRpc(name: string, args: Record<string,string>) {
+    setLoading(true); setError("");
+    try {
+      const client = createSupabaseBrowserClient();
+      if (!client) throw new Error("Sin conexión");
+      const { error } = await client.rpc(name,args);
+      if (error) throw error;
+      router.refresh();
+    } catch { setError("No pudimos actualizar la operación. Revisá estado y permisos."); }
+    finally { setLoading(false); }
   }
-
-  if (role === "importer" && guaranteeStatus === "pending") {
-    return <div className="operation-control"><p>Confirmá la garantía académica para habilitar el traslado. No mueve dinero real.</p><button disabled={loading} onClick={() => runRpc("simulate_guarantee", { target_operation_id: operationId })}>{loading ? "Confirmando…" : "Simular garantía de pago"}</button>{error && <div className="form-error">{error}</div>}</div>;
-  }
-
-  if (role === "operator" && step) {
-    return <div className="operation-control"><input aria-label="Ubicación del hito" onChange={(event) => setLocation(event.target.value)} placeholder="Ubicación del hito" value={location} /><button disabled={loading || guaranteeStatus !== "held_simulated"} onClick={() => runRpc("advance_operation", { target_operation_id: operationId, next_status: step.status, event_title: step.title, event_location: location || null })}>{loading ? "Actualizando…" : step.label}</button>{guaranteeStatus !== "held_simulated" && <p>La operación se habilita cuando el importador confirma la garantía simulada.</p>}{error && <div className="form-error">{error}</div>}</div>;
-  }
-
-  return null;
+  if (role !== "importer") return null;
+  const pending = phase === "created" && guaranteeStatus === "pending";
+  const delivery = phase === "awaiting_delivery_confirmation";
+  if (!pending && !delivery) return null;
+  return <div className="operation-control">
+    <p>{pending ? "La garantía es una simulación académica. No mueve dinero real." : "Confirmá la recepción para finalizar y liberar el pago simulado."}</p>
+    <button disabled={loading} onClick={() => pending
+      ? runRpc("simulate_guarantee", {target_operation_id: operationId})
+      : runRpc("transition_operation", {target: operationId, next_phase: "completed"})}>
+      {loading ? "Actualizando…" : pending ? "Simular garantía de pago" : "Confirmar recepción y finalizar"}
+    </button>
+    {error && <div className="form-error" role="alert">{error}</div>}
+  </div>;
 }

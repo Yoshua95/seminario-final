@@ -6,7 +6,8 @@
     "outDir": "../.test-dist",
     "rootDir": "../packages/domain/src",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
   "files": [
     "../packages/domain/src/index.ts"

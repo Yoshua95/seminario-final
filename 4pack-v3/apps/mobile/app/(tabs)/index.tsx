@@ -1,3 +1,4 @@
+import { phaseLabels } from "@4pack/domain";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
@@ -16,15 +17,7 @@ const activeMilestone = {
   cancelled: 0
 };
 
-const statusLabel = {
-  draft: "BORRADOR",
-  open: "PUBLICADA",
-  awarded: "ADJUDICADA",
-  in_transit: "EN TRÁNSITO",
-  customs: "ADUANA",
-  delivered: "ENTREGADA",
-  cancelled: "CANCELADA"
-};
+
 
 export default function HomeScreen() {
   const [operation, setOperation] = useState<MobileOperation | null>(null);
@@ -51,7 +44,7 @@ export default function HomeScreen() {
         {loading && <ActivityIndicator color="#FF6B2C" style={styles.loader} />}
         {error ? <Text style={styles.message}>{error}</Text> : null}
         {operation ? <View style={styles.card}>
-          <View style={styles.row}><Text style={styles.code}>{operation.id.slice(0, 8).toUpperCase()}</Text><Text style={styles.badge}>{statusLabel[operation.status]}</Text></View>
+          <View style={styles.row}><Text style={styles.code}>{operation.id.slice(0, 8).toUpperCase()}</Text><Text style={styles.badge}>{phaseLabels[operation.phase]}</Text></View>
           <Text style={styles.cardTitle}>{operation.title}</Text>
           <Text style={styles.operator}>Operación adjudicada · seguimiento activo</Text>
           <View style={styles.timeline}>{milestones.map((item, index) => { const isCurrent = index === activeMilestone[operation.status]; const isComplete = index <= activeMilestone[operation.status]; return <View style={styles.milestone} key={item}><View style={[styles.circle, isComplete && styles.complete, isCurrent && styles.current]} /><Text style={[styles.milestoneText, isCurrent && styles.currentText]}>{item}</Text></View>; })}</View>

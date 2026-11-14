@@ -1,4 +1,4 @@
-import { requiresHazmatReview, type CargoStatus, type GuaranteeStatus, type TransportMode, type UserRole } from "@4pack/domain";
+import { requiresHazmatReview, type OperationPhase, type CargoStatus, type GuaranteeStatus, type TransportMode, type UserRole } from "@4pack/domain";
 import { supabase } from "./supabase";
 
 export type MobileProfile = {
@@ -18,6 +18,8 @@ export type MobileCargo = {
 };
 
 export type MobileOperation = {
+  phase: OperationPhase;
+  currency: "USD" | "ARS";
   id: string;
   title: string;
   route: string;
@@ -74,6 +76,8 @@ type CargoRow = {
 };
 
 type OperationRow = {
+  phase: OperationPhase;
+  contract_currency: "USD" | "ARS";
   id: string;
   status: CargoStatus;
   cargo_requests: { title: string; origin: string; destination: string } | Array<{ title: string; origin: string; destination: string }> | null;
@@ -134,7 +138,7 @@ export async function loadOperations(): Promise<MobileOperation[]> {
 
   const { data, error } = await supabase
     .from("operations")
-    .select("id, status, cargo_requests(title, origin, destination)")
+    .select("id, phase, contract_currency, status, cargo_requests(title, origin, destination)")
     .order("awarded_at", { ascending: false });
 
   if (error) throw error;
@@ -147,6 +151,8 @@ export async function loadOperations(): Promise<MobileOperation[]> {
       id: operation.id,
       title: cargo?.title ?? "Carga sin título",
       route: cargo ? `${cargo.origin} → ${cargo.destination}` : "Ruta no disponible",
+      phase: operation.phase,
+      currency: operation.contract_currency,
       status: operation.status
     };
   });
@@ -245,24 +251,8 @@ export async function submitOffer(cargoId: string, input: {
   includesCustoms: boolean;
   terms: string;
 }) {
-  if (!supabase) throw new Error("La conexión no está disponible.");
-  const profile = await loadCurrentProfile();
-  if (!profile || profile.role !== "operator") throw new Error("Sólo un operador puede cotizar.");
-  if (profile.verificationStatus !== "approved") throw new Error("El operador todavía no fue aprobado.");
-
-  const { error } = await supabase.from("offers").insert({
-    cargo_id: cargoId,
-    operator_id: profile.id,
-    mode: input.mode,
-    freight_usd: input.freightUsd,
-    customs_usd: input.customsUsd,
-    other_costs_usd: input.otherCostsUsd,
-    estimated_days: input.estimatedDays,
-    includes_customs: input.includesCustoms,
-    terms: input.terms,
-    valid_until: new Date(Date.now() + 7 * 86400000).toISOString()
-  });
-  if (error) throw error;
+  void cargoId; void input;
+  throw new Error("Operator offers are managed on web.");
 }
 
 export async function loadOperationDetail(operationId: string): Promise<MobileOperationDetail | null> {
@@ -272,7 +262,7 @@ export async function loadOperationDetail(operationId: string): Promise<MobileOp
 
   const { data: operation, error } = await supabase
     .from("operations")
-    .select("id, cargo_id, accepted_offer_id, status")
+    .select("id, phase, contract_currency, cargo_id, accepted_offer_id, status")
     .eq("id", operationId)
     .maybeSingle();
   if (error) throw error;
@@ -299,6 +289,8 @@ export async function loadOperationDetail(operationId: string): Promise<MobileOp
     id: operation.id,
     title: cargo.title,
     route: `${cargo.origin} → ${cargo.destination}`,
+    phase: operation.phase as OperationPhase,
+    currency: operation.contract_currency,
     status: operation.status as CargoStatus,
     role: profile.role,
     mode: offer.mode as TransportMode,
@@ -334,12 +326,14 @@ export async function simulateGuarantee(operationId: string) {
 }
 
 export async function advanceOperation(operationId: string, nextStatus: CargoStatus, title: string, location: string) {
+  void operationId; void nextStatus; void title; void location;
+  throw new Error("El operador gestiona la operación desde web.");
+}
+
+export async function confirmDelivery(operationId: string) {
   if (!supabase) throw new Error("La conexión no está disponible.");
-  const { error } = await supabase.rpc("advance_operation", {
-    target_operation_id: operationId,
-    next_status: nextStatus,
-    event_title: title,
-    event_location: location || null
+  const { error } = await supabase.rpc("transition_operation", {
+    target: operationId, next_phase: "completed"
   });
   if (error) throw error;
 }

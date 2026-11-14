@@ -1,0 +1,11 @@
+{
+  "created": {"label":"Creada","next":["confirmed","cancelled"]},
+  "confirmed": {"label":"Confirmada","next":["in_progress","cancelled"]},
+  "in_progress": {"label":"En curso","next":["awaiting_delivery_confirmation","incident","disputed"]},
+  "awaiting_delivery_confirmation": {"label":"Esperando confirmación de entrega","next":["completed","incident","disputed"]},
+  "completed": {"label":"Completada","next":[]},
+  "incident": {"label":"Con incidencia","next":["in_progress","disputed","failed"]},
+  "disputed": {"label":"En disputa","next":[]},
+  "cancelled": {"label":"Cancelada","next":[]},
+  "failed": {"label":"Fallida","next":[]}
+}
