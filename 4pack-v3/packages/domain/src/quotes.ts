@@ -8,6 +8,8 @@ export type NormalizedQuote = {
   scope: string;
   amount: string;
   currency: ContractCurrency;
+  working_capital_amount?: string | null;
+  working_capital_currency?: ContractCurrency | null;
   included: string[];
   excluded: string[];
   insurance: string;
@@ -24,6 +26,8 @@ export function sameQuoteScope(a: NormalizedQuote | null, b: NormalizedQuote | n
   return scope(a) === scope(b);
 }
 export function validateQuote(q: NormalizedQuote): string | null {
+  if (!q.working_capital_amount || !/^[0-9]+(\.[0-9]{1,2})?$/.test(q.working_capital_amount) || Number(q.working_capital_amount)>Number(q.amount)) return "Declarar capital de trabajo estimado entre cero y el precio del servicio.";
+  if (q.working_capital_currency !== q.currency) return "La moneda del capital debe coincidir con la contractual.";
   if (!["air","sea","consolidated"].includes(q.mode)) return "Elegí una modalidad válida.";
   if (!["USD","ARS"].includes(q.currency)) return "Elegí USD o ARS, sin combinar monedas.";
   if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(q.amount) || Number(q.amount)<=0 || Number(q.amount)>999999999) return "Revisá el precio.";

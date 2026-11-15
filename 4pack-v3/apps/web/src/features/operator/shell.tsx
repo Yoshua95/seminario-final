@@ -7,6 +7,7 @@ import type { Company, Profile } from "./types";
 import { Icon, Badge } from "./ui";
 import { signOutOperator } from "./actions";
 const navigation = [
+  ["capacidad", "Capacidad", "operations"],
   ["oportunidades", "Cargas Disponibles", "cargo"],
   ["mis-ofertas", "Mis Ofertas", "offers"],
   ["operaciones", "Operaciones", "operations"],

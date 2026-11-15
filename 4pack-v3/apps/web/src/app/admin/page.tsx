@@ -18,6 +18,7 @@ export default async function AdminPage() {
 
   return <DashboardShell active="admin">
     <header><div><p className="eyebrow">CONTROL OPERATIVO</p><h1>Panel administrativo</h1><p>Métricas, garantías y validaciones de la plataforma.</p></div><Link className="header-action" href="/admin/operadores">Revisar operadores</Link></header>
+    <Link className="header-action" href="/admin/capacidad">Administrar capacidad</Link>
     <div className="metrics admin-metrics">
       <article><span>Operadores pendientes</span><strong>{dashboard.pendingOperators}</strong><small>Requieren decisión administrativa</small></article>
       <article><span>Operaciones activas</span><strong>{dashboard.activeOperations}</strong><small>{dashboard.deliveredOperations} operaciones finalizadas</small></article>

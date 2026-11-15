@@ -31,6 +31,7 @@ export async function refreshLocalSchema(db) {
       );
     }
   }
+  await db.exec(assets.capacity_seed);
   await db.exec(assets.scenarios);
 }
 
@@ -50,6 +51,7 @@ export async function createLocalDatabase(directory) {
   if (!initialized.rows[0].name) {
     await db.exec(assets.bootstrap);
     for (const [file, source] of Object.entries(assets.migrations)) {
+      if (file >= "0020") continue;
       try {
         await db.exec(
           source.replace(/create extension if not exists "pgcrypto";/i, ""),
@@ -60,6 +62,9 @@ export async function createLocalDatabase(directory) {
       }
     }
     await db.exec(assets.seed);
+    for (const [file, source] of Object.entries(assets.migrations)) {
+      if (file >= "0020") await db.exec(source);
+    }
   }
   await db.exec(
     "create table if not exists public.local_demo_versions(name text primary key)",
@@ -93,6 +98,7 @@ export async function createLocalDatabase(directory) {
       );
     }
   }
+  await db.exec(assets.capacity_seed);
   if (directory) {
     await db.exec(assets.scenarios);
     const samplePath = demoUsers.importer + "/msds-demostracion.pdf";

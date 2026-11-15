@@ -1,4 +1,5 @@
 "use client";
+import type { CapacitySnapshot } from "../capacity/types";
 import { QuoteEditor } from "./quote-editor";
 import {
   useActionState,
@@ -191,8 +192,8 @@ export function ActionForm({
     </>
   );
 }
-export function OfferForm({demo,cargo,alreadyOffered}:{demo:boolean;cargo:Cargo;alreadyOffered:boolean}) {
- return <aside className="op-quote"><h2>Tu Oferta</h2>{alreadyOffered ? <p className="op-notice success">Tu oferta está presentada y sellada. Podés retirarla o reemplazarla desde Mis Ofertas antes del cierre.</p> : <QuoteEditor demo={demo} cargoId={cargo.id} deadline={cargo.bidding_deadline} />}</aside>;
+export function OfferForm({demo,cargo,alreadyOffered,capacity}:{capacity:CapacitySnapshot;demo:boolean;cargo:Cargo;alreadyOffered:boolean}) {
+ return <aside className="op-quote"><h2>Tu Oferta</h2>{alreadyOffered ? <p className="op-notice success">Tu oferta está presentada y sellada. Podés retirarla o reemplazarla desde Mis Ofertas antes del cierre.</p> : <QuoteEditor capacity={capacity} weight={cargo.weight_kg} volume={cargo.volume_m3} demo={demo} cargoId={cargo.id} deadline={cargo.bidding_deadline} />}</aside>;
 }
 export function DocumentButton({
   demo,

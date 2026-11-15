@@ -1,3 +1,4 @@
+import type { CapacitySnapshot } from "../capacity/types";
 import type { OperationPhase, OperatorStatus, NormalizedQuote } from "@4pack/domain";
 export type CommercialProfile = {
   public_id: string; trade_name: string; logo_url: string | null; description: string;
@@ -177,6 +178,7 @@ export type SupportMessage = {
   created_at: string;
 };
 export type Snapshot = {
+  capacity: CapacitySnapshot;
   commercial: CommercialProfile | null;
   drafts: QuoteDraft[];
   contracts: ContractSnapshot[];
@@ -203,6 +205,7 @@ export type ActionResult = {
   url?: string;
 };
 export type Section =
+  | "capacidad"
   | "oportunidades"
   | "mis-ofertas"
   | "operaciones"
@@ -212,6 +215,7 @@ export type Section =
   | "soporte"
   | "perfil";
 export const sections: readonly Section[] = [
+  "capacidad",
   "oportunidades",
   "mis-ofertas",
   "operaciones",

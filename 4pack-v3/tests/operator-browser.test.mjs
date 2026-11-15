@@ -151,6 +151,7 @@ try {
   await check("oferta confirmada, sellada y persistente", async () => {
     const form = page.locator(".op-quote form");
     await form.locator("[name=amount]").fill("785.50");
+    await form.locator("[name=working_capital_amount]").fill("100");
     await form.locator("[name=estimated_days]").fill("12");
     await form.locator("[name=scope]").fill("Retiro y entrega internacional de prueba.");
     await form.locator('[name=services][value=international_transport]').check();
@@ -503,6 +504,7 @@ try {
           "billetera",
           "soporte",
           "perfil",
+          "capacidad",
         ]) {
           await navigate(`/demo/operador/${section}`);
           assert.ok(
@@ -572,7 +574,10 @@ try {
             .getByRole("heading", { name: "Estado de tu cuenta", exact: true })
             .waitFor();
         }
+        await navigate("/demo/operador/capacidad");
+        await page.getByText("Pendiente de aprobacion: sin limites configurados.").waitFor();
         if (scenario === "suspended") {
+          await navigate("/demo/operador/oportunidades");
           assert.match(
             await page.locator(".op-suspended").innerText(),
             /Fecha de suspensión/,
@@ -597,6 +602,22 @@ try {
         .waitFor();
     },
   );
+  await check("capacity propia sin edicion y administracion auditada",async()=>{
+    await navigate("/demo/operador/capacidad");
+    await page.getByRole("heading",{name:"Capacidad",exact:true}).waitFor();
+    assert.equal(await page.locator('[name=max_exposure]').count(),0);
+    assert.match(await page.locator('.op-content').innerText(),/Capital declarado/);
+    await page.goto(base+"/admin/capacidad");
+    assert.match(page.url(),/acceso/);
+    await page.goto(base+"/demo/admin/capacidad?q=Rivera");
+    await page.getByRole("heading",{name:"Aprobar limites"}).waitFor();
+    const form=page.locator('form').filter({has:page.locator('[name=command][value=configure]')});
+    await form.locator('[name=reason]').fill("Revalidacion economica de prueba browser");
+    await form.getByRole('button',{name:"Guardar aprobacion"}).click();
+    await page.getByRole('status').filter({hasText:"Capacidad actualizada y auditada."}).waitFor();
+    await page.reload();
+    await page.getByText("Revalidacion economica de prueba browser",{exact:false}).first().waitFor();
+  });
   assert.deepEqual(errors, [], "No debe haber excepciones de JavaScript");
   console.log(
     `${passed} recorridos de navegador aprobados; capturas en ${screenshots}.`,

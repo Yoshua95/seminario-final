@@ -22,7 +22,10 @@ export function AwardOfferButton({ offerId }: { offerId: string }) {
     const { error: awardError } = await supabase.rpc("award_offer", { target_offer_id: offerId });
     setLoading(false);
     if (awardError) {
-      setError("No pudimos adjudicar la oferta. Verificá que la carga siga abierta.");
+      const capacityMessage = "El operador no dispone actualmente de capacidad suficiente para asumir esta operación.";
+      setError(awardError.code === "P0001" && awardError.message === capacityMessage
+        ? capacityMessage
+        : "No pudimos adjudicar la oferta. Verificá que la carga siga abierta.");
       return;
     }
     router.push("/operaciones");

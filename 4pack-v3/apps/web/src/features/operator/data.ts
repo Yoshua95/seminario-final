@@ -97,6 +97,8 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
     const snapshot = result.rows[0].data;
     snapshot.profile.email =
       user === demoUsers.operator ? "operador@4pack.demo" : "cuenta@4pack.demo";
+    const capacity = await asUser<{data: Snapshot["capacity"]}>(db,user,"select public.operator_capacity_snapshot() as data");
+    snapshot.capacity = capacity.rows[0].data;
     return snapshot;
   }
   const { client, user } = await operatorSession();
@@ -107,6 +109,9 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
     );
   const snapshot = data as Snapshot;
   snapshot.profile.email = user.email;
+  const capacity = await client.rpc("operator_capacity_snapshot");
+  if (capacity.error) throw new Error("No pudimos cargar capacidad.");
+  snapshot.capacity = capacity.data;
   return snapshot;
 });
 export async function executeCommand(

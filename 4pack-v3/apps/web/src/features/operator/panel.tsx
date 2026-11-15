@@ -1,3 +1,4 @@
+import { CapacityView } from "../capacity/view";
 import { CommercialEditor } from "./commercial-editor";
 import { QuoteEditor, WithdrawQuote } from "./quote-editor";
 import { QuoteTerms } from "@/features/marketplace/quote-terms";
@@ -350,6 +351,7 @@ function Opportunities({
       </div>
       {selected && (
         <OfferForm
+          capacity={data.capacity}
           key={selected.id}
           demo={demo}
           cargo={selected}
@@ -389,7 +391,7 @@ function Offers({
         title="Mis Ofertas Presentadas"
         description="Historial de cotizaciones activas en mesas de licitación ciega."
       />
-      {data.drafts.map(d=><details className="op-panel" key={d.id}><summary>Borrador de cotización · {cargoById(data,d.cargo_id)?.public_code}</summary><QuoteEditor demo={demo} cargoId={d.cargo_id} draftId={d.id} replacesOfferId={d.replaces_offer_id??undefined} initial={d.content} deadline={cargoById(data,d.cargo_id)?.bidding_deadline} /></details>)}
+      {data.drafts.map(d=><details className="op-panel" key={d.id}><summary>Borrador de cotización · {cargoById(data,d.cargo_id)?.public_code}</summary><QuoteEditor capacity={data.capacity} weight={cargoById(data,d.cargo_id)?.weight_kg} volume={cargoById(data,d.cargo_id)?.volume_m3} demo={demo} cargoId={d.cargo_id} draftId={d.id} replacesOfferId={d.replaces_offer_id??undefined} initial={d.content} deadline={cargoById(data,d.cargo_id)?.bidding_deadline} /></details>)}
       <form className="op-search-bar" method="get">
         <label className="sr-only" htmlFor="offer-search">
           Buscar oferta
@@ -1925,7 +1927,7 @@ export async function OperatorPanel({
             "1970-01-01",
         ),
   ).length;
-  const operational = !["perfil", "documentos", "soporte"].includes(section);
+  const operational = !["perfil", "documentos", "soporte", "capacidad"].includes(section);
   const blocked =
     data.operator.verification_status !== "approved" && operational;
   return (
@@ -1995,6 +1997,8 @@ export async function OperatorPanel({
             </Link>
           </section>
         </>
+      ) : section === "capacidad" ? (
+        <CapacityView data={data.capacity} operationBase={`${basePath(demo)}/operaciones`} />
       ) : section === "oportunidades" ? (
         <Opportunities data={data} demo={demo} id={id} search={search} />
       ) : section === "mis-ofertas" ? (
