@@ -20,10 +20,10 @@ const assets = {
     new URL("supabase/demo/operator-seed.sql", root),
     "utf8",
   ),
-  scenarios: await readFile(
+  scenarios: (await readFile(
     new URL("supabase/demo/operator-scenarios.sql", root),
     "utf8",
-  ),
+  )) + "\n" + await readFile(new URL("supabase/demo/stage2a-scenarios.sql",root),"utf8"),
 };
 const target = new URL("apps/web/src/features/operator/demo-sql.json", root);
 const text = JSON.stringify(assets, null, 2) + "\n";

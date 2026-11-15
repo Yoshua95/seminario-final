@@ -1,4 +1,4 @@
-import type { OperationPhase, CargoStatus, GuaranteeStatus, TransportMode, UserRole } from "@4pack/domain";
+import type { NormalizedQuote, OperationPhase, CargoStatus, GuaranteeStatus, TransportMode, UserRole } from "@4pack/domain";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type CargoSummary = {
@@ -26,6 +26,9 @@ export type OfferSummary = {
 };
 
 export type OfferComparison = {
+  normalizedQuote: NormalizedQuote | null;
+  publicProfileId: string | null;
+  revision: number;
   currency: string;
   id: string;
   operatorName: string;
@@ -62,6 +65,7 @@ export type OperationSummary = {
 };
 
 export type OperationDetail = {
+  contractQuote: NormalizedQuote | null;
   phase: OperationPhase;
   currency: "USD" | "ARS";
   id: string;
@@ -334,15 +338,17 @@ export async function getCargoOfferComparison(cargoId: string): Promise<CargoOff
 
   const { data: offers } = await supabase
     .from("offers")
-    .select("id, operator_id, payment_currency, mode, freight_usd, customs_usd, other_costs_usd, total_usd, estimated_days, includes_customs, terms, valid_until, status")
+    .select("id, operator_id, normalized_quote, revision, payment_currency, mode, freight_usd, customs_usd, other_costs_usd, total_usd, estimated_days, includes_customs, terms, valid_until, status")
     .eq("cargo_id", cargoId)
     .order("payment_currency", { ascending: true }).order("total_usd", { ascending: true });
 
   const operatorIds = [...new Set((offers ?? []).map((offer) => offer.operator_id))];
-  const { data: profiles } = operatorIds.length > 0
-    ? await supabase.from("profiles").select("id, full_name, operator_profiles(company_name, rating, completed_operations)").in("id", operatorIds)
-    : { data: [] };
-  const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
+  const commercialRows=await Promise.all((offers??[]).map(async offer=> {
+    const {data,error}=await supabase.rpc("offer_public_profile",{target_offer:offer.id});
+    if(error) throw new Error("No pudimos consultar el perfil comercial.");
+    return [offer.id,data] as const;
+  }));
+  const commercialByOffer=new Map(commercialRows);
   const reputations = await Promise.all(operatorIds.map(async id => {
     const {data,error} = await supabase.rpc("public_reputation",{target_user:id,target_role:"operator"});
     if(error) throw new Error("No pudimos verificar la reputacion.");
@@ -356,12 +362,14 @@ export async function getCargoOfferComparison(cargoId: string): Promise<CargoOff
     route: `${cargo.origin} → ${cargo.destination}`,
     status: cargo.status as CargoStatus,
     offers: (offers ?? []).map((offer) => {
-      const profile = profileById.get(offer.operator_id);
-      const operatorProfile = Array.isArray(profile?.operator_profiles) ? profile?.operator_profiles[0] : profile?.operator_profiles;
+      const commercial = commercialByOffer.get(offer.id);
       return {
         id: offer.id,
-        operatorName: profile?.full_name ?? "Operador logístico",
-        companyName: operatorProfile?.company_name ?? "Empresa pendiente",
+        operatorName: commercial?.trade_name ?? "Operador",
+        companyName: commercial?.trade_name ?? "Perfil comercial no publicado",
+        publicProfileId: commercial?.id ?? null,
+        normalizedQuote: offer.normalized_quote as NormalizedQuote | null,
+        revision: offer.revision,
         rating: reputationById.get(offer.operator_id)?.average ?? null,
         ratingsCount: reputationById.get(offer.operator_id)?.count ?? 0,
         completedOperations: reputationById.get(offer.operator_id)?.completed ?? 0,
@@ -426,6 +434,7 @@ export async function getOperationDetail(operationId: string): Promise<Operation
   ]);
 
   if (!cargo || !offer || !guarantee) return null;
+  const {data:contract}=await supabase.from("operation_contract_snapshots").select("content").eq("operation_id",operation.id).maybeSingle();
   return {
     id: operation.id,
     cargoTitle: cargo.title,
@@ -435,6 +444,7 @@ export async function getOperationDetail(operationId: string): Promise<Operation
     mode: offer.mode as TransportMode,
     totalUsd: Number(offer.total_usd),
     currency: operation.contract_currency,
+    contractQuote: contract?.content?.quote ?? null,
     guaranteeAmountUsd: Number(guarantee.amount_usd),
     commissionUsd: Number(guarantee.commission_usd),
     guaranteeStatus: guarantee.status as GuaranteeStatus,
@@ -456,7 +466,7 @@ export async function getOperationDetail(operationId: string): Promise<Operation
         createdAt: message.created_at
       };
     }),
-    ratingRecipient: recipient ? { id: recipient.id, name: recipient.full_name } : null,
+    ratingRecipient: recipientId ? { id: recipientId, name: recipient?.full_name ?? "Contraparte" } : null,
     existingRating: rating ? { score: rating.score, comment: rating.comment ?? "" } : null
   };
 }

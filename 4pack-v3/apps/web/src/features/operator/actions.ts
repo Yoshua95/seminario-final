@@ -7,9 +7,11 @@ import { revalidatePath } from "next/cache";
 import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { validateOffer, validateDocument } from "@4pack/domain";
+import { validateQuote, type NormalizedQuote } from "@4pack/domain";
 import {
   loadSnapshot,
   executeCommand,
+  executeQuoteCommand,
   registerDemoDocument,
   operatorSession,
   demoIdentity,
@@ -52,6 +54,8 @@ export async function operatorAction(
 ): Promise<ActionResult> {
   try {
     const allowed = [
+      "quote",
+      "commercial_profile",
       "offer",
       "advance",
       "milestone",
@@ -68,6 +72,32 @@ export async function operatorAction(
     const payload: Record<string, unknown> = {};
     for (const [key, value] of form.entries())
       if (typeof value === "string") payload[key] = value.trim();
+    if (command === "quote") {
+      const intent=String(form.get("intent") ?? "submit");
+      const lines=(key:string)=>String(form.get(key)??"").split(/\n/).map(s=>s.trim()).filter(Boolean);
+      const input:Record<string,unknown>={cargo_id:String(form.get("cargo_id")??""),draft_id:String(form.get("draft_id")??""),replaces_offer_id:String(form.get("replaces_offer_id")??""),offer_id:String(form.get("offer_id")??"")};
+      let validUntil=String(form.get("valid_until")??"");
+      if (validUntil && !/Z$|[+-]\d{2}:\d{2}$/.test(validUntil)) validUntil += (validUntil.length===16?":00":"")+"-03:00";
+      const quote={mode:String(form.get("mode")??""),services:form.getAll("services").map(String),scope:String(form.get("scope")??""),amount:String(form.get("amount")??""),currency:String(form.get("currency")??""),included:lines("included"),excluded:lines("excluded"),insurance:String(form.get("insurance")??""),estimated_days:String(form.get("estimated_days")??""),valid_until:validUntil,payment_terms:String(form.get("payment_terms")??""),required_documents:lines("required_documents"),responsibilities:String(form.get("responsibilities")??""),observations:String(form.get("observations")??"")} as NormalizedQuote;
+      if (intent !== "withdraw") {
+        if(intent!=="save") {const error=validateQuote(quote); if(error) throw new Error(error);}
+        input.quote=quote;
+      }
+      const result=await executeQuoteCommand(demo,intent,input);
+      revalidatePath(demo?"/demo/operador":"/operador","layout");
+      return {ok:true,message:intent==="save"?"Borrador guardado.":intent==="withdraw"?"Oferta retirada.":"Oferta presentada y sellada.",id:result.id};
+    }
+    if (command === "commercial_profile") {
+      const commercial:Record<string,unknown>={};
+      for(const key of ["trade_name","logo_url","description","city","province","country","experience_years"]) commercial[key]=String(form.get(key)??"").trim();
+      for(const key of ["specialties","coverage","categories"]) commercial[key]=String(form.get(key)??"").split(",").map(s=>s.trim()).filter(Boolean);
+      commercial.modes=form.getAll("modes").map(String);
+      commercial.published=form.get("published")==="on";
+      await executeCommand(demo,"commercial_profile",commercial);
+      revalidatePath(demo?"/demo/operador":"/operador","layout");
+      revalidatePath(demo?"/demo/operadores":"/operadores","layout");
+      return {ok:true,message:"Perfil comercial guardado."};
+    }
     if (command === "profile")
       payload.modes = form
         .getAll("modes")

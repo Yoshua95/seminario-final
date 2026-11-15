@@ -1,0 +1,11 @@
+{
+  "international_transport":"Transporte internacional",
+  "origin_handling":"Manipulación en origen",
+  "customs_coordination":"Coordinación aduanera",
+  "destination_handling":"Manipulación en destino",
+  "domestic_delivery":"Entrega nacional",
+  "storage":"Almacenamiento",
+  "insurance":"Seguro",
+  "integrated_service":"Servicio integral",
+  "other":"Otro"
+}

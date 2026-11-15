@@ -41,6 +41,7 @@ export default function Page() {
             dinero.
           </span>
         </div>
+        <Link href="/demo/operadores" className="op-text-link">Explorar directorio comercial del importador</Link>
         <form className="op-form" action={startDemo}>
           <label>
             Escenario de revisión

@@ -1,4 +1,5 @@
 "use client";
+import { QuoteEditor } from "./quote-editor";
 import {
   useActionState,
   useEffect,
@@ -190,131 +191,8 @@ export function ActionForm({
     </>
   );
 }
-export function OfferForm({
-  demo,
-  cargo,
-  alreadyOffered,
-}: {
-  demo: boolean;
-  cargo: Cargo;
-  alreadyOffered: boolean;
-}) {
-  const [mode, setMode] = useState("sea");
-  const [currency, setCurrency] = useState("USD");
-  return (
-    <aside className="op-quote">
-      <h2>Tu Oferta</h2>
-      <p>Cotizá a ciegas. No verás lo que ofertan los demás operadores.</p>
-      {alreadyOffered ? (
-        <div className="op-notice success">
-          <Icon name="lock" />
-          <span>
-            Tu oferta está presentada y sellada. Consultá su estado en Mis
-            Ofertas.
-          </span>
-        </div>
-      ) : (
-        <ActionForm
-          demo={demo}
-          command="offer"
-          label="Enviar Oferta Ciega"
-          confirm
-          summary={
-            <p>
-              Tu oferta quedará <strong>sellada</strong>: no podrás editarla
-              después de presentarla.
-            </p>
-          }
-        >
-          <input type="hidden" name="id" value={cargo.id} />
-          <input type="hidden" name="mode" value={mode} />
-          <fieldset className="op-mode-field">
-            <legend>Tipo de Envío</legend>
-            <div className="op-mode-selector">
-              {["sea", "air"].map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  aria-pressed={mode === m}
-                  className={mode === m ? "selected" : ""}
-                  onClick={() => setMode(m)}
-                >
-                  <Icon name={m === "sea" ? "ship" : "air"} />
-                  {modeLabel(m)}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <label>
-            Tarifa Ofertada ({currency})
-            <span className="op-input-icon">
-              <span>$</span>
-              <input
-                aria-label={`Tarifa ofertada en ${currency}`}
-                type="number"
-                name="amount"
-                placeholder="0,00"
-                min="0.01"
-                max="999999999"
-                step="0.01"
-                required
-              />
-            </span>
-          </label>
-          <label>
-            Tiempo Estimado de Entrega (Días)
-            <span className="op-input-icon">
-              <input
-                type="number"
-                name="days"
-                placeholder="0"
-                min="1"
-                max="365"
-                step="1"
-                required
-              />
-              <span>días</span>
-            </span>
-          </label>
-          <details className="op-offer-conditions">
-            <summary>
-              Observaciones y condiciones <Icon name="arrow" />
-            </summary>
-            <label>
-              Observaciones y alcance
-              <textarea
-                name="terms"
-                placeholder="Detallá el alcance de tu servicio…"
-                maxLength={2000}
-                required
-                rows={3}
-              />
-            </label>
-            <label>
-              Documentación / condiciones
-              <textarea
-                name="documentation"
-                placeholder="MSDS, UN38.3, packing list…"
-                maxLength={1000}
-                rows={2}
-              />
-            </label>
-            <label>
-              Moneda contractual
-              <select name="currency" value={currency} onChange={event=>setCurrency(event.target.value)}>
-                <option value="USD">USD · Dólares</option>
-                <option value="ARS">ARS · Pesos</option>
-              </select>
-            </label>
-          </details>
-        </ActionForm>
-      )}
-      <small className="op-quote-note">
-        <Icon name="lock" /> Una vez enviada, tu oferta quedará sellada hasta el
-        cierre de la mesa.
-      </small>
-    </aside>
-  );
+export function OfferForm({demo,cargo,alreadyOffered}:{demo:boolean;cargo:Cargo;alreadyOffered:boolean}) {
+ return <aside className="op-quote"><h2>Tu Oferta</h2>{alreadyOffered ? <p className="op-notice success">Tu oferta está presentada y sellada. Podés retirarla o reemplazarla desde Mis Ofertas antes del cierre.</p> : <QuoteEditor demo={demo} cargoId={cargo.id} deadline={cargo.bidding_deadline} />}</aside>;
 }
 export function DocumentButton({
   demo,

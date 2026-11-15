@@ -144,31 +144,33 @@ try {
       );
       const form = page.locator(".op-quote form");
       await form.locator("[name=amount]").fill("-1");
-      await form.locator("[name=days]").fill("0");
+      await form.locator("[name=estimated_days]").fill("0");
       assert.equal(await form.evaluate((f) => f.checkValidity()), false);
     },
   );
   await check("oferta confirmada, sellada y persistente", async () => {
     const form = page.locator(".op-quote form");
     await form.locator("[name=amount]").fill("785.50");
-    await form.locator("[name=days]").fill("12");
-    await form.locator(".op-offer-conditions summary").click();
-    await form
-      .locator("[name=terms]")
-      .fill("Retiro y entrega internacional de prueba.");
-    await form
-      .locator("[name=documentation]")
-      .fill("Packing list y factura comercial");
-    await form.getByRole("button", { name: "Enviar Oferta Ciega" }).click();
-    await page.getByRole("dialog").waitFor();
-    await page.getByRole("button", { name: "Confirmar y continuar" }).click();
-    await page
-      .getByText("Tu oferta está presentada y sellada.", { exact: false })
-      .waitFor();
+    await form.locator("[name=estimated_days]").fill("12");
+    await form.locator("[name=scope]").fill("Retiro y entrega internacional de prueba.");
+    await form.locator('[name=services][value=international_transport]').check();
+    await form.locator("[name=included]").fill("Transporte internacional");
+    await form.locator("[name=excluded]").fill("Almacenamiento");
+    await form.locator("[name=insurance]").fill("Sin seguro incluido");
+    await form.locator("[name=payment_terms]").fill("Garantia simulada previa");
+    await form.locator("[name=required_documents]").fill("Packing list\nFactura comercial");
+    await form.locator("[name=responsibilities]").fill("Operador transporta; importador aporta documentos");
+    await form.locator("[name=observations]").fill("Oferta de prueba completa");
+    const validUntil=new Date(Date.now()+86400000).toISOString().slice(0,16);
+    await form.locator("[name=valid_until]").fill(validUntil);
+    await form.getByRole("button",{name:"Guardar borrador",exact:true}).click();
+    await form.getByText("Borrador guardado.",{exact:true}).waitFor();
+    await navigate("/demo/operador/mis-ofertas");
+    const draft=page.locator("details").filter({has:page.locator("summary").filter({hasText:"Borrador de"})}).first();
+    await draft.locator("summary").click();
+    await draft.getByRole("button",{name:"Enviar Oferta Ciega",exact:true}).click();
+    await page.locator(".op-offer-card").filter({hasText:"#LC-5512"}).waitFor();
     await page.reload();
-    await page
-      .getByText("Tu oferta está presentada y sellada.", { exact: false })
-      .waitFor();
     await navigate("/demo/operador/mis-ofertas");
     assert.ok(
       (
@@ -178,6 +180,30 @@ try {
           .innerText()
       ).includes("785,50"),
     );
+  });
+  await check("directorio comercial filtra y no expone datos legales",async()=>{
+    await page.goto(base+"/demo/operadores");
+    assert.equal(await page.locator(".comparison-grid article").count(),2);
+    assert.ok((await page.locator("body").innerText()).includes("Operador nuevo"));
+    await page.locator('[name=q]').fill("Rivera");await page.locator('[name=mode]').selectOption("air");
+    await page.locator('[name=specialty]').fill("Electr");await page.locator('[name=coverage]').fill("China");
+    await page.getByRole("button",{name:"Buscar operadores"}).click();
+    await page.waitForURL('**/demo/operadores?**');
+    assert.equal(await page.locator(".comparison-grid article").count(),1);
+    await page.getByRole("link",{name:"Rivera Logistics",exact:true}).click();
+    await page.getByRole("heading",{name:"Rivera Logistics",exact:true}).first().waitFor();
+    const body=await page.locator("body").innerText();
+    assert.equal(body.includes("30-71234567-8"),false);assert.equal(body.includes("Perfil Pendiente"),false);
+    assert.equal(await page.getByRole("button",{name:/Solicitar cotiz/}).isDisabled(),true);
+    await navigate("/demo/operador/mis-ofertas");
+  });
+  await check("reemplazo de oferta conserva ambas revisiones",async()=>{
+    const oldCard=page.locator(".op-offer-card").filter({hasText:"#LC-5512"});
+    await oldCard.locator("summary").getByText("Reemplazar",{exact:false}).click();
+    const editor=oldCard.locator(".op-quote-editor");await editor.locator('[name=amount]').fill("800.50");
+    await editor.getByRole("button",{name:"Enviar Oferta Ciega",exact:true}).click();
+    await page.locator(".op-offer-card").filter({hasText:"#LC-5512"}).nth(1).waitFor();
+    await page.reload();assert.equal(await page.locator(".op-offer-card").filter({hasText:"#LC-5512"}).count(),2);
   });
   await check("adjudicación de demo genera operación y garantía", async () => {
     const card = page.locator(".op-offer-card").filter({ hasText: "#LC-5512" });
@@ -423,18 +449,27 @@ try {
           .count(),
         0,
       );
-      await page.locator("[name=trade_name]").fill("Rivera Logistics · E2E");
+      await page.locator(".op-profile-layout [name=trade_name]").fill("Rivera Logistics · E2E");
       await page
         .getByRole("button", { name: "Guardar cambios", exact: true })
         .click();
       await page.getByText("Cambios guardados.", { exact: true }).waitFor();
       await page.reload();
       assert.equal(
-        await page.locator("[name=trade_name]").inputValue(),
+        await page.locator(".op-profile-layout [name=trade_name]").inputValue(),
         "Rivera Logistics · E2E",
       );
     },
   );
+  await check("perfil comercial se edita de forma independiente al legal",async()=>{
+    const section=page.locator("section").filter({has:page.getByRole("heading",{name:"Perfil comercial público",exact:true})}).first();
+    await section.locator('[name=trade_name]').fill("Rivera Logistics Comercial");
+    await section.getByRole("button",{name:"Guardar perfil comercial",exact:true}).click();
+    await section.getByText("Perfil comercial guardado.",{exact:true}).waitFor();
+    await page.goto(base+"/demo/operadores?q=Comercial");
+    await page.getByRole("link",{name:"Rivera Logistics Comercial",exact:true}).waitFor();
+    assert.equal((await page.locator("body").innerText()).includes("30-71234567-8"),false);
+  });
   await check("responsive a 390 px y menú accesible", async () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await navigate("/demo/operador/oportunidades");

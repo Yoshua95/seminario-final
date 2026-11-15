@@ -56,6 +56,7 @@ test("paquete demo contiene exactamente las migraciones y semillas versionadas",
       "utf8",
     ),
   );
+  assert.equal(assets.scenarios,(await readFile(new URL("../supabase/demo/operator-scenarios.sql",import.meta.url),"utf8"))+"\n"+(await readFile(new URL("../supabase/demo/stage2a-scenarios.sql",import.meta.url),"utf8")));
 });
 test("runtime Preview inicia desde el paquete SQL y un directorio temporal, sin Supabase", async () => {
   const saved = {

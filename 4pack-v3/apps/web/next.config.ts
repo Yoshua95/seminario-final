@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@4pack/domain"],
   serverExternalPackages: ["@electric-sql/pglite"],
   turbopack: {
-    resolveAlias: { "./operator.js": "../../packages/domain/src/operator.ts" },
+    resolveAlias: { "./operator.js": "../../packages/domain/src/operator.ts", "./quotes.js": "../../packages/domain/src/quotes.ts" },
   },
   experimental: { serverActions: { bodySizeLimit: "11mb" } },
 };

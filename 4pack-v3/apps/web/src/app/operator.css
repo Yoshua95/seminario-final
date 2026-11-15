@@ -667,6 +667,24 @@ summary:focus-visible,
 .op-quote .op-form {
   gap: 19px;
 }
+.op-quote-editor,
+.op-quote-editor label {
+  min-width: 0;
+  max-width: 100%;
+}
+.op-quote-editor .op-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.op-quote-editor .op-modal-actions {
+  flex-wrap: wrap;
+}
+.op-facts dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .op-quote-editor .op-form-grid { grid-template-columns: minmax(0, 1fr); }
+}
 .op-offer-conditions summary {
   display: flex;
   align-items: center;
@@ -902,6 +920,7 @@ summary:focus-visible,
   grid-column: 1/-1;
 }
 .op-checkboxes {
+  flex-wrap: wrap;
   display: flex;
   gap: 20px;
 }
@@ -912,6 +931,7 @@ summary:focus-visible,
   gap: 8px;
 }
 .op-form fieldset {
+  min-inline-size: 0;
   border: 1px solid var(--op-line);
   border-radius: 9px;
   padding: 12px;

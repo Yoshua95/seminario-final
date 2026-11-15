@@ -1,4 +1,12 @@
-import type { OperationPhase, OperatorStatus } from "@4pack/domain";
+import type { OperationPhase, OperatorStatus, NormalizedQuote } from "@4pack/domain";
+export type CommercialProfile = {
+  public_id: string; trade_name: string; logo_url: string | null; description: string;
+  city: string | null; province: string | null; country: string | null;
+  modes: string[]; specialties: string[]; coverage: string[]; categories: string[];
+  experience_years: number | null; published: boolean; admin_hidden: boolean;
+};
+export type QuoteDraft = { id: string; cargo_id: string; content: Partial<NormalizedQuote>; replaces_offer_id: string | null };
+export type ContractSnapshot = { operation_id: string; state: "complete" | "requires_review"; content: {quote:NormalizedQuote;revision:number} | null };
 export type Profile = {
   id: string;
   full_name: string;
@@ -48,6 +56,9 @@ export type Cargo = {
   reputation: { average: number | null; count: number; completed: number };
 };
 export type Offer = {
+  normalized_quote: NormalizedQuote | null;
+  revision: number;
+  replaces_offer_id: string | null;
   id: string;
   cargo_id: string;
   operator_id: string;
@@ -166,6 +177,9 @@ export type SupportMessage = {
   created_at: string;
 };
 export type Snapshot = {
+  commercial: CommercialProfile | null;
+  drafts: QuoteDraft[];
+  contracts: ContractSnapshot[];
   profile: Profile;
   operator: Company;
   cargos: Cargo[];
@@ -208,7 +222,7 @@ export const sections: readonly Section[] = [
   "perfil",
 ];
 export const money = (n: number, currency = "USD") =>
-  new Intl.NumberFormat("es-AR", {
+  !["USD","ARS"].includes(currency) ? "Moneda por revisar" : new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency,
     maximumFractionDigits: 2,

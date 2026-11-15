@@ -1,3 +1,4 @@
+import { quoteFixture } from "./quote-fixture.mjs";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -10,10 +11,11 @@ before(async()=>{db=await createLocalDatabase();});
 after(async()=>{await db?.close();});
 const q=(user,sql,params=[])=>asUser(db,users[user],sql,params);
 async function offer(currency="USD", operator=users.operator) {
-  const cargo=randomUUID(), id=randomUUID();
+  const cargo=randomUUID();
   await db.query("insert into public.cargo_requests(id,importer_id,title,description,origin,destination,category,weight_kg,volume_m3,fob_usd,status,bidding_deadline) values($1,$2,'Test','Test','A','B','Test',1,1,99999,'open',now()+interval '1 day')",[cargo,users.importer]);
-  await db.query("insert into public.offers(id,cargo_id,operator_id,mode,freight_usd,estimated_days,terms,valid_until,payment_currency) values($1,$2,$3,'air',1000,3,'Servicio',now()+interval '1 hour',$4)",[id,cargo,operator,currency]);
-  return {id,cargo};
+  const response=await asUser(db,operator,"select public.quote_command('submit',$1::jsonb) as r",[JSON.stringify({cargo_id:cargo,quote:quoteFixture({currency})})]);
+  return {id:response.rows[0].r.id,cargo};
+
 }
 const award=id=>q("importer","select public.award_offer($1) as id",[id]);
 test("oferta vencida y operador suspendido no se adjudican",async()=>{
@@ -33,7 +35,7 @@ test("oferta vencida y operador suspendido no se adjudican",async()=>{
 test("reintento recupera la misma operación y doble adjudicación no duplica",async()=>{
   const f=await offer();
   const second=randomUUID();
-  await db.query("insert into public.offers(id,cargo_id,operator_id,mode,freight_usd,estimated_days,terms,valid_until) values($1,$2,$3,'air',1100,3,'Otro',now()+interval '1 hour')",[second,f.cargo,users.competitor]);
+  await db.query("insert into public.offers(id,cargo_id,operator_id,mode,freight_usd,estimated_days,terms,valid_until,normalized_quote) values($1,$2,$3,'air',1100,3,'Otro',($4::jsonb->>'valid_until')::timestamptz,$4::jsonb)",[second,f.cargo,users.competitor,JSON.stringify(quoteFixture({amount:"1100",estimated_days:"3"}))]);
   const first=(await award(f.id)).rows[0].id;
   assert.equal((await award(f.id)).rows[0].id,first);
   await assert.rejects(award(second),/ya fue adjudicada/);
@@ -45,7 +47,7 @@ test("adjudicaciones solapadas simuladas se serializan en PGlite",async()=>{
   const attempts=await Promise.all([award(f.id),award(f.id),award(f.id)]);
   assert.equal(new Set(attempts.map(r=>r.rows[0].id)).size,1);
   const competing=await offer(); const second=randomUUID();
-  await db.query("insert into public.offers(id,cargo_id,operator_id,mode,freight_usd,estimated_days,terms,valid_until) values($1,$2,$3,'air',1100,3,'Otro',now()+interval '1 hour')",[second,competing.cargo,users.competitor]);
+  await db.query("insert into public.offers(id,cargo_id,operator_id,mode,freight_usd,estimated_days,terms,valid_until,normalized_quote) values($1,$2,$3,'air',1100,3,'Otro',($4::jsonb->>'valid_until')::timestamptz,$4::jsonb)",[second,competing.cargo,users.competitor,JSON.stringify(quoteFixture({amount:"1100",estimated_days:"3"}))]);
   const results=await Promise.allSettled([award(competing.id),award(second)]);
   assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
   assert.equal(results.filter(r=>r.status==='rejected').length,1);

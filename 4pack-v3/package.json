@@ -12,14 +12,15 @@
     "dev:mobile": "npm run start --workspace=@4pack/mobile",
     "build:web": "npm run build --workspace=@4pack/web",
     "build:mobile": "npm run export:android --workspace=@4pack/mobile",
-    "test": "npm run test:domain && npm run test:database && npm run test:preview",
+    "test": "npm run test:domain && npm run test:database && npm run test:stage2a && npm run test:preview",
     "test:preview": "node --test tests/demo-preview.test.mjs",
     "test:database": "node --test tests/database.test.mjs tests/stage1.test.mjs",
     "test:web": "node tests/operator-browser.test.mjs",
-    "test:domain": "tsc -p tests/tsconfig.json && node --test tests/domain.test.mjs tests/operator.test.mjs",
+    "test:domain": "tsc -p tests/tsconfig.json && node --test tests/domain.test.mjs tests/operator.test.mjs tests/quotes.test.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "check:contract": "node scripts/prepare-operation-contract.mjs --check"
+    "check:contract": "node scripts/prepare-operation-contract.mjs --check",
+    "test:stage2a": "node --test tests/stage2a.test.mjs"
   },
   "overrides": {
     "react": "19.1.0",

@@ -1,3 +1,6 @@
+import { CommercialEditor } from "./commercial-editor";
+import { QuoteEditor, WithdrawQuote } from "./quote-editor";
+import { QuoteTerms } from "@/features/marketplace/quote-terms";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -373,6 +376,7 @@ function Offers({
   const query = val(search, "q").toLowerCase();
   const offers = data.offers.filter(
     (o) =>
+      (!val(search, "offer") || o.id === val(search, "offer")) &&
       (!val(search, "status") || offerStatus(o) === val(search, "status")) &&
       (!query ||
         `${o.id} ${cargoById(data, o.cargo_id)?.public_code ?? ""}`
@@ -385,6 +389,7 @@ function Offers({
         title="Mis Ofertas Presentadas"
         description="Historial de cotizaciones activas en mesas de licitación ciega."
       />
+      {data.drafts.map(d=><details className="op-panel" key={d.id}><summary>Borrador de cotización · {cargoById(data,d.cargo_id)?.public_code}</summary><QuoteEditor demo={demo} cargoId={d.cargo_id} draftId={d.id} replacesOfferId={d.replaces_offer_id??undefined} initial={d.content} deadline={cargoById(data,d.cargo_id)?.bidding_deadline} /></details>)}
       <form className="op-search-bar" method="get">
         <label className="sr-only" htmlFor="offer-search">
           Buscar oferta
@@ -492,11 +497,17 @@ function Offers({
                 <div>
                   <span>Doc. Exigida</span>
                   <strong>
-                    {o.documentation_terms || "Sin requisitos adicionales"}
+                    {o.documentation_terms || "No declarado · Requiere revisión"}
                   </strong>
                 </div>
               </div>
-              <p className="op-small">{o.terms}</p>
+              <p className="op-small">Revisión {o.revision} {o.replaces_offer_id ? "· Reemplaza una propuesta anterior" : ""}</p>
+              <Link href={base+"/mis-ofertas?offer="+o.id}>Detalle de oferta</Link>
+              <QuoteTerms quote={o.normalized_quote} />
+              {cargo?.status==="open" && (cargo.bidding_deadline===null || Date.parse(cargo.bidding_deadline)>Date.now()) && Date.parse(o.valid_until)>Date.now() && ["submitted","withdrawn"].includes(o.status) && !data.offers.some(next=>next.replaces_offer_id===o.id) && <>
+                {o.status==="submitted"&&<WithdrawQuote demo={demo} id={o.id} />}
+                <details><summary>Reemplazar con nueva revisión</summary><QuoteEditor demo={demo} cargoId={o.cargo_id} replacesOfferId={o.id} initial={o.normalized_quote??{}} deadline={cargo.bidding_deadline} /></details>
+              </>}
               <div className="op-card-bottom">
                 <span>
                   <Icon name="lock" /> Sellada · {date(o.created_at)}
@@ -508,7 +519,7 @@ function Offers({
                   >
                     Ver operación <Icon name="arrow" />
                   </Link>
-                ) : demo && o.status === "submitted" ? (
+                ) : demo && o.status === "submitted" && o.normalized_quote ? (
                   <ActionForm
                     demo
                     command="demo_award"
@@ -835,6 +846,8 @@ function Operations({
               )}
             </Fact>
             <Fact label="Modalidad">{modeLabel(offer?.mode ?? null)}</Fact>
+            <h3>Snapshot contractual</h3>
+            <QuoteTerms quote={data.contracts.find(c=>c.operation_id===operation.id)?.content?.quote??null} />
             <Fact label="Precio acordado">{money(offer?.total_usd ?? 0, offer?.payment_currency ?? "USD")}</Fact>
             <Fact label="Escrow académico">
               <Badge status={guarantee?.status ?? "pending"} />
@@ -1695,6 +1708,7 @@ function Profile({ data, demo }: { data: Snapshot; demo: boolean }) {
         description="Tu identidad logística, alcance operativo y documentación de validación."
         action={<Badge status={c.verification_status} />}
       />
+      <CommercialEditor demo={demo} profile={data.commercial} />
       <div className="op-profile-layout">
         <section className="op-panel">
           <h2>Datos de la empresa</h2>

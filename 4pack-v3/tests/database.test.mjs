@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { gatewayDocument } from "./document-gateway-helper.mjs";
+import { quoteFixture } from "./quote-fixture.mjs";
 import {
   createLocalDatabase,
   asUser,
@@ -16,7 +17,7 @@ const query = (user, sql, params = []) =>
 const command = (user, name, payload) =>
   name === "document" ? gatewayDocument(db, demoUsers[user], payload) : query(user, "select public.operator_command($1,$2::jsonb) as result", [
     name,
-    JSON.stringify(payload),
+    JSON.stringify(name === "offer" ? {...payload,quote:quoteFixture({mode:payload.mode,amount:String(payload.amount),estimated_days:String(payload.days),scope:payload.terms || "Servicio de prueba",currency:payload.currency??"USD"})} : payload),
   ]);
 before(async () => {
   db = await createLocalDatabase();
@@ -152,12 +153,11 @@ test("oferta ciega persiste y no admite duplicado entre modalidades", async () =
   );
 });
 test("oferta sellada no permite alterar el precio", async () => {
-  const r = await query(
+  await assert.rejects(query(
     "operator",
     "update public.offers set freight_usd=1 where cargo_id=$1 returning id",
     [cargo],
-  );
-  assert.equal(r.rows.length, 0);
+  ), /permission denied/);
 });
 test("licitación cerrada y tarifa inválida son rechazadas", async () => {
   await assert.rejects(

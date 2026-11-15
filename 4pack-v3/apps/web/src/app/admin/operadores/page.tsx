@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { OperatorReviewList } from "@/components/operator-review-list";
@@ -11,6 +12,7 @@ export default async function OperatorAdminPage() {
   return (
     <DashboardShell active="profile">
       <header><div><p className="eyebrow">CONTROL ADMINISTRATIVO</p><h1>Validación de operadores</h1><p>Revisá la identidad comercial antes de habilitar cotizaciones.</p></div></header>
+      <Link href="/admin/operadores/comercial">Moderar perfiles comerciales</Link>
       <OperatorReviewList operators={operators} />
     </DashboardShell>
   );

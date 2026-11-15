@@ -4,6 +4,7 @@ import { SessionProfile } from "@/components/session-profile";
 import { getCurrentRole } from "@/lib/dashboard-data";
 
 const navigation = [
+  { key: "operators", href: "/operadores", label: "Operadores" },
   { key: "opportunities", href: "/", label: "Oportunidades" },
   { key: "offers", href: "/ofertas", label: "Mis ofertas" },
   { key: "operations", href: "/operaciones", label: "Operaciones" },

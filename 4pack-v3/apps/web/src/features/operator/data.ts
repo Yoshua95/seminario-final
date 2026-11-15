@@ -138,6 +138,19 @@ export async function executeCommand(
     );
   return data as { id?: string };
 }
+
+export async function executeQuoteCommand(demo: boolean, command: string, payload: Record<string, unknown>) {
+  if (demo) {
+    const actor = await demoIdentity();
+    const db = await localDatabase();
+    const result = await asUser<{result:{id:string}}>(db,actor,"select public.quote_command($1,$2::jsonb) as result",[command,JSON.stringify(payload)]);
+    return result.rows[0].result;
+  }
+  const {client} = await operatorSession();
+  const {data,error} = await client.rpc("quote_command",{command,payload});
+  if (error) throw new Error(error.code==="P0001"?error.message:"No pudimos guardar la cotización.");
+  return data as {id:string};
+}
 export async function demoAward(offerId: string) {
   const snapshot = await loadSnapshot(true);
   if (
