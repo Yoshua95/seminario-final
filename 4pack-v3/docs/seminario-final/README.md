@@ -7,14 +7,14 @@
 | Carrera | Analista de Sistemas |
 | Materia | Seminario Final |
 | Profesor | Francisco Montero |
-| Última actualización | **15/11/2026** |
+| Última actualización | **16/11/2026** |
 | Cierre técnico planificado | **23/11/2026** |
 | Rama | `codex/4pack-qa-readiness` |
 | Checkpoint 2B | `de5e3eeb562d44f848c0e18addcbaef6e9bbcde2` |
 
 ## Propósito y estado
 
-Este conjunto describe el sistema real al cierre local de Capacity 2B. No modifica código funcional ni comienza otra etapa. Los doce archivos quedan **sin commit para revisión**; el checkpoint preserva la implementación anterior a esta carpeta.
+Este conjunto describe el sistema real al cierre local de Capacity 2B. Los doce documentos están **publicados en la rama `codex/4pack-qa-readiness` mediante el commit `cc00b58`**, sin merge a `main`. La implementación de Capacity 2B permanece preservada en `de5e3ee`. La publicación y esta actualización documental no modifican funcionalidades ni comienzan otra etapa.
 
 El commit `feat(4pack): complete stage 2b capacity` contiene 35 archivos, incluidas migraciones 0020–0022, fixture ficticio, interfaz, pruebas e informe 2B. Se revisaron candidatos y exclusiones de secretos/artefactos. Antes del commit se quitó solamente una línea vacía final detectada al incorporar 0021 al índice y se regeneró el paquete SQL de demo; no cambió su lógica. `diff --cached --check` y las cuatro pruebas de demo/Preview pasaron. El árbol quedó limpio antes de redactar estos documentos.
 
@@ -59,7 +59,7 @@ La aprobación económica de Capacity es **administrativa**. La comprobación y 
 
 ## Validación de esta documentación
 
-Verificación documental final: **16/11/2026**. Se conserva la última actualización/corte académico **15/11/2026**, solicitado para la entrega, y el horizonte **23/11/2026**. Las tareas futuras del Gantt no se convierten en ejecutadas por transcurrir su fecha de inicio.
+Verificación y actualización documental: **16/11/2026**. Se conserva el corte académico **15/11/2026**, solicitado para la entrega, y el horizonte **23/11/2026**. Las tareas futuras del Gantt no se convierten en ejecutadas por transcurrir su fecha de inicio.
 
 | Verificación ejecutada | Resultado |
 | --- | --- |
@@ -70,9 +70,9 @@ Verificación documental final: **16/11/2026**. Se conserva la última actualiza
 | Grafo de Operations comparado con el contrato JSON | 13/13 transiciones internas coincidentes; ninguna transición adicional. El final gráfico de disputed no libera capacidad. |
 | Referencias de requisitos a casos de uso | 12 casos definidos; ninguna referencia CU sin definición. |
 | Escaneo de afirmaciones de alcance | 10 menciones sensibles revisadas: todas son negaciones, exclusiones o condiciones futuras. Ninguna se acepta como afirmación de fondos, distribución firmada o producción/concurrencia certificadas. |
-| Integridad del código después del checkpoint | `git diff --name-only` y el index sin cambios; únicamente esta carpeta nueva sin seguimiento. No se modificó código funcional durante la fase académica. |
+| Integridad y publicación después del checkpoint | Los doce documentos están versionados y publicados en QA mediante `cc00b58`; la carpeta ya no está sin seguimiento. La implementación 2B permanece en `de5e3ee`. No se modificaron funcionalidades durante la elaboración, publicación ni esta corrección documental. |
 
-Las utilidades locales se ejecutaron con `node .4pack-demo/seminario-validation/validate.mjs` y `node .4pack-demo/seminario-validation/semantic.mjs`. Los resultados se conservan en `validation.json`, `semantic.json`, `contradictions.json` y sus logs dentro de ese directorio. La comprobación local de Mermaid utiliza familias soportadas por GitHub sin plugins/sintaxis experimental; **no equivale a haber publicado y comprobado el render en GitHub**.
+Las utilidades locales se ejecutaron con `node .4pack-demo/seminario-validation/validate.mjs` y `node .4pack-demo/seminario-validation/semantic.mjs`. Los resultados se conservan en `validation.json`, `semantic.json`, `contradictions.json` y sus logs dentro de ese directorio. La comprobación local de Mermaid utiliza familias soportadas por GitHub sin plugins/sintaxis experimental. Los archivos están publicados en GitHub; **la validación local no equivale a comprobar su render en GitHub**.
 
 Las herramientas temporales, sus dependencias, SVG y logs permanecen bajo `.4pack-demo/`, ignorados por Git. No se modifican los manifiestos ni el lockfile del proyecto para validar documentación. La primera descarga de la herramienta fue bloqueada por las restricciones de red; el reintento autorizado usó directorio y cache temporales locales.
 
@@ -84,7 +84,7 @@ Las herramientas temporales, sus dependencias, SVG y logs permanecen bajo `.4pac
 4. Prueba mobile en dispositivo; exportar Android no acredita APK firmado ni distribución.
 5. Presupuesto, demanda y costos operativos; existen dos entrevistas reales con importadores y todavía no existen entrevistas con operadores logísticos externos. No hay rentabilidad demostrada.
 6. Revisión jurídica/contractual si se evoluciona hacia usuarios, envíos o pagos reales.
-7. Publicación académica conectada sujeta a autorización y checks; no se certifica producción.
+7. Despliegue académico de la aplicación en un entorno conectado sujeto a autorización y checks; la documentación ya está publicada en GitHub y no se certifica producción.
 8. Integración HAZMAT: el formulario web conserva subida directa MSDS incompatible con 0015 y puede no compensar el alta de carga bajo RLS de 0016. Hallazgo por inspección estática, sin reproducción remota ni corrección. Mobile marca MSDS requerido pero no lo adjunta desde publicación.
 
-No hubo push, merge, despliegue ni migración remota para preparar este conjunto. Finalizada la documentación, el trabajo se detiene sin iniciar funcionalidades nuevas.
+La documentación fue publicada mediante push normal a `origin/codex/4pack-qa-readiness`, con `cc00b58` como commit de publicación de los doce documentos. No hubo merge a `main`, despliegue ni migración remota. La implementación 2B permanece en `de5e3ee`; no se modificaron funcionalidades. Esta corrección se limita al estado documental de publicación, sin iniciar funcionalidades nuevas.
