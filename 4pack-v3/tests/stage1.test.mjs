@@ -73,7 +73,8 @@ test("cliente mobile anterior rechazado; mobile nuevo solo ofrece acciones de im
   await assert.rejects(q("operator","select public.advance_operation($1,'in_transit','Test')",[id]),/incompatible/);
   const screen=await readFile(new URL("../apps/mobile/app/operation/[operationId].tsx",import.meta.url),"utf8");
   assert.equal(screen.includes("nextStep"),false);
-  assert.ok(screen.includes('operation.role === "importer"'));
+  const view=await readFile(new URL("../apps/mobile/features/importer/views.tsx",import.meta.url),"utf8");
+  assert.ok(view.includes('o.role==="importer"') || view.includes('o.role === "importer"'));
 });
 test("moneda ARS se conserva en garantía, comisión y movimiento sin usar FOB",async()=>{
   const f=await offer("ARS");const id=(await award(f.id)).rows[0].id;

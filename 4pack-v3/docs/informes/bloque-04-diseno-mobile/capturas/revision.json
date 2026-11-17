@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "checks": [
+    "01-inicio",
+    "02-publicacion",
+    "02b-dimensiones",
+    "02c-revision",
+    "03-ofertas",
+    "04-seguimiento",
+    "04b-garantia",
+    "04c-evaluacion",
+    "04d-entrega",
+    "02d-msds"
+  ],
+  "backendConnected": false,
+  "device": "Pixel_7 / emulator-5554",
+  "fixture": true
+}

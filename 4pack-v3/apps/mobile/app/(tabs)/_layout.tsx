@@ -28,10 +28,10 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#FF6B2C",
-        tabBarInactiveTintColor: "#737782",
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
-        tabBarStyle: { height: 66, paddingTop: 8, paddingBottom: 8 }
+        tabBarActiveTintColor: "#ff762e",
+        tabBarInactiveTintColor: "#b1b1ba",
+        tabBarLabelStyle: { fontFamily:"Geist", fontSize: 11, fontWeight: "600" },
+        tabBarStyle: { backgroundColor:"#171718",borderTopColor:"#303033", height: 66, paddingTop: 8, paddingBottom: 8 }
       }}
     >
       <Tabs.Screen name="index" options={{

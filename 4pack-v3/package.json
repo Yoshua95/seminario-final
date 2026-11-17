@@ -12,7 +12,7 @@
     "dev:mobile": "npm run start --workspace=@4pack/mobile",
     "build:web": "npm run build --workspace=@4pack/web",
     "build:mobile": "npm run export:android --workspace=@4pack/mobile",
-    "test": "npm run test:domain && npm run test:database && npm run test:stage2a && npm run test:stage2b && npm run test:preview && npm run test:multirole && npm run test:hazmat && npm run test:mobile:importer",
+    "test": "npm run test:domain && npm run test:database && npm run test:stage2a && npm run test:stage2b && npm run test:preview && npm run test:multirole && npm run test:hazmat && npm run test:mobile:importer && npm run test:mobile:visual",
     "test:preview": "node --test tests/demo-preview.test.mjs",
     "test:database": "node --test tests/database.test.mjs tests/stage1.test.mjs",
     "test:web": "node tests/operator-browser.test.mjs",
@@ -26,7 +26,10 @@
     "test:multirole:web": "node tests/multirole-browser.test.mjs",
     "test:hazmat": "tsc -p tests/tsconfig.json && node --test tests/hazmat.test.mjs tests/mobile-publication.test.mjs",
     "test:hazmat:web": "node tests/multirole-browser.test.mjs --hazmat",
-    "test:mobile:importer": "tsc -p tests/tsconfig.json && node --test tests/mobile-importer.test.mjs"
+    "test:mobile:importer": "tsc -p tests/tsconfig.json && node --test tests/mobile-importer.test.mjs",
+    "test:mobile:visual": "node --test tests/mobile-visual-environment.test.mjs",
+    "test:mobile:visual:emulator": "node tests/mobile-visual-emulator.mjs",
+    "check:mobile:release": "node scripts/check-mobile-visual-release.mjs"
   },
   "overrides": {
     "react": "19.1.0",
