@@ -1,3 +1,4 @@
+import { importerOperationAction, validateImporterRating, type ImporterOffer } from "./importer-flow";
 import { publishMobileCargo, type NativeMsds } from "./cargo-publication";
 import type { PublicationAttempt } from "@4pack/domain";
 import { requiresHazmatReview, type OperationPhase, type CargoStatus, type GuaranteeStatus, type TransportMode, type UserRole } from "@4pack/domain";
@@ -51,6 +52,7 @@ export type MobileOperationDetail = MobileOperation & {
   commissionUsd: number;
   guaranteeStatus: GuaranteeStatus;
   events: Array<{
+    attachmentId: string | null;
     id: string;
     status: CargoStatus;
     title: string;
@@ -116,11 +118,12 @@ export async function loadCurrentProfile(): Promise<MobileProfile | null> {
 
 export async function loadOpenCargos(): Promise<MobileCargo[]> {
   if (!supabase) return [];
+  const profile=await importerSession();
 
   const { data, error } = await supabase
     .from("cargo_requests")
     .select("id, title, origin, destination, weight_kg, volume_m3, hazmat_review_required")
-    .eq("status", "open")
+    .eq("importer_id", profile.id)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -259,7 +262,7 @@ export async function loadOperationDetail(operationId: string): Promise<MobileOp
     supabase.from("cargo_requests").select("title, origin, destination").eq("id", operation.cargo_id).single(),
     supabase.from("offers").select("mode, total_usd").eq("id", operation.accepted_offer_id).single(),
     supabase.from("payment_guarantees").select("amount_usd, commission_usd, status").eq("operation_id", operation.id).single(),
-    supabase.from("tracking_events").select("id, status, title, description, location, created_at").eq("operation_id", operation.id).order("created_at", { ascending: false }),
+    supabase.from("tracking_events").select("id, status, title, description, location, created_at, attachment_id").eq("operation_id", operation.id).order("created_at", { ascending: false }),
     supabase.from("messages").select("id, sender_id, body, created_at, profiles(full_name)").eq("operation_id", operation.id).order("created_at", { ascending: true })
   ]);
 
@@ -286,6 +289,7 @@ export async function loadOperationDetail(operationId: string): Promise<MobileOp
     commissionUsd: Number(guarantee.commission_usd),
     guaranteeStatus: guarantee.status as GuaranteeStatus,
     events: (eventsResult.data ?? []).map((event) => ({
+      attachmentId: event.attachment_id,
       id: event.id,
       status: event.status as CargoStatus,
       title: event.title,
@@ -306,10 +310,9 @@ export async function loadOperationDetail(operationId: string): Promise<MobileOp
   };
 }
 
-export async function simulateGuarantee(operationId: string) {
-  if (!supabase) throw new Error("La conexión no está disponible.");
-  const { error } = await supabase.rpc("simulate_guarantee", { target_operation_id: operationId });
-  if (error) throw error;
+export async function simulateGuarantee(operationId:string) {
+ await importerSession();
+ await importerOperationAction("guarantee",operationId,(name,args)=>supabase!.rpc(name,args));
 }
 
 export async function advanceOperation(operationId: string, nextStatus: CargoStatus, title: string, location: string) {
@@ -317,12 +320,9 @@ export async function advanceOperation(operationId: string, nextStatus: CargoSta
   throw new Error("El operador gestiona la operación desde web.");
 }
 
-export async function confirmDelivery(operationId: string) {
-  if (!supabase) throw new Error("La conexión no está disponible.");
-  const { error } = await supabase.rpc("transition_operation", {
-    target: operationId, next_phase: "completed"
-  });
-  if (error) throw error;
+export async function confirmDelivery(operationId:string) {
+ await importerSession();
+ await importerOperationAction("complete",operationId,(name,args)=>supabase!.rpc(name,args));
 }
 
 export async function sendOperationMessage(operationId: string, body: string) {
@@ -335,4 +335,49 @@ export async function sendOperationMessage(operationId: string, body: string) {
     body
   });
   if (error) throw error;
+}
+
+async function importerSession() {
+  if(!supabase)throw new Error("Falta configurar el entorno compartido.");
+  const profile=await loadCurrentProfile();
+  if(profile?.role!=="importer")throw new Error("Acceso exclusivo del importador.");
+  return profile;
+}
+export async function loadImporterOffers(cargoId:string):Promise<ImporterOffer[]> {
+  await importerSession();
+  const {data,error}=await supabase!.from("offers").select("id,operator_id,total_usd,payment_currency,estimated_days,status,valid_until,normalized_quote").eq("cargo_id",cargoId).order("created_at");
+  if(error)throw error;
+  return (data??[]).map(o=>({id:o.id,operatorId:o.operator_id,amount:Number(o.total_usd),currency:o.payment_currency,days:o.estimated_days,status:o.status,validUntil:o.valid_until,quote:o.normalized_quote}));
+}
+export async function loadCargoOperation(cargoId:string) {
+  const profile=await importerSession();
+  const {data,error}=await supabase!.from("operations").select("id").eq("cargo_id",cargoId).eq("importer_id",profile.id).maybeSingle();
+  if(error)throw error;return data?.id as string|undefined;
+}
+export async function awardImporterOffer(id:string) {
+  await importerSession();
+  return await importerOperationAction("award",id,(name,args)=>supabase!.rpc(name,args)) as string;
+}
+export async function operationEvidenceUrl(documentId:string) {
+  await importerSession();
+  const {data,error}=await supabase!.from("documents").select("storage_path").eq("id",documentId).single();
+  if(error)throw error;
+  const signed=await supabase!.storage.from("documents").createSignedUrl(data.storage_path,60);
+  if(signed.error)throw signed.error;
+  return signed.data.signedUrl;
+}
+export async function loadOwnRating(operationId:string) {
+  const profile=await importerSession();
+  const {data,error}=await supabase!.from("ratings").select("id,score,comment").eq("operation_id",operationId).eq("author_id",profile.id).maybeSingle();
+  if(error)throw error;return data;
+}
+export async function rateCompletedOperator(operationId:string,score:number,comment:string) {
+  validateImporterRating(score,comment);
+  const profile=await importerSession();
+  const {data:operation,error}=await supabase!.from("operations").select("operator_id,phase").eq("id",operationId).eq("importer_id",profile.id).single();
+  if(error || operation?.phase!=="completed")throw new Error("Solo podes evaluar una operacion propia completada.");
+  const existing=await loadOwnRating(operationId);if(existing)return existing.id;
+  const result=await supabase!.from("ratings").insert({operation_id:operationId,author_id:profile.id,recipient_id:operation.operator_id,score,comment:comment.trim()||null}).select("id").single();
+  if(result.error) {if(result.error.code==="23505")return (await loadOwnRating(operationId))!.id;throw result.error;}
+  return result.data.id;
 }
