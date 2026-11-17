@@ -1,3 +1,4 @@
+import { isMultiroleDemo } from "../multirole/environment.mjs";
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
@@ -61,6 +62,7 @@ export async function localDatabase() {
   return localGlobal.operatorDemoDb;
 }
 export async function demoIdentity() {
+  if(isMultiroleDemo()) return (await (await import("../multirole/session")).rehearsalSession("operator")).id;
   assertDemo();
   const identity = (await cookies()).get("fourpack-demo")?.value;
   if (!identity || !["operator", "pending", "suspended"].includes(identity))
@@ -95,6 +97,7 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
       "select public.operator_snapshot() as data",
     );
     const snapshot = result.rows[0].data;
+    snapshot.multirole = isMultiroleDemo();
     snapshot.profile.email =
       user === demoUsers.operator ? "operador@4pack.demo" : "cuenta@4pack.demo";
     const capacity = await asUser<{data: Snapshot["capacity"]}>(db,user,"select public.operator_capacity_snapshot() as data");
@@ -157,6 +160,7 @@ export async function executeQuoteCommand(demo: boolean, command: string, payloa
   return data as {id:string};
 }
 export async function demoAward(offerId: string) {
+  if(isMultiroleDemo()) throw new Error("La adjudicacion corresponde a la sesion del importador.");
   const snapshot = await loadSnapshot(true);
   if (
     snapshot.operator.verification_status !== "approved" ||
@@ -181,6 +185,31 @@ export async function demoAward(offerId: string) {
     result.rows[0].id,
   ]);
   return result.rows[0].id;
+}
+
+export async function submitOperatorRating(demo:boolean,operationId:string,score:number,comment:string){
+  if(!Number.isInteger(score)||score<1||score>5||comment.length>500)throw new Error('Puntaje o comentario inválido.');
+  if(demo){
+    const actor=await demoIdentity();
+    const result=await asUser<{id:string}>(await localDatabase(),actor,`with eligible as (
+      select id,importer_id from public.operations where id=$1 and operator_id=auth.uid() and phase='completed'
+    ), inserted as (
+      insert into public.ratings(operation_id,author_id,recipient_id,score,comment)
+      select id,auth.uid(),importer_id,$2,$3 from eligible
+      on conflict(operation_id,author_id) do nothing returning id
+    ) select id from inserted union all select r.id from public.ratings r join eligible e on e.id=r.operation_id where r.author_id=auth.uid() limit 1`,[operationId,score,comment||null]);
+    if(!result.rows[0])throw new Error('La evaluación requiere una operación completada propia.');
+    return result.rows[0];
+  }
+  const {client,user}=await operatorSession();
+  const operation=await client.from('operations').select('importer_id,phase').eq('id',operationId).eq('operator_id',user.id).single();
+  if(operation.error||operation.data.phase!=='completed')throw new Error('La evaluación requiere una operación completada propia.');
+  const existing=await client.from('ratings').select('id').eq('operation_id',operationId).eq('author_id',user.id).maybeSingle();
+  if(existing.error)throw new Error('No se pudo consultar la evaluación.');
+  if(existing.data)return existing.data;
+  const result=await client.from('ratings').insert({operation_id:operationId,author_id:user.id,recipient_id:operation.data.importer_id,score,comment:comment||null}).select('id').single();
+  if(result.error)throw new Error('No se pudo registrar la evaluación.');
+  return result.data;
 }
 
 // Only local/Preview: mirrors the trusted Edge gateway after byte validation.

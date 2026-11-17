@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import assets from "./demo-sql.json" with { type: "json" };
 import { isDemoEnabled } from "./demo-environment.mjs";
 export const demoUsers = {
+  multirole: "a0000000-0000-0000-0000-000000000007",
   operator: "a0000000-0000-0000-0000-000000000001",
   importer: "a0000000-0000-0000-0000-000000000002",
   admin: "a0000000-0000-0000-0000-000000000003",
@@ -32,6 +33,7 @@ export async function refreshLocalSchema(db) {
     }
   }
   await db.exec(assets.capacity_seed);
+  await db.exec(assets.multirole_seed);
   await db.exec(assets.scenarios);
 }
 
@@ -99,6 +101,7 @@ export async function createLocalDatabase(directory) {
     }
   }
   await db.exec(assets.capacity_seed);
+  await db.exec(assets.multirole_seed);
   if (directory) {
     await db.exec(assets.scenarios);
     const samplePath = demoUsers.importer + "/msds-demostracion.pdf";

@@ -178,6 +178,7 @@ export type SupportMessage = {
   created_at: string;
 };
 export type Snapshot = {
+  multirole?: boolean;
   capacity: CapacitySnapshot;
   commercial: CommercialProfile | null;
   drafts: QuoteDraft[];

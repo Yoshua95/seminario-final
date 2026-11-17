@@ -57,6 +57,7 @@ test("paquete demo contiene exactamente las migraciones y semillas versionadas",
     ),
   );
   assert.equal(assets.scenarios,(await readFile(new URL("../supabase/demo/operator-scenarios.sql",import.meta.url),"utf8"))+"\n"+(await readFile(new URL("../supabase/demo/stage2a-scenarios.sql",import.meta.url),"utf8")));
+  assert.equal(assets.multirole_seed,await readFile(new URL("../supabase/demo/multirole-seed.sql",import.meta.url),"utf8"));
   assert.equal(assets.capacity_seed,await readFile(new URL("../supabase/demo/stage2b-capacity-seed.sql",import.meta.url),"utf8"));
 });
 test("runtime Preview inicia desde el paquete SQL y un directorio temporal, sin Supabase", async () => {

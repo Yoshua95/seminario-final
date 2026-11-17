@@ -16,6 +16,7 @@ const assets = {
     "utf8",
   ),
   migrations,
+  multirole_seed: await readFile(new URL("supabase/demo/multirole-seed.sql",root),"utf8"),
   capacity_seed: await readFile(new URL("supabase/demo/stage2b-capacity-seed.sql",root),"utf8"),
   seed: await readFile(
     new URL("supabase/demo/operator-seed.sql", root),

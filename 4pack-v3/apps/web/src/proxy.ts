@@ -1,3 +1,4 @@
+import {isMultiroleDemo} from "./features/multirole/environment.mjs";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
@@ -7,6 +8,11 @@ import {
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  if(isMultiroleDemo()) {
+    const alias:Record<string,string>={"/acceso":"/demo/acceso","/cargas/nueva":"/demo/importador/cargas/nueva","/admin":"/demo/admin","/admin/operadores":"/demo/admin/operadores","/admin/capacidad":"/demo/admin/capacidad"};
+    const destination=alias[request.nextUrl.pathname];
+    if(destination) { const url=request.nextUrl.clone();url.pathname=destination;return NextResponse.redirect(url); }
+  }
   if (isVercelPreview() && !request.nextUrl.pathname.startsWith("/demo/"))
     return NextResponse.redirect(new URL("/demo/acceso", request.url));
   if (request.nextUrl.pathname.startsWith("/demo/") && isDemoEnabled())

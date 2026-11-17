@@ -521,7 +521,7 @@ function Offers({
                   >
                     Ver operación <Icon name="arrow" />
                   </Link>
-                ) : demo && o.status === "submitted" && o.normalized_quote ? (
+                ) : demo && !data.multirole && o.status === "submitted" && o.normalized_quote ? (
                   <ActionForm
                     demo
                     command="demo_award"
@@ -835,6 +835,30 @@ function Operations({
           </section>
         </div>
         <aside className="op-stack">
+          {operation.phase === "completed" && (
+            <section className="op-panel">
+              <h2>Evaluar al importador</h2>
+              {data.ratings.some(
+                (r) => r.operation_id === id && r.author_id === data.profile.id,
+              ) ? (
+                <p>Tu evaluación del importador está registrada.</p>
+              ) : (
+                <ActionForm demo={demo} command="rating" label="Enviar evaluación al importador">
+                  <input type="hidden" name="id" value={id} />
+                  <label>
+                    Puntaje
+                    <select name="score">
+                      {[5, 4, 3, 2, 1].map((n) => <option key={n}>{n}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    Comentario
+                    <textarea name="comment" maxLength={500} />
+                  </label>
+                </ActionForm>
+              )}
+            </section>
+          )}
           <section className="op-panel">
             <h2>Resumen contractual</h2>
             <Fact label="Importador">{operation.importer_name}</Fact>

@@ -1,3 +1,4 @@
+import { isMultiroleDemo } from "../multirole/environment.mjs";
 import "server-only";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -7,6 +8,7 @@ import type { CapacitySnapshot } from "./types";
 export async function capacityAdmin(demo: boolean) {
   if (demo) {
     assertDemo();
+    if(isMultiroleDemo()) await (await import("../multirole/session")).rehearsalSession("admin");
     return null;
   }
   const client = await createSupabaseServerClient();

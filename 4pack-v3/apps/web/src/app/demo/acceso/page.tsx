@@ -1,3 +1,5 @@
+import {isMultiroleDemo} from "@/features/multirole/environment.mjs";
+import {MultiroleAccess} from "@/features/multirole/pages";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { startDemo } from "@/features/operator/actions";
@@ -8,6 +10,7 @@ import {
 } from "@/features/operator/demo-environment.mjs";
 export const dynamic = "force-dynamic";
 export default function Page() {
+  if(isMultiroleDemo()) return <MultiroleAccess/>;
   if (!isDemoEnabled()) notFound();
   const preview = isVercelPreview();
   return (

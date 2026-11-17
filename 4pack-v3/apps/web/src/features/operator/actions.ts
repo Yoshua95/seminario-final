@@ -12,6 +12,7 @@ import {
   loadSnapshot,
   executeCommand,
   executeQuoteCommand,
+  submitOperatorRating,
   registerDemoDocument,
   operatorSession,
   demoIdentity,
@@ -38,6 +39,7 @@ export async function startDemo(form: FormData) {
 export async function signOutOperator(demo: boolean) {
   if (demo) {
     assertDemo();
+    if((await import("../multirole/environment.mjs")).isMultiroleDemo()) { await (await import("../multirole/session")).closeRehearsalSession(); redirect("/demo/acceso"); }
     (await cookies()).delete("fourpack-demo");
     redirect("/demo/acceso");
   }
@@ -54,6 +56,7 @@ export async function operatorAction(
 ): Promise<ActionResult> {
   try {
     const allowed = [
+      "rating",
       "quote",
       "commercial_profile",
       "offer",
@@ -72,6 +75,11 @@ export async function operatorAction(
     const payload: Record<string, unknown> = {};
     for (const [key, value] of form.entries())
       if (typeof value === "string") payload[key] = value.trim();
+    if(command==='rating'){
+      const result=await submitOperatorRating(demo,String(payload.id??''),Number(payload.score),String(payload.comment??''));
+      revalidatePath(demo?'/demo/operador':'/operador','layout');
+      return {ok:true,message:'Evaluación del importador registrada.',id:result.id};
+    }
     if (command === "quote") {
       const intent=String(form.get("intent") ?? "submit");
       const lines=(key:string)=>String(form.get(key)??"").split(/\n/).map(s=>s.trim()).filter(Boolean);
