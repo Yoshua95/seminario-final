@@ -85,7 +85,7 @@ test("runtime Preview inicia desde el paquete SQL y un directorio temporal, sin 
     assert.equal(data.operator.company_name, "Marítima Rivera S.A.");
     assert.equal(data.cargos.filter((c) => c.status === "open").length, 4);
     assert.equal(
-      data.documents.find((d) => d.document_type === "MSDS").id,
+      data.documents.find((d) => d.id === "f0000000-0000-0000-0000-000000000001")?.id,
       "f0000000-0000-0000-0000-000000000001",
     );
   } finally {

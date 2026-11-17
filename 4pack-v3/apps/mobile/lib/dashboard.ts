@@ -1,3 +1,5 @@
+import { publishMobileCargo, type NativeMsds } from "./cargo-publication";
+import type { PublicationAttempt } from "@4pack/domain";
 import { requiresHazmatReview, type OperationPhase, type CargoStatus, type GuaranteeStatus, type TransportMode, type UserRole } from "@4pack/domain";
 import { supabase } from "./supabase";
 
@@ -212,34 +214,19 @@ export async function createCargo(input: {
   volumeM3: number;
   fobUsd: number;
   preferredMode: TransportMode;
-}) {
+}, attempt: PublicationAttempt, msds: NativeMsds | null) {
   if (!supabase) throw new Error("La conexión no está disponible.");
   const profile = await loadCurrentProfile();
   if (!profile || profile.role !== "importer") throw new Error("Sólo un importador puede publicar cargas.");
 
-  const requiresReview = requiresHazmatReview(input.description);
-  const { data, error } = await supabase
-    .from("cargo_requests")
-    .insert({
-      importer_id: profile.id,
-      title: input.title,
-      description: input.description,
-      origin: input.origin,
-      destination: input.destination,
-      category: input.category,
-      weight_kg: input.weightKg,
-      volume_m3: input.volumeM3,
-      fob_usd: input.fobUsd,
-      preferred_mode: input.preferredMode,
-      status: "open",
-      hazmat_review_required: requiresReview,
-      msds_required: requiresReview,
-      bidding_deadline: new Date(Date.now() + 7 * 86400000).toISOString()
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
-  return data.id as string;
+  return publishMobileCargo({
+    title: input.title, description: input.description, origin: input.origin, destination: input.destination,
+    category: input.category, weight_kg: input.weightKg, volume_m3: input.volumeM3,
+    fob_usd: input.fobUsd, preferred_mode: input.preferredMode,
+  }, attempt, msds, {
+    rpc: (name,args) => supabase!.rpc(name,args),
+    upload: form => supabase!.functions.invoke("document-upload",{body:form}),
+  });
 }
 
 export async function submitOffer(cargoId: string, input: {

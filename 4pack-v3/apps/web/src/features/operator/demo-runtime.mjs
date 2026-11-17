@@ -16,6 +16,29 @@ export const demoUsers = {
 export const demoSchemaVersion = createHash("sha256")
   .update(JSON.stringify(assets.migrations))
   .digest("hex");
+async function prepareHazmatFixtures(db, directory) {
+  // Fictional legacy listings need trusted MSDS bytes under the new invariant.
+  // This is only the local/demo adapter, never a production data migration.
+  const bytes=Buffer.from("%PDF-1.4\nMSDS ficticia 4PACK. Sin validez tecnica.\n%%EOF\n");
+  const sha256=createHash("sha256").update(bytes).digest("hex");
+  for(const suffix of ["009477","003104"]) {
+    const cargoId="b0000000-0000-0000-0000-000000"+suffix;
+    const filename="f1000000-0000-0000-0000-000000"+suffix+".pdf";
+    const storagePath=demoUsers.importer+"/"+filename;
+    if(directory) {
+      const folder=path.join(path.dirname(directory),"files",demoUsers.importer);
+      await mkdir(folder,{recursive:true});
+      await writeFile(path.join(folder,filename),bytes);
+    }
+    await db.transaction(async tx=>{
+      if(!(await tx.query("select id from storage.objects where bucket_id='documents' and name=$1",[storagePath])).rows.length)
+        await tx.query("insert into storage.objects(bucket_id,name,owner_id,metadata,user_metadata) values('documents',$1,$2,$3,$4)",
+          [storagePath,demoUsers.importer,JSON.stringify({size:bytes.length,mimetype:"application/pdf"}),JSON.stringify({uploaded_by:demoUsers.importer,sha256})]);
+      await tx.query("select public.register_document_upload($1,$2::jsonb)",[demoUsers.importer,JSON.stringify({id:cargoId,target_type:"cargo",document_type:"MSDS",kind:"msds",storage_path:storagePath,sha256,original_name:"MSDS ficticia de ensayo.pdf",mime_type:"application/pdf",size_bytes:bytes.length})]);
+      await tx.query("update public.cargo_requests set status='open' where id=$1 and status='draft'",[cargoId]);
+    });
+  }
+}
 export async function refreshLocalSchema(db) {
   if (!isDemoEnabled()) throw new Error("La demostración no está disponible.");
   for (const [name, sql] of Object.entries(assets.migrations)) {
@@ -34,6 +57,9 @@ export async function refreshLocalSchema(db) {
   }
   await db.exec(assets.capacity_seed);
   await db.exec(assets.multirole_seed);
+  // refreshLocalSchema receives the already-open database; fixture metadata is
+  // idempotent. File bytes are created on the next adapter start.
+  await prepareHazmatFixtures(db);
   await db.exec(assets.scenarios);
 }
 
@@ -102,6 +128,7 @@ export async function createLocalDatabase(directory) {
   }
   await db.exec(assets.capacity_seed);
   await db.exec(assets.multirole_seed);
+  await prepareHazmatFixtures(db,directory);
   if (directory) {
     await db.exec(assets.scenarios);
     const samplePath = demoUsers.importer + "/msds-demostracion.pdf";

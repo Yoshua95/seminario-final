@@ -1,13 +1,20 @@
 import { chromium } from "playwright-core";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, writeFile, readFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  writeFile,
+  readFile,
+  rename,
+  unlink,
+} from "node:fs/promises";
 import { spawn, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 const require = createRequire(import.meta.url),
-  port = 3002,
+  port = Number(process.env.FOURPACK_TEST_PORT ?? 3002),
   base = `http://localhost:${port}`;
 await mkdir(".4pack-demo", { recursive: true });
 const directory = await mkdtemp(path.resolve(".4pack-demo/multirole-browser-"));
@@ -38,15 +45,21 @@ async function start() {
         ...process.env,
         FOURPACK_MULTIROLE_DEMO: "1",
         FOURPACK_DEMO_DIRECTORY: directory,
-        FOURPACK_DIST_DIR: ".next/multirole",
+        FOURPACK_DIST_DIR: ".next/multirole-test",
       },
       windowsHide: true,
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
   let log = "";
-  server.stdout.on("data", (d) => (log += d));
-  server.stderr.on("data", (d) => (log += d));
+  server.stdout.on("data", (d) => {
+    log += d;
+    report.serverOutput = (report.serverOutput ?? "") + d;
+  });
+  server.stderr.on("data", (d) => {
+    log += d;
+    report.serverOutput = (report.serverOutput ?? "") + d;
+  });
   for (let i = 0; i < 100; i++) {
     if (server.exitCode !== null)
       throw Error("El servidor aislado termino: " + log.slice(-1200));
@@ -93,6 +106,7 @@ let browser,
   importer,
   cargoId,
   operationId,
+  hazmatCargoId,
   evidenceBytes = Buffer.from("%PDF-1.4\nEvidencia multirrol ficticia\n");
 async function login(context, role) {
   const page = await context.newPage();
@@ -110,7 +124,13 @@ async function replay(context, request) {
     headers: await request.allHeaders(),
     data: request.postDataBuffer(),
   });
-  assert.equal(response.status(), 200);
+  assert.equal(
+    response.status(),
+    200,
+    response.status() === 200
+      ? undefined
+      : (await response.text()).slice(0, 1500),
+  );
 }
 async function capture(page, button) {
   const request = page.waitForRequest(
@@ -123,6 +143,35 @@ async function inspect(expected) {
   const db = new PGlite(path.join(directory, "database"));
   await db.waitReady;
   try {
+    if (hazmatCargoId) {
+      assert.equal(
+        (
+          await db.query(
+            "select status from public.cargo_requests where id=$1",
+            [hazmatCargoId],
+          )
+        ).rows[0].status,
+        "open",
+      );
+      assert.equal(
+        (
+          await db.query(
+            "select count(*)::int n from public.documents where cargo_id=$1",
+            [hazmatCargoId],
+          )
+        ).rows[0].n,
+        1,
+      );
+      assert.equal(
+        (
+          await db.query(
+            "select count(*)::int n from public.cargo_publication_requests where cargo_id=$1",
+            [hazmatCargoId],
+          )
+        ).rows[0].n,
+        1,
+      );
+    }
     const row = (
       await db.query(
         "select o.phase,g.status from public.operations o join public.payment_guarantees g on g.operation_id=o.id where o.id=$1",
@@ -292,10 +341,98 @@ try {
         .waitFor();
     },
   );
+  if (process.argv.includes("--hazmat"))
+    await check(
+      "HAZMAT web: ausencia, PDF falso, fallo real de escritura y reintento sin duplicados",
+      async () => {
+        await importer.goto(base + "/cargas/nueva");
+        const form = importer.locator("[data-command=cargo]");
+        for (const [name, value] of Object.entries({
+          title: "Baterias de litio de ensayo",
+          description: "Celdas nuevas para equipos",
+          origin: "Shenzhen",
+          destination: "Buenos Aires",
+          category: "Tecnologia",
+          weight_kg: "10",
+          volume_m3: "1",
+          fob_usd: "2000",
+        }))
+          await form.locator(`[name=${name}]`).fill(value);
+        const file = form.locator("input[type=file]"),
+          button = form.getByRole("button", {
+            name: "Publicar carga",
+            exact: true,
+          });
+        await button.click();
+        assert.equal(
+          await file.evaluate((el) => el.validity.valueMissing),
+          true,
+        );
+        await file.setInputFiles({
+          name: "msds.pdf",
+          mimeType: "application/pdf",
+          buffer: Buffer.from("NOT A PDF"),
+        });
+        await button.click();
+        await form
+          .getByRole("alert")
+          .filter({ hasText: "Invalid document format" })
+          .waitFor();
+        assert.equal(
+          await form.getByRole("link", { name: "Ver carga publicada" }).count(),
+          0,
+        );
+        await file.setInputFiles({
+          name: "msds.pdf",
+          mimeType: "application/pdf",
+          buffer: evidenceBytes,
+        });
+        const folder = path.resolve(
+            directory,
+            "files",
+            "a0000000-0000-0000-0000-000000000002",
+          ),
+          backup = folder + "-test-backup";
+        assert.ok(
+          folder.startsWith(directory + path.sep) &&
+            backup.startsWith(directory + path.sep),
+        );
+        // Only temporarily move a fixture inside this test's own isolated directory.
+        await rename(folder, backup);
+        try {
+          await writeFile(folder, "storage failure fixture");
+          await button.click();
+          await form
+            .getByRole("alert")
+            .filter({ hasText: /EEXIST|ENOTDIR/ })
+            .waitFor();
+          assert.equal(
+            await form
+              .getByRole("link", { name: "Ver carga publicada" })
+              .count(),
+            0,
+          );
+        } finally {
+          await unlink(folder);
+          await rename(backup, folder);
+        }
+        await capture(importer, button);
+        const link = form.getByRole("link", { name: "Ver carga publicada" });
+        await link.waitFor();
+        hazmatCargoId = (await link.getAttribute("href")).split("/").at(-1);
+        const retryResponse = importer.waitForResponse(
+          (r) => r.request().method() === "POST" && r.url().startsWith(base),
+        );
+        await button.click();
+        assert.equal((await retryResponse).status(), 200);
+        await link.click();
+        await importer.waitForURL("**/demo/importador/cargas/" + hazmatCargoId);
+      },
+    );
   await check("importador publica carga estandar desde pantalla", async () => {
     await importer.goto(base + "/cargas/nueva");
     await importer
-      .getByRole("heading", { name: "Publicar carga estándar" })
+      .getByRole("heading", { name: "Publicar carga", exact: true })
       .waitFor();
     const form = importer.locator("[data-command=cargo]");
     for (const [name, value] of Object.entries({

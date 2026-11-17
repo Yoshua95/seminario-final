@@ -1,7 +1,6 @@
 "use server";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requiresHazmatReview } from "@4pack/domain";
 import {
   openRehearsalSession,
   closeRehearsalSession,
@@ -37,45 +36,7 @@ export async function rehearsalAction(
     const query = async <T>(sql: string, params: unknown[] = []) =>
       asUser<T>(db, session.id, sql, params);
     let id: string | undefined;
-    if (command === "cargo") {
-      const title = text("title"),
-        description = text("description"),
-        origin = text("origin"),
-        destination = text("destination"),
-        category = text("category");
-      const weight = Number(text("weight_kg")),
-        volume = Number(text("volume_m3")),
-        fob = Number(text("fob_usd"));
-      if (
-        ![title, description, origin, destination, category].every(
-          (s) => s.length >= 2 && s.length <= 2000,
-        ) ||
-        ![weight, volume, fob].every(Number.isFinite) ||
-        weight <= 0 ||
-        volume <= 0 ||
-        fob < 0
-      )
-        throw new Error("Revisá los datos y dimensiones de la carga.");
-      if (requiresHazmatReview(title + " " + description + " " + category))
-        throw new Error(
-          "Este ensayo admite carga estándar. HAZMAT/MSDS queda para el siguiente bloque.",
-        );
-      id = (
-        await query<{ id: string }>(
-          "insert into public.cargo_requests(importer_id,title,description,origin,destination,category,weight_kg,volume_m3,fob_usd,status,bidding_deadline) values(auth.uid(),$1,$2,$3,$4,$5,$6,$7,$8,'open',now()+interval '7 days') returning id",
-          [
-            title,
-            description,
-            origin,
-            destination,
-            category,
-            weight,
-            volume,
-            fob,
-          ],
-        )
-      ).rows[0].id;
-    } else if (command === "verify") {
+    if (command === "verify") {
       const status = text("status");
       if (!["approved", "rejected"].includes(status))
         throw new Error("Estado no disponible.");
@@ -155,9 +116,7 @@ export async function rehearsalAction(
     return {
       ok: true,
       message:
-        command === "cargo"
-          ? "Carga estándar publicada."
-          : command === "award"
+        command === "award"
             ? "Operación creada con capacidad reservada."
             : command === "guarantee"
               ? "Garantía simulada confirmada."

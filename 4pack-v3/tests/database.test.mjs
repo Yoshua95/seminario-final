@@ -271,7 +271,7 @@ test("documentos privados y metadatos validados", async () => {
   };
   await command("operator", "document", p);
   assert.equal(
-    (await query("competitor", "select * from public.documents")).rows.length,
+    (await query("competitor", "select * from public.documents where operation_id=$1",[operation])).rows.length,
     0,
   );
   await assert.rejects(

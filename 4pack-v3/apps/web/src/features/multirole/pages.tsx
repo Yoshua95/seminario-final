@@ -1,3 +1,4 @@
+import { NewCargoForm } from "@/components/new-cargo-form";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
@@ -99,7 +100,7 @@ export async function RehearsalShell({
               <Link href="/demo/importador">Mis cargas y operaciones</Link>
               {" · "}
               <Link href="/demo/importador/cargas/nueva">
-                Publicar carga estándar
+                Publicar carga
               </Link>
             </>
           ) : (
@@ -165,57 +166,8 @@ export async function ImporterScreen({ parts }: { parts: string[] }) {
     return (
       <RehearsalShell role="importer">
         <section className="op-panel">
-          <h1>Publicar carga estándar</h1>
-          <p>HAZMAT/MSDS no forma parte de este bloque.</p>
-          <RehearsalForm
-            command="cargo"
-            label="Publicar carga"
-            linkBase="/demo/importador/cargas"
-            linkLabel="Ver carga publicada"
-          >
-            {[
-              ["title", "Título"],
-              ["description", "Descripción"],
-              ["origin", "Origen"],
-              ["destination", "Destino"],
-              ["category", "Categoría"],
-            ].map(([key, label]) => (
-              <label key={key}>
-                {label}
-                <input name={key} required minLength={2} maxLength={2000} />
-              </label>
-            ))}
-            <label>
-              Peso (kg)
-              <input
-                name="weight_kg"
-                type="number"
-                min="0.01"
-                step="0.01"
-                required
-              />
-            </label>
-            <label>
-              Volumen (m³)
-              <input
-                name="volume_m3"
-                type="number"
-                min="0.001"
-                step="0.001"
-                required
-              />
-            </label>
-            <label>
-              Valor FOB (USD)
-              <input
-                name="fob_usd"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-              />
-            </label>
-          </RehearsalForm>
+          <h1>Publicar carga</h1>
+          <NewCargoForm demo />
         </section>
       </RehearsalShell>
     );

@@ -1,6 +1,8 @@
 export { operationTransitions, phaseLabels, milestoneTypes, documentTypes, canOperate, canTransition, validateOffer, validateDocument, reputation, simulatedNet } from "./operator.js";
 export type { OperatorStatus, OperationPhase } from "./operator.js";
 export type UserRole = "importer" | "operator" | "admin";
+export { validateMsdsFile, publishCargoWithMsds } from "./cargo-publication.js";
+export type { MsdsFile, PublicationAttempt } from "./cargo-publication.js";
 export { serviceTaxonomy, sameQuoteScope, validateQuote } from "./quotes.js";
 export type { ServiceKind, ContractCurrency, NormalizedQuote } from "./quotes.js";
 

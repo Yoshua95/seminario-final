@@ -12,7 +12,7 @@
     "dev:mobile": "npm run start --workspace=@4pack/mobile",
     "build:web": "npm run build --workspace=@4pack/web",
     "build:mobile": "npm run export:android --workspace=@4pack/mobile",
-    "test": "npm run test:domain && npm run test:database && npm run test:stage2a && npm run test:stage2b && npm run test:preview && npm run test:multirole",
+    "test": "npm run test:domain && npm run test:database && npm run test:stage2a && npm run test:stage2b && npm run test:preview && npm run test:multirole && npm run test:hazmat",
     "test:preview": "node --test tests/demo-preview.test.mjs",
     "test:database": "node --test tests/database.test.mjs tests/stage1.test.mjs",
     "test:web": "node tests/operator-browser.test.mjs",
@@ -23,7 +23,9 @@
     "test:stage2a": "node --test tests/stage2a.test.mjs",
     "test:stage2b": "node --test tests/stage2b.test.mjs",
     "test:multirole": "node --test tests/multirole-environment.test.mjs tests/multirole-persistence.test.mjs",
-    "test:multirole:web": "node tests/multirole-browser.test.mjs"
+    "test:multirole:web": "node tests/multirole-browser.test.mjs",
+    "test:hazmat": "tsc -p tests/tsconfig.json && node --test tests/hazmat.test.mjs tests/mobile-publication.test.mjs",
+    "test:hazmat:web": "node tests/multirole-browser.test.mjs --hazmat"
   },
   "overrides": {
     "react": "19.1.0",

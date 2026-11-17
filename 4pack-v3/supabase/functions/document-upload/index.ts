@@ -28,16 +28,21 @@ Deno.serve(async (request: Request) => {
     const { data: allowed, error: targetError } = await admin.rpc("document_upload_target", { actor: user.id, payload });
     if (targetError || !allowed) return Response.json({ error: "Destino no autorizado" }, { status: 403 });
     const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))).map(n=>n.toString(16).padStart(2,"0")).join("");
-    const storage_path = `${user.id}/${crypto.randomUUID()}.${extension}`;
+    const uploadId = form.get("upload_request_id") ?? crypto.randomUUID();
+    if (typeof uploadId !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(uploadId)) throw new Error("Reintento inválido");
+    const storage_path = `${user.id}/${uploadId}.${extension}`;
     const { error: uploadError } = await admin.storage.from("documents").upload(storage_path, bytes, {
       contentType: file.type, upsert: false, metadata: { uploaded_by: user.id, sha256 },
     });
-    if (uploadError) throw new Error("No se pudo subir el archivo");
+    // A retry can encounter an object whose first response was lost. The RPC
+    // verifies its uploader, hash, bytes metadata and exact target before reuse.
+    if (uploadError && String(uploadError.statusCode) !== "409") throw new Error("No se pudo subir el archivo");
     const { data: id, error } = await admin.rpc("register_document_upload", { actor: user.id, payload: {
       ...payload, storage_path, sha256, original_name: file.name, mime_type: file.type, size_bytes: file.size,
     }});
     if (error) {
-      await admin.storage.from("documents").remove([storage_path]);
+      // A transport error may hide a committed registration. Keep the private
+      // object for a safe retry rather than deleting potentially bound evidence.
       throw new Error("No se pudo vincular el documento");
     }
     return Response.json({ id });
