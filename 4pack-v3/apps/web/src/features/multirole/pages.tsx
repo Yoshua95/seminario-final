@@ -21,6 +21,7 @@ type CargoRow = {
   status: string;
 };
 type OfferRow = {
+  backed?: boolean;
   id: string;
   operator_id: string;
   payment_currency: string;
@@ -99,9 +100,7 @@ export async function RehearsalShell({
             <>
               <Link href="/demo/importador">Mis cargas y operaciones</Link>
               {" · "}
-              <Link href="/demo/importador/cargas/nueva">
-                Publicar carga
-              </Link>
+              <Link href="/demo/importador/cargas/nueva">Publicar carga</Link>
             </>
           ) : (
             <>
@@ -183,10 +182,18 @@ export async function ImporterScreen({ parts }: { parts: string[] }) {
     if (!cargo) notFound();
     const offers = await rows<OfferRow>(
       "importer",
-      "select id,operator_id,payment_currency,total_usd,status,normalized_quote from public.offers where cargo_id=$1 order by created_at",
+      process.env.FOURPACK_CAPITAL_ADMIN === "1"
+        ? "select f.id,f.operator_id,f.payment_currency,f.total_usd,f.status,f.normalized_quote,b.backed from public.offers f join public.offer_backing($1) b on b.offer_id=f.id where f.cargo_id=$1 order by f.created_at"
+        : "select id,operator_id,payment_currency,total_usd,status,normalized_quote from public.offers where cargo_id=$1 order by created_at",
       [id],
     );
-    const operation=(await rows<{id:string}>("importer","select id from public.operations where cargo_id=$1 and importer_id=auth.uid()",[id]))[0];
+    const operation = (
+      await rows<{ id: string }>(
+        "importer",
+        "select id from public.operations where cargo_id=$1 and importer_id=auth.uid()",
+        [id],
+      )
+    )[0];
     return (
       <RehearsalShell role="importer">
         <section className="op-panel">
@@ -199,10 +206,20 @@ export async function ImporterScreen({ parts }: { parts: string[] }) {
           </p>
           <h2>Comparar propuestas privadas</h2>
           <p>
-            Compará alcance y moneda, no solo el precio. La capacidad se
-            confirma al adjudicar.
+            Compará alcance y moneda, no solo el precio. La capacidad se reserva
+            al enviar y se transfiere al adjudicar.
           </p>
-          {operation&&<div><p role="status">Operación creada con capacidad reservada.</p><Link className="op-button" href={'/demo/importador/operaciones/'+operation.id}>Ver operación creada</Link></div>}
+          {operation && (
+            <div>
+              <p role="status">Operación creada con capacidad reservada.</p>
+              <Link
+                className="op-button"
+                href={"/demo/importador/operaciones/" + operation.id}
+              >
+                Ver operación creada
+              </Link>
+            </div>
+          )}
           {offers.length === 0 && <p>Sin propuestas presentadas.</p>}
           {offers.map((o) => (
             <article key={o.id} className="op-panel">
@@ -210,18 +227,28 @@ export async function ImporterScreen({ parts }: { parts: string[] }) {
                 Propuesta · {o.payment_currency}{" "}
                 {money(o.total_usd, o.payment_currency)}
               </h3>
-              <p>{o.status}</p>
+              <p>
+                {o.status} ·{" "}
+                {o.backed === true
+                  ? "Capital reservado"
+                  : o.status === "submitted"
+                    ? "Respaldo pendiente"
+                    : "Oferta cerrada"}
+              </p>
               <QuoteTerms quote={o.normalized_quote} />
-              {o.status === "submitted" && cargo.status === "open" && (
-                <RehearsalForm
-                  command="award"
-                  label="Adjudicar oferta"
-                  linkBase="/demo/importador/operaciones"
-                  linkLabel="Ver operación creada"
-                >
-                  <input type="hidden" name="offer_id" value={o.id} />
-                </RehearsalForm>
-              )}
+              {o.status === "submitted" &&
+                cargo.status === "open" &&
+                (process.env.FOURPACK_CAPITAL_ADMIN !== "1" ||
+                  o.backed === true) && (
+                  <RehearsalForm
+                    command="award"
+                    label="Adjudicar oferta"
+                    linkBase="/demo/importador/operaciones"
+                    linkLabel="Ver operación creada"
+                  >
+                    <input type="hidden" name="offer_id" value={o.id} />
+                  </RehearsalForm>
+                )}
             </article>
           ))}
         </section>

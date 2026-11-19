@@ -516,7 +516,24 @@ export async function loadImporterOffers(
     .eq("cargo_id", cargoId)
     .order("created_at");
   if (error) throw error;
+  const backing = await supabase!.rpc("offer_backing", {
+    target_cargo: cargoId,
+  });
+  if (backing.error)
+    throw new Error(
+      "No pudimos comprobar el respaldo de las ofertas. Volvé a actualizar.",
+    );
+  const backed = new Map<string, { backed: boolean; reason: string }>(
+    (backing.data ?? []).map(
+      (r: { offer_id: string; backed: boolean; reason: string }) => [
+        r.offer_id,
+        r,
+      ],
+    ),
+  );
   return (data ?? []).map((o) => ({
+    capitalBacked: backed.get(o.id)?.backed === true,
+    backingReason: backed.get(o.id)?.reason ?? "Respaldo no verificado",
     id: o.id,
     operatorId: o.operator_id,
     amount: Number(o.total_usd),

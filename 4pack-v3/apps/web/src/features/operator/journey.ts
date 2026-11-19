@@ -9,6 +9,23 @@ export function capacityWarnings(
   volume: number | null,
   now = Date.now(),
 ) {
+  if (capacity?.capital) {
+    const c = capacity.capital,
+      reasons: string[] = [];
+    if (c.available === null || c.requires_review)
+      reasons.push(
+        "Las reservas históricas requieren revisión administrativa.",
+      );
+    else if (capital > c.available)
+      reasons.push(
+        `Faltan ARS ${(capital - c.available).toLocaleString("es-AR")} para respaldar esta oferta.`,
+      );
+    if (volume === null)
+      reasons.push(
+        "El importador debe confirmar el volumen antes de adjudicar; el capital sí se reserva al enviar.",
+      );
+    return reasons;
+  }
   if (!capacity)
     return ["No pudimos verificar tus límites. Se comprobarán al adjudicar."];
   const l = capacity.limits,

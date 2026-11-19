@@ -5,21 +5,35 @@ import { SessionProfile } from "@/components/session-profile";
 import { getCurrentRole } from "@/lib/dashboard-data";
 
 const navigation = [
-  { key: "capacity", href: "/admin/capacidad", label: "Capacidad", adminOnly: true },
+  {
+    key: "capacity",
+    href: "/admin/capacidad",
+    label: "Capacidad",
+    adminOnly: true,
+  },
   { key: "operators", href: "/operadores", label: "Operadores" },
   { key: "opportunities", href: "/", label: "Oportunidades" },
   { key: "offers", href: "/ofertas", label: "Mis ofertas" },
   { key: "operations", href: "/operaciones", label: "Operaciones" },
   { key: "documents", href: "/documentos", label: "Documentos" },
   { key: "profile", href: "/perfil", label: "Mi perfil" },
-  { key: "admin", href: "/admin", label: "Administración", adminOnly: true }
+  { key: "admin", href: "/admin", label: "Administración", adminOnly: true },
 ] as const;
+const adminNavigation = [
+  { key: "admin", href: "/admin", label: "Inicio" },
+  { key: "operators", href: "/admin/operadores", label: "Operadores" },
+  { key: "capacity", href: "/admin/capacidad", label: "Capacidad" },
+  { key: "operations", href: "/admin/operaciones", label: "Operaciones" },
+  { key: "claims", href: "/admin/reclamos", label: "Reclamos" },
+  { key: "importers", href: "/admin/importadores", label: "Importadores" },
+  { key: "profile", href: "/admin/perfil", label: "Mi perfil" },
+];
 
 export type DashboardSection = (typeof navigation)[number]["key"];
 
 export async function DashboardShell({
   active,
-  children
+  children,
 }: {
   active: DashboardSection;
   children: ReactNode;
@@ -28,10 +42,19 @@ export async function DashboardShell({
   return (
     <main className="shell">
       <aside className="sidebar">
-        <Link className="brand" href="/"><BrandMark/></Link>
+        <Link className="brand" href="/">
+          <BrandMark />
+        </Link>
         <nav aria-label="Navegación principal">
-          {navigation.filter((item) => !("adminOnly" in item) || role === "admin").map((item) => (
-            <Link className={item.key === active ? "active" : undefined} href={item.href} key={item.key}>
+          {(role === "admin"
+            ? adminNavigation
+            : navigation.filter((item) => !("adminOnly" in item))
+          ).map((item) => (
+            <Link
+              className={item.key === active ? "active" : undefined}
+              href={item.href}
+              key={item.key}
+            >
               {item.label}
             </Link>
           ))}

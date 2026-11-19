@@ -22,7 +22,7 @@ export async function CapacityAdminPage({
       {demo && (
         <p>DEMO LOCAL: identidad administrativa simulada. Datos ficticios.</p>
       )}
-      <Link href={demo ? "/demo/operador/capacidad" : "/admin"}>
+      <Link href={demo ? "/demo/operador/perfil#capital-operativo" : "/admin"}>
         Volver al panel
       </Link>
       <form>

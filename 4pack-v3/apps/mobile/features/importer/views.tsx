@@ -492,6 +492,7 @@ export function OffersView({
       )}
       {offers.map((o, i) => {
         const eligible =
+          o.capitalBacked === true &&
           o.status === "submitted" &&
           o.currency === "ARS" &&
           Date.parse(o.validUntil) > Date.now();
@@ -508,9 +509,12 @@ export function OffersView({
               <View style={s.row}>
                 <Copy muted>PROPUESTA {String(i + 1).padStart(2, "0")}</Copy>
                 <Tag tone={eligible ? "green" : "yellow"}>
-                  {eligible ? "Disponible" : "No disponible"}
+                  {eligible ? "Capital reservado" : "No disponible"}
                 </Tag>
               </View>
+              {!eligible && (
+                <Copy muted>{o.backingReason ?? "Respaldo no verificado"}</Copy>
+              )}
               <Copy style={s.price}>
                 {o.currency} {o.amount.toLocaleString("es-AR")}
               </Copy>

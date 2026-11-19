@@ -1,19 +1,15 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { DashboardShell } from "@/components/dashboard-shell";
-import { OperatorReviewList } from "@/components/operator-review-list";
-import { getCurrentRole, getOperatorReviews } from "@/lib/dashboard-data";
-
-export default async function OperatorAdminPage() {
-  const role = await getCurrentRole();
-  if (role !== "admin") redirect("/");
-  const operators = await getOperatorReviews();
-
+import { AdminWorkspace } from "@/features/admin/workspace";
+export const dynamic = "force-dynamic";
+export default function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
   return (
-    <DashboardShell active="profile">
-      <header><div><p className="eyebrow">CONTROL ADMINISTRATIVO</p><h1>Validación de operadores</h1><p>Revisá la identidad comercial antes de habilitar cotizaciones.</p></div></header>
-      <Link href="/admin/operadores/comercial">Moderar perfiles comerciales</Link>
-      <OperatorReviewList operators={operators} />
-    </DashboardShell>
+    <AdminWorkspace
+      section="operadores"
+      demo={false}
+      searchParams={searchParams}
+    />
   );
 }

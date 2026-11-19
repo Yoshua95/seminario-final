@@ -6,7 +6,15 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@4pack/domain"],
   serverExternalPackages: ["@electric-sql/pglite"],
   turbopack: {
-    resolveAlias: { "./operator.js": "../../packages/domain/src/operator.ts", "./quotes.js": "../../packages/domain/src/quotes.ts", "./cargo-publication.js": "../../packages/domain/src/cargo-publication.ts" },
+    ...(process.env.FOURPACK_TURBOPACK_ROOT
+      ? { root: process.env.FOURPACK_TURBOPACK_ROOT }
+      : {}),
+    resolveAlias: {
+      "./operator.js": "../../packages/domain/src/operator.ts",
+      "./quotes.js": "../../packages/domain/src/quotes.ts",
+      "./cargo-publication.js":
+        "../../packages/domain/src/cargo-publication.ts",
+    },
   },
   experimental: { serverActions: { bodySizeLimit: "11mb" } },
 };

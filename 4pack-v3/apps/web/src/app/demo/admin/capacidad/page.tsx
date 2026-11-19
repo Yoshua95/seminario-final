@@ -1,9 +1,15 @@
-import { CapacityAdminPage } from "@/features/capacity/admin-page";
+import { AdminWorkspace } from "@/features/admin/workspace";
 export const dynamic = "force-dynamic";
 export default function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; operator?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  return <CapacityAdminPage demo searchParams={searchParams} />;
+  return (
+    <AdminWorkspace
+      section="capacidad"
+      demo={true}
+      searchParams={searchParams}
+    />
+  );
 }

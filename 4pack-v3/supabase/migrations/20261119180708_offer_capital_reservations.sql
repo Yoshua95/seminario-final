@@ -17,6 +17,9 @@ create table public.offer_capital_reservations(
  check((state='transferred')=(operation_id is not null)),check((state='released')=(released_at is not null))
 );
 create index offer_capital_operator_idx on public.offer_capital_reservations(operator_id,state);
+create table public.offer_submission_requests(operator_id uuid not null references public.operator_profiles(user_id),request_key text not null,payload jsonb not null,offer_id uuid not null references public.offers(id),primary key(operator_id,request_key));
+alter table public.offer_submission_requests enable row level security;
+revoke all on public.offer_submission_requests from public,anon,authenticated;
 alter table public.offer_capital_reservations enable row level security;
 revoke all on public.offer_capital_reservations from public,anon,authenticated;
 grant select on public.offer_capital_reservations to authenticated;
@@ -70,10 +73,20 @@ create trigger offer_capital_status after update of status on public.offers for 
 
 alter function public.quote_command(text,jsonb) rename to quote_command_before_offer_capital;
 revoke all on function public.quote_command_before_offer_capital(text,jsonb) from public,anon,authenticated;
-create function public.quote_command(command text,payload jsonb) returns jsonb language plpgsql security definer set search_path=public as $$ begin
+create function public.quote_command(command text,payload jsonb) returns jsonb language plpgsql security definer set search_path=public as $$
+declare prior public.offer_submission_requests;result jsonb;key text:=coalesce(nullif(payload->>'submission_key',''),md5(payload::text));begin
  if auth.uid() is null or not public.operator_approved() then raise exception 'Operador aprobado requerido';end if;
  perform public.lock_capital_market();perform public.release_expired_offer_capital();
- return public.quote_command_before_offer_capital(command,payload);
+ if command='submit' then
+  select * into prior from public.offer_submission_requests where operator_id=auth.uid() and request_key=key;
+  if found then
+   if prior.payload is distinct from payload then raise exception 'El reintento debe conservar los datos de la oferta';end if;
+   return jsonb_build_object('ok',true,'id',prior.offer_id);
+  end if;
+ end if;
+ result:=public.quote_command_before_offer_capital(command,payload);
+ if command='submit' then insert into public.offer_submission_requests values(auth.uid(),key,payload,(result->>'id')::uuid);end if;
+ return result;
 end $$;
 
 -- Transfer the already backed amount. No second availability subtraction; no
@@ -141,6 +154,7 @@ create function public.configure_operator_capacity(target_operator uuid,payload 
 declare usage jsonb;begin
  if auth.uid() is null or public.current_user_role()<>'admin' then raise exception 'Acceso administrativo requerido';end if;
  perform public.lock_capital_market();usage:=public.capital_commitment(target_operator);
+ if not exists(select 1 from public.operator_profiles where user_id=target_operator and verification_status='approved') then raise exception 'Solo empresas registradas y aprobadas';end if;
  if (payload->>'approved_working_capital')::numeric<(usage->>'committed')::numeric then raise exception 'El capital aprobado no puede ser menor que el comprometido';end if;
  perform public.configure_capacity_before_offers(target_operator,payload||jsonb_build_object('max_operations',greatest(2147483647,coalesce((payload->>'max_operations')::int,0))));
 end $$;

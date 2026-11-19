@@ -3,11 +3,11 @@ import { Drawer } from "./drawer";
 import { OffersList } from "./offers-list";
 import { Collections } from "./collections";
 import { nextOperationStep, isProviderTest } from "./journey";
-import { CapacityView } from "../capacity/view";
-import { CommercialEditor } from "./commercial-editor";
+import { CompanyProfile } from "./company-profile";
+
 import { QuoteTerms } from "@/features/marketplace/quote-terms";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   documentTypes,
   milestoneTypes,
@@ -44,7 +44,13 @@ const basePath = (demo: boolean) => (demo ? "/demo/operador" : "/operador");
 function cargoById(data: Snapshot, id: string) {
   return data.cargos.find((c) => c.id === id);
 }
-function RatingCard({ average, count }: { average: number | null; count: number }) {
+function RatingCard({
+  average,
+  count,
+}: {
+  average: number | null;
+  count: number;
+}) {
   return (
     <div className="op-reputation">
       <div className="op-icon-box">
@@ -85,7 +91,9 @@ function Manifest({
         <span className="op-badge mono">#{code(cargo)}</span>
       </div>
       <div className="op-facts">
-        <Fact label="Modalidad solicitada">{modeLabel(cargo.preferred_mode)}</Fact>
+        <Fact label="Modalidad solicitada">
+          {modeLabel(cargo.preferred_mode)}
+        </Fact>
         <Fact icon="pin" label="Origen de Carga">
           {cargo.origin}
         </Fact>
@@ -99,7 +107,9 @@ function Manifest({
           {Number(cargo.weight_kg).toLocaleString("es-AR")} kg
         </Fact>
         <Fact icon="volume" label="Volumen Métrico">
-          {cargo.volume_m3===null?'Por confirmar':`${number(cargo.volume_m3, 2)} m³`}
+          {cargo.volume_m3 === null
+            ? "Por confirmar"
+            : `${number(cargo.volume_m3, 2)} m³`}
         </Fact>
         <Fact icon="offers" label="Unidades / Bultos">
           {cargo.units_description || `${cargo.packages} bultos`}
@@ -314,7 +324,9 @@ function Opportunities({
                 <p>
                   {c.origin} → {c.destination} · {c.title} —{" "}
                   {Number(c.weight_kg).toLocaleString("es-AR")} kg /{" "}
-                  {c.volume_m3===null?'Volumen por confirmar':`${number(c.volume_m3, 2)} m³`}
+                  {c.volume_m3 === null
+                    ? "Volumen por confirmar"
+                    : `${number(c.volume_m3, 2)} m³`}
                 </p>
               </div>
               <div className="op-cargo-tags">
@@ -369,7 +381,9 @@ function Opportunities({
     </div>
   );
 }
-function Offers(props: {data:Snapshot;demo:boolean;search:Search}) { return <OffersList {...props}/>; }
+function Offers(props: { data: Snapshot; demo: boolean; search: Search }) {
+  return <OffersList {...props} />;
+}
 function Operations({
   data,
   demo,
@@ -385,9 +399,11 @@ function Operations({
   const active = data.operations.filter(
     (o) => !["completed", "cancelled", "failed"].includes(o.phase),
   );
-  const filtered = (val(search,"estado")==="completed" ? data.operations.filter(o=>o.phase==="completed") : active).filter(
-    (o) => !val(search, "estado") || o.phase === val(search, "estado"),
-  );
+  const filtered = (
+    val(search, "estado") === "completed"
+      ? data.operations.filter((o) => o.phase === "completed")
+      : active
+  ).filter((o) => !val(search, "estado") || o.phase === val(search, "estado"));
   if (!id)
     return (
       <>
@@ -433,7 +449,9 @@ function Operations({
           </Link>
         </form>
         <div className="op-stack">
-          {filtered.map(o=><OperationRow key={o.id} data={data} id={o.id} base={base}/>)}
+          {filtered.map((o) => (
+            <OperationRow key={o.id} data={data} id={o.id} base={base} />
+          ))}
           {filtered.length === 0 && (
             <Empty title="Sin operaciones activas">
               Tus ofertas adjudicadas aparecerán acá.
@@ -450,7 +468,10 @@ function Operations({
   const documents = data.documents.filter((d) => d.operation_id === id);
   const events = data.events.filter((e) => e.operation_id === id);
   const next = operationTransitions[operation.phase].filter(
-    (p) => !["disputed", "cancelled", "confirmed", "completed", "failed"].includes(p),
+    (p) =>
+      !["disputed", "cancelled", "confirmed", "completed", "failed"].includes(
+        p,
+      ),
   );
   return (
     <>
@@ -462,7 +483,20 @@ function Operations({
         description={`#${code(operation)} · ${cargo?.title ?? "Operación"}`}
         action={<Badge status={operation.phase} />}
       />
-      <section className="op-panel op-next-step"><div><p className="op-caption">PRÓXIMO PASO</p><h2>{nextOperationStep(operation.phase, guarantee?.status === "held_simulated")}</h2></div><a href="#registrar-hito" className="op-button secondary">Ver acciones de esta operación</a></section>
+      <section className="op-panel op-next-step">
+        <div>
+          <p className="op-caption">PRÓXIMO PASO</p>
+          <h2>
+            {nextOperationStep(
+              operation.phase,
+              guarantee?.status === "held_simulated",
+            )}
+          </h2>
+        </div>
+        <a href="#registrar-hito" className="op-button secondary">
+          Ver acciones de esta operación
+        </a>
+      </section>
       <div className="op-operation-layout">
         <div className="op-stack">
           <section className="op-panel">
@@ -483,7 +517,17 @@ function Operations({
                       ? `Estado: ${phaseLabels[e.event_type as keyof typeof phaseLabels] ?? "Actualizado"}`
                       : e.title}
                   </h3>
-                  <p>{e.description}</p><small>Responsable: {e.created_by === data.profile.id ? data.profile.full_name : e.created_by === operation.importer_id ? operation.importer_name : e.created_by ? `Cuenta ${e.created_by}` : "No informado en el registro histórico"}</small>
+                  <p>{e.description}</p>
+                  <small>
+                    Responsable:{" "}
+                    {e.created_by === data.profile.id
+                      ? data.profile.full_name
+                      : e.created_by === operation.importer_id
+                        ? operation.importer_name
+                        : e.created_by
+                          ? `Cuenta ${e.created_by}`
+                          : "No informado en el registro histórico"}
+                  </small>
                   <small>
                     <Icon name="pin" />
                     {e.location || "Sin ubicación informada"}
@@ -567,62 +611,69 @@ function Operations({
               </ActionForm>
             </section>
           )}
-          <Drawer label="Enviar mensaje" title="Chat de esta operación" initialOpen={val(search,"panel")==="chat"} wide><section className="op-panel op-chat">
-            <div className="op-chat-header">
-              <span className="op-avatar">
-                {operation.importer_name?.slice(0, 2).toUpperCase() || "IM"}
-              </span>
-              <div>
-                <h2>{operation.importer_name || "Importador"}</h2>
-                <p>Conversación privada de la operación</p>
+          <Drawer
+            label="Enviar mensaje"
+            title="Chat de esta operación"
+            initialOpen={val(search, "panel") === "chat"}
+            wide
+          >
+            <section className="op-panel op-chat">
+              <div className="op-chat-header">
+                <span className="op-avatar">
+                  {operation.importer_name?.slice(0, 2).toUpperCase() || "IM"}
+                </span>
+                <div>
+                  <h2>{operation.importer_name || "Importador"}</h2>
+                  <p>Conversación privada de la operación</p>
+                </div>
+                <LiveUpdates demo={demo} operationId={id} />
               </div>
-              <LiveUpdates demo={demo} operationId={id} />
-            </div>
-            <MessageList>
-              {data.messages
-                .filter((m) => m.operation_id === id)
-                .map((m) => (
-                  <article
-                    key={m.id}
-                    className={`op-message ${m.sender_id === data.profile.id ? "mine" : ""}`}
-                  >
-                    <small>
-                      {m.sender_id === data.profile.id
-                        ? "Vos"
-                        : m.sender_name || "Importador"}{" "}
-                      · {date(m.created_at)}
-                    </small>
-                    <p>{m.body}</p>
-                  </article>
-                ))}
-              {!data.messages.some((m) => m.operation_id === id) && (
-                <Empty title="Iniciá la conversación">
-                  Los mensajes quedan asociados a esta operación.
-                </Empty>
-              )}
-            </MessageList>
-            <ActionForm
-              demo={demo}
-              command="message"
-              label="Enviar mensaje"
-              reset
-              className="op-message-form"
-            >
-              <input type="hidden" name="id" value={id} />
-              <label className="sr-only" htmlFor="operation-message">
-                Mensaje
-              </label>
-              <textarea
-                id="operation-message"
-                name="body"
-                placeholder="Escribí un mensaje para el importador…"
-                required
-                maxLength={2000}
-                rows={2}
-              />
-            </ActionForm>
-            <MarkRead demo={demo} id={id} />
-          </section></Drawer>
+              <MessageList>
+                {data.messages
+                  .filter((m) => m.operation_id === id)
+                  .map((m) => (
+                    <article
+                      key={m.id}
+                      className={`op-message ${m.sender_id === data.profile.id ? "mine" : ""}`}
+                    >
+                      <small>
+                        {m.sender_id === data.profile.id
+                          ? "Vos"
+                          : m.sender_name || "Importador"}{" "}
+                        · {date(m.created_at)}
+                      </small>
+                      <p>{m.body}</p>
+                    </article>
+                  ))}
+                {!data.messages.some((m) => m.operation_id === id) && (
+                  <Empty title="Iniciá la conversación">
+                    Los mensajes quedan asociados a esta operación.
+                  </Empty>
+                )}
+              </MessageList>
+              <ActionForm
+                demo={demo}
+                command="message"
+                label="Enviar mensaje"
+                reset
+                className="op-message-form"
+              >
+                <input type="hidden" name="id" value={id} />
+                <label className="sr-only" htmlFor="operation-message">
+                  Mensaje
+                </label>
+                <textarea
+                  id="operation-message"
+                  name="body"
+                  placeholder="Escribí un mensaje para el importador…"
+                  required
+                  maxLength={2000}
+                  rows={2}
+                />
+              </ActionForm>
+              <MarkRead demo={demo} id={id} />
+            </section>
+          </Drawer>
         </div>
         <aside className="op-stack">
           {operation.phase === "completed" && (
@@ -633,12 +684,18 @@ function Operations({
               ) ? (
                 <p>Tu evaluación del importador está registrada.</p>
               ) : (
-                <ActionForm demo={demo} command="rating" label="Enviar evaluación al importador">
+                <ActionForm
+                  demo={demo}
+                  command="rating"
+                  label="Enviar evaluación al importador"
+                >
                   <input type="hidden" name="id" value={id} />
                   <label>
                     Puntaje
                     <select name="score">
-                      {[5, 4, 3, 2, 1].map((n) => <option key={n}>{n}</option>)}
+                      {[5, 4, 3, 2, 1].map((n) => (
+                        <option key={n}>{n}</option>
+                      ))}
                     </select>
                   </label>
                   <label>
@@ -662,17 +719,57 @@ function Operations({
               )}
             </Fact>
             <Fact label="Modalidad">{modeLabel(offer?.mode ?? null)}</Fact>
-            <Drawer label="Ver contrato" title={`Contrato · ${code(operation)}`} wide><h3>{cargo?.origin} → {cargo?.destination}</h3><QuoteTerms quote={data.contracts.find(c=>c.operation_id===operation.id)?.content?.quote??null} /></Drawer>
-            <Fact label="Precio acordado">{money(offer?.total_usd ?? 0, offer?.payment_currency ?? "USD")}</Fact>
-            <Fact label={isProviderTest(operation)?"Pago de prueba":"Garantía simulada"}>
-              {isProviderTest(operation) ? <span>{data.paymentsUnavailable?"Verificación no disponible":data.payments?.some(p=>p.operation_id===id&&p.status==="approved")?"Aprobado · verificado por backend":"Pendiente de pago verificado"}</span> : <Badge status={guarantee?.status ?? "pending"} />}
+            <Drawer
+              label="Ver contrato"
+              title={`Contrato · ${code(operation)}`}
+              wide
+            >
+              <h3>
+                {cargo?.origin} → {cargo?.destination}
+              </h3>
+              <QuoteTerms
+                quote={
+                  data.contracts.find((c) => c.operation_id === operation.id)
+                    ?.content?.quote ?? null
+                }
+              />
+            </Drawer>
+            <Fact label="Precio acordado">
+              {money(offer?.total_usd ?? 0, offer?.payment_currency ?? "USD")}
+            </Fact>
+            <Fact
+              label={
+                isProviderTest(operation)
+                  ? "Pago de prueba"
+                  : "Garantía simulada"
+              }
+            >
+              {isProviderTest(operation) ? (
+                <span>
+                  {data.paymentsUnavailable
+                    ? "Verificación no disponible"
+                    : data.payments?.some(
+                          (p) =>
+                            p.operation_id === id && p.status === "approved",
+                        )
+                      ? "Aprobado · verificado por backend"
+                      : "Pendiente de pago verificado"}
+                </span>
+              ) : (
+                <Badge status={guarantee?.status ?? "pending"} />
+              )}
             </Fact>
             <Fact label="Comisión 4PACK">
-              {money(guarantee?.commission_usd ?? 0, guarantee?.currency ?? "USD")}
+              {money(
+                guarantee?.commission_usd ?? 0,
+                guarantee?.currency ?? "USD",
+              )}
             </Fact>
             <Fact label="Adjudicación">{date(operation.awarded_at)}</Fact>
             <p className="op-small">
-              {isProviderTest(operation)?"Pago de prueba. Liberación por hitos aún no disponible.":"Garantía simulada: no representa fondos custodiados."}
+              {isProviderTest(operation)
+                ? "Pago de prueba. Liberación por hitos aún no disponible."
+                : "Garantía simulada: no representa fondos custodiados."}
             </p>
           </section>
           <section className="op-panel">
@@ -744,8 +841,47 @@ function Operations({
             )}
           </section>
           <section className="op-panel">
-            <h2>Documentación de la operación</h2><p className="op-small">Packing list y factura: el importador aporta los datos de la mercadería. Podés adjuntar el archivo recibido; comprobantes del servicio: operador.</p>
-            {[...new Set(["Packing list",...(cargo?.required_documents??[]),...(cargo?.msds_required?["MSDS"]:[])])].map(type=>{const doc=documents.find(d=>d.document_type.toLowerCase()===type.toLowerCase())??data.documents.find(d=>d.cargo_id===cargo?.id&&d.document_type.toLowerCase()===type.toLowerCase());return <div className="op-document-task" key={type}><strong>{type}</strong><small>Responsable: {type==="Comprobante de entrega"?"Operador":"Importador"}</small><span>{doc?<Badge status={doc.validation_status}/>:"Falta adjuntar"}</span></div>;})}
+            <h2>Documentación de la operación</h2>
+            <p className="op-small">
+              Packing list y factura: el importador aporta los datos de la
+              mercadería. Podés adjuntar el archivo recibido; comprobantes del
+              servicio: operador.
+            </p>
+            {[
+              ...new Set([
+                "Packing list",
+                ...(cargo?.required_documents ?? []),
+                ...(cargo?.msds_required ? ["MSDS"] : []),
+              ]),
+            ].map((type) => {
+              const doc =
+                documents.find(
+                  (d) => d.document_type.toLowerCase() === type.toLowerCase(),
+                ) ??
+                data.documents.find(
+                  (d) =>
+                    d.cargo_id === cargo?.id &&
+                    d.document_type.toLowerCase() === type.toLowerCase(),
+                );
+              return (
+                <div className="op-document-task" key={type}>
+                  <strong>{type}</strong>
+                  <small>
+                    Responsable:{" "}
+                    {type === "Comprobante de entrega"
+                      ? "Operador"
+                      : "Importador"}
+                  </small>
+                  <span>
+                    {doc ? (
+                      <Badge status={doc.validation_status} />
+                    ) : (
+                      "Falta adjuntar"
+                    )}
+                  </span>
+                </div>
+              );
+            })}
             {documents.map((d) => (
               <div className="op-document-inline" key={d.id}>
                 <div>
@@ -856,7 +992,7 @@ function Documents({
               Tipo documental
               <select
                 name="document_type"
-                defaultValue={replacing?.document_type ?? val(search,"tipo")}
+                defaultValue={replacing?.document_type ?? val(search, "tipo")}
               >
                 {documentTypes.map((t) => (
                   <option key={t}>{t}</option>
@@ -973,10 +1109,19 @@ function Documents({
   );
 }
 function History({ data, demo }: { data: Snapshot; demo: boolean }) {
-  const operations = data.operations.filter((o) =>
-    o.phase === "completed" || data.offers.find(f=>f.id===o.accepted_offer_id)?.payment_currency === "USD",
+  const operations = data.operations.filter(
+    (o) =>
+      o.phase === "completed" ||
+      data.offers.find((f) => f.id === o.accepted_offer_id)
+        ?.payment_currency === "USD",
   );
-  const scores = data.ratings.filter((r) => r.recipient_id === data.profile.id && data.operations.some(o=>o.id===r.operation_id && o.phase==="completed"));
+  const scores = data.ratings.filter(
+    (r) =>
+      r.recipient_id === data.profile.id &&
+      data.operations.some(
+        (o) => o.id === r.operation_id && o.phase === "completed",
+      ),
+  );
   const rep = reputation(scores.map((r) => Number(r.score)));
   return (
     <>
@@ -999,7 +1144,8 @@ function History({ data, demo }: { data: Snapshot; demo: boolean }) {
         </div>
         <div className="op-rank-score">
           <strong>
-            {rep.count === 0 ? "Sin historial" : number(rep.average ?? 0)} <small>/ 5,0</small>
+            {rep.count === 0 ? "Sin historial" : number(rep.average ?? 0)}{" "}
+            <small>/ 5,0</small>
           </strong>
           <span>
             ({operations.length} operaciones · {rep.count} calificaciones)
@@ -1083,7 +1229,9 @@ function History({ data, demo }: { data: Snapshot; demo: boolean }) {
     </>
   );
 }
-function Wallet(props:{data:Snapshot;demo:boolean}) { return <Collections {...props}/>; }
+function Wallet(props: { data: Snapshot; demo: boolean }) {
+  return <Collections {...props} />;
+}
 function Support({
   data,
   demo,
@@ -1333,209 +1481,7 @@ function Support({
   );
 }
 function Profile({ data, demo }: { data: Snapshot; demo: boolean }) {
-  const c = data.operator;
-  return (
-    <>
-      <PageHeader
-        title="Perfil Empresarial"
-        description="Tu identidad logística, alcance operativo y documentación de validación."
-        action={<Badge status={c.verification_status} />}
-      />
-      <section className="op-panel"><h2>Documentos de tu empresa</h2><p>Certificaciones e identidad empresarial para revisión administrativa.</p><Link className="op-button secondary" href={`${basePath(demo)}/documentos?empresa=1`}>Gestionar documentación empresarial</Link><Link className="op-text-link" href={`${basePath(demo)}/documentos`}>Consultar archivo general</Link></section>
-      <CommercialEditor demo={demo} profile={data.commercial} />
-      <div className="op-profile-layout">
-        <section className="op-panel">
-          <h2>Datos de la empresa</h2>
-          {c.verification_status === "approved" && (
-            <p className="op-small">
-              La razón social y el CUIT están validados.{" "}
-              <Link className="op-text-link" href={`${basePath(demo)}/soporte`}>
-                Solicitar un cambio de datos jurídicos
-              </Link>
-              .
-            </p>
-          )}
-          <ActionForm demo={demo} command="profile">
-            <div className="op-form-grid">
-              <label>
-                Razón social
-                <input
-                  name="company_name"
-                  defaultValue={c.company_name}
-                  readOnly={c.verification_status === "approved"}
-                  required
-                  minLength={3}
-                  maxLength={150}
-                />
-              </label>
-              <label>
-                CUIT
-                <input
-                  name="tax_id"
-                  defaultValue={c.tax_id}
-                  readOnly={c.verification_status === "approved"}
-                  required
-                  minLength={7}
-                  maxLength={30}
-                />
-              </label>
-              <label>
-                Nombre comercial
-                <input
-                  name="trade_name"
-                  defaultValue={c.trade_name}
-                  maxLength={150}
-                />
-              </label>
-              <label>
-                Responsable
-                <input
-                  name="full_name"
-                  defaultValue={data.profile.full_name}
-                  required
-                  minLength={3}
-                  maxLength={150}
-                />
-              </label>
-              <label>
-                Correo de acceso
-                <input
-                  readOnly
-                  value={data.profile.email ?? ""}
-                  aria-label="Correo de acceso"
-                />
-              </label>
-              <label>
-                Teléfono
-                <input
-                  name="phone"
-                  defaultValue={data.profile.phone ?? ""}
-                  maxLength={60}
-                />
-              </label>
-              <label>
-                Dirección
-                <input
-                  name="address"
-                  defaultValue={c.address}
-                  maxLength={300}
-                />
-              </label>
-              <label className="op-wide">
-                Descripción
-                <textarea
-                  name="description"
-                  defaultValue={c.description}
-                  maxLength={2000}
-                />
-              </label>
-              <fieldset className="op-wide">
-                <legend>Modalidades ofrecidas</legend>
-                <div className="op-checkboxes">
-                  {["air", "sea"].map((m) => (
-                    <label key={m}>
-                      <input
-                        type="checkbox"
-                        name="modes"
-                        value={m}
-                        defaultChecked={c.modes.includes(m)}
-                      />
-                      {modeLabel(m)}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <label className="op-wide">
-                Rutas
-                <input name="routes" defaultValue={c.routes} maxLength={500} />
-              </label>
-              <label className="op-wide">
-                Certificaciones
-                <textarea
-                  name="certifications"
-                  defaultValue={c.certifications}
-                  maxLength={1000}
-                />
-              </label>
-            </div>
-          </ActionForm>
-        </section>
-        <aside className="op-stack">
-          <section className="op-panel">
-            <span className="op-avatar large">
-              {c.company_name.slice(0, 2).toUpperCase()}
-            </span>
-            <h2>{c.company_name}</h2>
-            <Fact label="Cuenta">Operador logístico</Fact>
-            <Fact label="Estado">
-              <Badge status={c.verification_status} />
-            </Fact>
-            <Fact label="Reputación">
-              <span>
-                <Icon name="star" /> {data.ratings.some(r=>r.recipient_id===data.profile.id) ? number(c.rating) : "Sin historial"} / 5
-              </span>
-            </Fact>
-            <Fact label="Operaciones finalizadas">
-              {c.completed_operations}
-            </Fact>
-            <Fact label="Fecha de alta">{date(data.profile.created_at)}</Fact>
-            <p className="op-small">
-              El rol, la aprobación y la reputación son administrados por 4PACK.
-              Tu sesión está asociada al correo con el que ingresaste.
-            </p>
-            {c.rejection_reason && (
-              <div className="op-notice danger">{c.rejection_reason}</div>
-            )}
-          </section>
-          <section className="op-panel">
-            <h2>Checklist documental</h2>
-            <p className="op-small">
-              La aprobación de cada archivo corresponde al equipo 4PACK.
-            </p>
-            {[
-              "Credencial del operador",
-              ...new Set(
-                data.documents
-                  .filter(
-                    (d) =>
-                      d.operator_id === data.profile.id &&
-                      !data.documents.some((v) => v.replaces_id === d.id),
-                  )
-                  .map((d) => d.document_type)
-                  .filter((type) => type !== "Credencial del operador"),
-              ),
-            ].map((type) => {
-              const doc = data.documents.find(
-                (d) =>
-                  d.operator_id === data.profile.id &&
-                  d.document_type === type &&
-                  !data.documents.some((v) => v.replaces_id === d.id),
-              );
-              return (
-                <div className="op-document-inline" key={type}>
-                  <div>
-                    <strong>{type}</strong>
-                    <p>{doc ? code(doc) : "Falta presentar"}</p>
-                    {doc?.rejection_reason && (
-                      <p className="op-error-text">{doc.rejection_reason}</p>
-                    )}
-                  </div>
-                  <Badge status={doc?.validation_status ?? "pending"} />
-                </div>
-              );
-            })}
-          </section>
-          <Link
-            className="op-button secondary"
-            href={`${basePath(demo)}/documentos`}
-          >
-            <Icon name="offers" />
-            Documentación empresarial
-          </Link>
-        </aside>
-      </div>
-    </>
-  );
+  return <CompanyProfile data={data} demo={demo} />;
 }
 export async function OperatorPanel({
   demo = false,
@@ -1559,7 +1505,12 @@ export async function OperatorPanel({
             "1970-01-01",
         ),
   ).length;
-  const operational = !["perfil", "documentos", "soporte", "capacidad"].includes(section);
+  const operational = ![
+    "perfil",
+    "documentos",
+    "soporte",
+    "capacidad",
+  ].includes(section);
   const blocked =
     data.operator.verification_status !== "approved" && operational;
   return (
@@ -1630,7 +1581,7 @@ export async function OperatorPanel({
           </section>
         </>
       ) : section === "capacidad" ? (
-        <CapacityView data={data.capacity} operationBase={`${basePath(demo)}/operaciones`} />
+        redirect(`${basePath(demo)}/perfil#capital-operativo`)
       ) : section === "oportunidades" ? (
         <Opportunities data={data} demo={demo} id={id} search={search} />
       ) : section === "mis-ofertas" ? (

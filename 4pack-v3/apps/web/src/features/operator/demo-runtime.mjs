@@ -3,6 +3,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import assets from "./demo-sql.json" with { type: "json" };
+import capitalAssets from "./capital-sql.json" with { type: "json" };
+import { companyFixturePdf } from "./company-fixture.mjs";
 import { isDemoEnabled } from "./demo-environment.mjs";
 export const demoUsers = {
   multirole: "a0000000-0000-0000-0000-000000000007",
@@ -15,34 +17,115 @@ export const demoUsers = {
 };
 export const demoSchemaVersion = createHash("sha256")
   .update(JSON.stringify(assets.migrations))
+  .update(JSON.stringify(capitalAssets))
   .digest("hex");
+async function applyCapitalSchema(db, directory) {
+  if (process.env.FOURPACK_CAPITAL_ADMIN !== "1") return;
+  for (const [name, sql] of Object.entries(capitalAssets)) {
+    if (
+      !(
+        await db.query(
+          "select name from public.local_demo_versions where name=$1",
+          [name],
+        )
+      ).rows.length
+    ) {
+      await db.exec(sql);
+      await db.query(
+        "insert into public.local_demo_versions(name,checksum)values($1,$2)",
+        [name, createHash("sha256").update(sql).digest("hex")],
+      );
+    }
+  }
+  if (directory) {
+    const folder = path.join(
+      path.dirname(directory),
+      "files",
+      demoUsers.multirole,
+    );
+    await mkdir(folder, { recursive: true });
+    await writeFile(
+      path.join(folder, "credencial-ensayo.pdf"),
+      companyFixturePdf(),
+    );
+    await db.exec(
+      `insert into storage.objects(id,bucket_id,name,owner_id,metadata)values('f3000000-0000-0000-0000-000000000007','documents','${demoUsers.multirole}/credencial-ensayo.pdf','${demoUsers.multirole}','{"mimetype":"application/pdf"}') on conflict(id) do nothing;insert into public.document_objects(object_id,document_id,uploaded_by,storage_path)values('f3000000-0000-0000-0000-000000000007','f2000000-0000-0000-0000-000000000007','${demoUsers.multirole}','${demoUsers.multirole}/credencial-ensayo.pdf') on conflict(object_id) do nothing;`,
+    );
+  }
+}
 async function prepareHazmatFixtures(db, directory) {
   // Fictional legacy listings need trusted MSDS bytes under the new invariant.
   // This is only the local/demo adapter, never a production data migration.
-  const bytes=Buffer.from("%PDF-1.4\nMSDS ficticia 4PACK. Sin validez tecnica.\n%%EOF\n");
-  const sha256=createHash("sha256").update(bytes).digest("hex");
-  for(const suffix of ["009477","003104"]) {
-    const cargoId="b0000000-0000-0000-0000-000000"+suffix;
-    const filename="f1000000-0000-0000-0000-000000"+suffix+".pdf";
-    const storagePath=demoUsers.importer+"/"+filename;
-    if(directory) {
-      const folder=path.join(path.dirname(directory),"files",demoUsers.importer);
-      await mkdir(folder,{recursive:true});
-      await writeFile(path.join(folder,filename),bytes);
+  const bytes = Buffer.from(
+    "%PDF-1.4\nMSDS ficticia 4PACK. Sin validez tecnica.\n%%EOF\n",
+  );
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  for (const suffix of ["009477", "003104"]) {
+    const cargoId = "b0000000-0000-0000-0000-000000" + suffix;
+    const filename = "f1000000-0000-0000-0000-000000" + suffix + ".pdf";
+    const storagePath = demoUsers.importer + "/" + filename;
+    if (directory) {
+      const folder = path.join(
+        path.dirname(directory),
+        "files",
+        demoUsers.importer,
+      );
+      await mkdir(folder, { recursive: true });
+      await writeFile(path.join(folder, filename), bytes);
     }
-    await db.transaction(async tx=>{
-      if(!(await tx.query("select id from storage.objects where bucket_id='documents' and name=$1",[storagePath])).rows.length)
-        await tx.query("insert into storage.objects(bucket_id,name,owner_id,metadata,user_metadata) values('documents',$1,$2,$3,$4)",
-          [storagePath,demoUsers.importer,JSON.stringify({size:bytes.length,mimetype:"application/pdf"}),JSON.stringify({uploaded_by:demoUsers.importer,sha256})]);
-      await tx.query("select public.register_document_upload($1,$2::jsonb)",[demoUsers.importer,JSON.stringify({id:cargoId,target_type:"cargo",document_type:"MSDS",kind:"msds",storage_path:storagePath,sha256,original_name:"MSDS ficticia de ensayo.pdf",mime_type:"application/pdf",size_bytes:bytes.length})]);
-      await tx.query("update public.cargo_requests set status='open' where id=$1 and status='draft'",[cargoId]);
+    await db.transaction(async (tx) => {
+      if (
+        !(
+          await tx.query(
+            "select id from storage.objects where bucket_id='documents' and name=$1",
+            [storagePath],
+          )
+        ).rows.length
+      )
+        await tx.query(
+          "insert into storage.objects(bucket_id,name,owner_id,metadata,user_metadata) values('documents',$1,$2,$3,$4)",
+          [
+            storagePath,
+            demoUsers.importer,
+            JSON.stringify({ size: bytes.length, mimetype: "application/pdf" }),
+            JSON.stringify({ uploaded_by: demoUsers.importer, sha256 }),
+          ],
+        );
+      await tx.query("select public.register_document_upload($1,$2::jsonb)", [
+        demoUsers.importer,
+        JSON.stringify({
+          id: cargoId,
+          target_type: "cargo",
+          document_type: "MSDS",
+          kind: "msds",
+          storage_path: storagePath,
+          sha256,
+          original_name: "MSDS ficticia de ensayo.pdf",
+          mime_type: "application/pdf",
+          size_bytes: bytes.length,
+        }),
+      ]);
+      await tx.query(
+        "update public.cargo_requests set status='open' where id=$1 and status='draft'",
+        [cargoId],
+      );
     });
   }
 }
 export async function refreshLocalSchema(db) {
   if (!isDemoEnabled()) throw new Error("La demostración no está disponible.");
+  if (
+    process.env.FOURPACK_CAPITAL_ADMIN === "1" &&
+    (await db.query("select to_regclass('public.capital_market_mutex') t"))
+      .rows[0].t
+  ) {
+    await applyCapitalSchema(db);
+    return;
+  }
   // Older local databases predate the anon role; hosted Supabase already has it.
-  await db.exec("do $$ begin if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if; end $$;");
+  await db.exec(
+    "do $$ begin if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if; end $$;",
+  );
   for (const [name, sql] of Object.entries(assets.migrations)) {
     const checksum = createHash("sha256").update(sql).digest("hex");
     const applied = await db.query(
@@ -63,6 +146,7 @@ export async function refreshLocalSchema(db) {
   // idempotent. File bytes are created on the next adapter start.
   await prepareHazmatFixtures(db);
   await db.exec(assets.scenarios);
+  await applyCapitalSchema(db);
 }
 
 export async function createLocalDatabase(directory) {
@@ -72,12 +156,28 @@ export async function createLocalDatabase(directory) {
     );
   const db = new PGlite(directory);
   await db.waitReady;
-  await db.exec("do $$ begin if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if; end $$;");
-  if ((await db.query("select to_regclass('storage.objects') as name")).rows[0].name)
-    await db.exec("alter table storage.objects add column if not exists metadata jsonb; alter table storage.objects add column if not exists user_metadata jsonb");
+  await db.exec(
+    "do $$ begin if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if; end $$;",
+  );
+  if (
+    (await db.query("select to_regclass('storage.objects') as name")).rows[0]
+      .name
+  )
+    await db.exec(
+      "alter table storage.objects add column if not exists metadata jsonb; alter table storage.objects add column if not exists user_metadata jsonb",
+    );
   const initialized = await db.query(
     "select to_regclass('public.operator_profiles') as name",
   );
+  if (
+    process.env.FOURPACK_CAPITAL_ADMIN === "1" &&
+    initialized.rows[0].name &&
+    (await db.query("select to_regclass('public.capital_market_mutex') t"))
+      .rows[0].t
+  ) {
+    await applyCapitalSchema(db, directory);
+    return db;
+  }
   if (!initialized.rows[0].name) {
     await db.exec(assets.bootstrap);
     for (const [file, source] of Object.entries(assets.migrations)) {
@@ -111,7 +211,10 @@ export async function createLocalDatabase(directory) {
     ))
       await db.query(
         "insert into public.local_demo_versions(name,checksum) values($1,$2) on conflict do nothing",
-        [name, createHash("sha256").update(assets.migrations[name]).digest("hex")],
+        [
+          name,
+          createHash("sha256").update(assets.migrations[name]).digest("hex"),
+        ],
       );
   }
   for (const [name, sql] of Object.entries(assets.migrations)) {
@@ -130,7 +233,7 @@ export async function createLocalDatabase(directory) {
   }
   await db.exec(assets.capacity_seed);
   await db.exec(assets.multirole_seed);
-  await prepareHazmatFixtures(db,directory);
+  await prepareHazmatFixtures(db, directory);
   if (directory) {
     await db.exec(assets.scenarios);
     const samplePath = demoUsers.importer + "/msds-demostracion.pdf";
@@ -188,6 +291,7 @@ export async function createLocalDatabase(directory) {
     }
   }
 
+  await applyCapitalSchema(db, directory);
   return db;
 }
 export async function asUser(db, userId, query, params = []) {

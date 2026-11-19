@@ -68,6 +68,7 @@ export function QuoteComposer({
     dialog = useRef<HTMLDialogElement>(null),
     send = useRef<HTMLButtonElement>(null),
     confirmed = useRef(false);
+  const submissionInput = useRef<HTMLInputElement>(null);
   const selectedLabels = services.map((s) => serviceTaxonomy[s]);
   const reasons = capacityWarnings(
     capacity,
@@ -84,6 +85,8 @@ export function QuoteComposer({
     if (!scopeEdited) setScope(next.map((s) => serviceTaxonomy[s]).join(". "));
   }
   function review(event: FormEvent<HTMLFormElement>) {
+    if (submissionInput.current && !submissionInput.current.value)
+      submissionInput.current.value = crypto.randomUUID();
     const included = event.currentTarget.elements.namedItem(
       "included",
     ) as HTMLTextAreaElement;
@@ -134,6 +137,12 @@ export function QuoteComposer({
       className="op-form op-quote-editor"
     >
       <input type="hidden" name="cargo_id" value={cargoId} />
+      <input
+        type="hidden"
+        name="submission_key"
+        defaultValue=""
+        ref={submissionInput}
+      />
       <input
         type="hidden"
         name="draft_id"
@@ -390,6 +399,13 @@ export function QuoteComposer({
       </label>
       <section className="op-capital-internal">
         <h3>Tu capital de trabajo · uso interno</h3>
+        <p>
+          Disponible según backend:{" "}
+          {capacity?.capital?.available == null
+            ? "Pendiente de revisión"
+            : money(capacity.capital.available, "ARS")}{" "}
+          · Requerido por esta oferta: {money(Number(capital || 0), "ARS")}
+        </p>
         <label>
           ¿Cuánto capital propio necesitás comprometer para realizar este
           servicio? (ARS)
@@ -405,8 +421,8 @@ export function QuoteComposer({
         </label>
         <input type="hidden" name="working_capital_currency" value="ARS" />
         <p className="op-small">
-          Estimación entre cero y el precio. No es un cobro al importador ni una
-          reserva anticipada.
+          Estimación entre cero y el precio. No es un cobro al importador. Al
+          enviar, ese capital queda reservado mientras la oferta esté vigente.
         </p>
         {reasons.length ? (
           <ul role="status" className="op-capacity-warning">
@@ -416,7 +432,8 @@ export function QuoteComposer({
           </ul>
         ) : (
           <p role="status">
-            Dentro de los límites actuales. Se vuelven a comprobar al adjudicar.
+            Capital suficiente según la última consulta. El servidor confirma y
+            reserva al enviar.
           </p>
         )}
       </section>

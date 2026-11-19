@@ -7,7 +7,11 @@ import { revalidatePath } from "next/cache";
 import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { validateOffer, validateDocument } from "@4pack/domain";
-import { validateQuote, assertNewContractCurrency, type NormalizedQuote } from "@4pack/domain";
+import {
+  validateQuote,
+  assertNewContractCurrency,
+  type NormalizedQuote,
+} from "@4pack/domain";
 import {
   loadSnapshot,
   executeCommand,
@@ -23,13 +27,34 @@ import {
 } from "./data";
 import type { ActionResult } from "./types";
 
-export async function proposeVolume(demo:boolean,_previous:ActionResult,form:FormData):Promise<ActionResult>{
- try{
-  const volume=Number(form.get('volume_m3')),cargo=String(form.get('cargo_id')??'');
-  if(!Number.isFinite(volume)||volume<=0||volume>=1000000)throw Error('Ingresá un volumen válido.');
-  const id=await executeVolumeProposal(demo,cargo,volume);revalidatePath(demo?'/demo/operador':'/operador','layout');
-  return{ok:true,id,message:'Volumen propuesto. El importador debe confirmarlo antes de reservar capacidad.'};
- }catch(error){unstable_rethrow(error);return{ok:false,message:error instanceof Error?error.message:'No se pudo proponer el volumen.'};}
+export async function proposeVolume(
+  demo: boolean,
+  _previous: ActionResult,
+  form: FormData,
+): Promise<ActionResult> {
+  try {
+    const volume = Number(form.get("volume_m3")),
+      cargo = String(form.get("cargo_id") ?? "");
+    if (!Number.isFinite(volume) || volume <= 0 || volume >= 1000000)
+      throw Error("Ingresá un volumen válido.");
+    const id = await executeVolumeProposal(demo, cargo, volume);
+    revalidatePath(demo ? "/demo/operador" : "/operador", "layout");
+    return {
+      ok: true,
+      id,
+      message:
+        "Volumen propuesto. El importador debe confirmarlo antes de reservar capacidad.",
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "No se pudo proponer el volumen.",
+    };
+  }
 }
 
 export async function startDemo(form: FormData) {
@@ -49,7 +74,10 @@ export async function startDemo(form: FormData) {
 export async function signOutOperator(demo: boolean) {
   if (demo) {
     assertDemo();
-    if((await import("../multirole/environment.mjs")).isMultiroleDemo()) { await (await import("../multirole/session")).closeRehearsalSession(); redirect("/demo/acceso"); }
+    if ((await import("../multirole/environment.mjs")).isMultiroleDemo()) {
+      await (await import("../multirole/session")).closeRehearsalSession();
+      redirect("/demo/acceso");
+    }
     (await cookies()).delete("fourpack-demo");
     redirect("/demo/acceso");
   }
@@ -85,38 +113,104 @@ export async function operatorAction(
     const payload: Record<string, unknown> = {};
     for (const [key, value] of form.entries())
       if (typeof value === "string") payload[key] = value.trim();
-    if(command==='rating'){
-      const result=await submitOperatorRating(demo,String(payload.id??''),Number(payload.score),String(payload.comment??''));
-      revalidatePath(demo?'/demo/operador':'/operador','layout');
-      return {ok:true,message:'Evaluación del importador registrada.',id:result.id};
+    if (command === "rating") {
+      const result = await submitOperatorRating(
+        demo,
+        String(payload.id ?? ""),
+        Number(payload.score),
+        String(payload.comment ?? ""),
+      );
+      revalidatePath(demo ? "/demo/operador" : "/operador", "layout");
+      return {
+        ok: true,
+        message: "Evaluación del importador registrada.",
+        id: result.id,
+      };
     }
     if (command === "quote") {
-      const intent=String(form.get("intent") ?? "submit");
-      const lines=(key:string)=>String(form.get(key)??"").split(/\n/).map(s=>s.trim()).filter(Boolean);
-      const input:Record<string,unknown>={cargo_id:String(form.get("cargo_id")??""),draft_id:String(form.get("draft_id")??""),replaces_offer_id:String(form.get("replaces_offer_id")??""),offer_id:String(form.get("offer_id")??"")};
-      let validUntil=String(form.get("valid_until")??"");
-      if (validUntil && !/Z$|[+-]\d{2}:\d{2}$/.test(validUntil)) validUntil += (validUntil.length===16?":00":"")+"-03:00";
-      const quote={working_capital_amount:String(form.get("working_capital_amount")??""),working_capital_currency:String(form.get("working_capital_currency")??""),mode:String(form.get("mode")??""),services:form.getAll("services").map(String),scope:String(form.get("scope")??""),amount:String(form.get("amount")??""),currency:String(form.get("currency")??""),included:lines("included"),excluded:lines("excluded"),insurance:String(form.get("insurance")??""),estimated_days:String(form.get("estimated_days")??""),valid_until:validUntil,payment_terms:String(form.get("payment_terms")??""),required_documents:lines("required_documents"),responsibilities:String(form.get("responsibilities")??""),observations:String(form.get("observations")??"")} as NormalizedQuote;
+      const intent = String(form.get("intent") ?? "submit");
+      const lines = (key: string) =>
+        String(form.get(key) ?? "")
+          .split(/\n/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+      const input: Record<string, unknown> = {
+        submission_key: String(form.get("submission_key") ?? ""),
+        cargo_id: String(form.get("cargo_id") ?? ""),
+        draft_id: String(form.get("draft_id") ?? ""),
+        replaces_offer_id: String(form.get("replaces_offer_id") ?? ""),
+        offer_id: String(form.get("offer_id") ?? ""),
+      };
+      let validUntil = String(form.get("valid_until") ?? "");
+      if (validUntil && !/Z$|[+-]\d{2}:\d{2}$/.test(validUntil))
+        validUntil += (validUntil.length === 16 ? ":00" : "") + "-03:00";
+      const quote = {
+        working_capital_amount: String(
+          form.get("working_capital_amount") ?? "",
+        ),
+        working_capital_currency: String(
+          form.get("working_capital_currency") ?? "",
+        ),
+        mode: String(form.get("mode") ?? ""),
+        services: form.getAll("services").map(String),
+        scope: String(form.get("scope") ?? ""),
+        amount: String(form.get("amount") ?? ""),
+        currency: String(form.get("currency") ?? ""),
+        included: lines("included"),
+        excluded: lines("excluded"),
+        insurance: String(form.get("insurance") ?? ""),
+        estimated_days: String(form.get("estimated_days") ?? ""),
+        valid_until: validUntil,
+        payment_terms: String(form.get("payment_terms") ?? ""),
+        required_documents: lines("required_documents"),
+        responsibilities: String(form.get("responsibilities") ?? ""),
+        observations: String(form.get("observations") ?? ""),
+      } as NormalizedQuote;
       if (intent !== "withdraw") {
         assertNewContractCurrency(quote.currency);
         assertNewContractCurrency(quote.working_capital_currency);
-        if(intent!=="save") {const error=validateQuote(quote); if(error) throw new Error(error);}
-        input.quote=quote;
+        if (intent !== "save") {
+          const error = validateQuote(quote);
+          if (error) throw new Error(error);
+        }
+        input.quote = quote;
       }
-      const result=await executeQuoteCommand(demo,intent,input);
-      revalidatePath(demo?"/demo/operador":"/operador","layout");
-      return {ok:true,message:intent==="save"?"Borrador guardado.":intent==="withdraw"?"Oferta retirada.":"Oferta presentada y sellada.",id:result.id};
+      const result = await executeQuoteCommand(demo, intent, input);
+      revalidatePath(demo ? "/demo/operador" : "/operador", "layout");
+      return {
+        ok: true,
+        message:
+          intent === "save"
+            ? "Borrador guardado."
+            : intent === "withdraw"
+              ? "Oferta retirada."
+              : "Oferta presentada y sellada.",
+        id: result.id,
+      };
     }
     if (command === "commercial_profile") {
-      const commercial:Record<string,unknown>={};
-      for(const key of ["trade_name","logo_url","description","city","province","country","experience_years"]) commercial[key]=String(form.get(key)??"").trim();
-      for(const key of ["specialties","coverage","categories"]) commercial[key]=String(form.get(key)??"").split(",").map(s=>s.trim()).filter(Boolean);
-      commercial.modes=form.getAll("modes").map(String);
-      commercial.published=form.get("published")==="on";
-      await executeCommand(demo,"commercial_profile",commercial);
-      revalidatePath(demo?"/demo/operador":"/operador","layout");
-      revalidatePath(demo?"/demo/operadores":"/operadores","layout");
-      return {ok:true,message:"Perfil comercial guardado."};
+      const commercial: Record<string, unknown> = {};
+      for (const key of [
+        "trade_name",
+        "logo_url",
+        "description",
+        "city",
+        "province",
+        "country",
+        "experience_years",
+      ])
+        commercial[key] = String(form.get(key) ?? "").trim();
+      for (const key of ["specialties", "coverage", "categories"])
+        commercial[key] = String(form.get(key) ?? "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      commercial.modes = form.getAll("modes").map(String);
+      commercial.published = form.get("published") === "on";
+      await executeCommand(demo, "commercial_profile", commercial);
+      revalidatePath(demo ? "/demo/operador" : "/operador", "layout");
+      revalidatePath(demo ? "/demo/operadores" : "/operadores", "layout");
+      return { ok: true, message: "Perfil comercial guardado." };
     }
     if (command === "profile")
       payload.modes = form
@@ -158,7 +252,7 @@ export async function operatorAction(
       const error = validateDocument(file.name, file.size, file.type);
       if (error) throw new Error(error);
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const extension = validateDocumentBytes(file.name,file.type,bytes);
+      const extension = validateDocumentBytes(file.name, file.type, bytes);
       const userId = demo
         ? await demoIdentity()
         : (await operatorSession()).user.id;

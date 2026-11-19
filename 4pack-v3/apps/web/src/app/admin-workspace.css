@@ -1,0 +1,190 @@
+.admin-workspace {
+  background: #0c0c0e;
+  color: #f2f2ef;
+  min-height: 100vh;
+}
+.admin-workspace .sidebar {
+  background: #101113;
+}
+.admin-heading {
+  display: block !important;
+  text-align: left;
+  margin-bottom: 28px;
+}
+.admin-heading .eyebrow {
+  color: #a9abb2;
+}
+.profile-overview nav {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.profile-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+}
+.profile-facts dt {
+  color: #a9abb2;
+  font-size: 12px;
+}
+.profile-facts dd {
+  margin: 8px 0;
+  font-size: 17px;
+}
+.capacity-panel strong {
+  font-variant-numeric: tabular-nums;
+}
+.op-panel details > summary {
+  cursor: pointer;
+  padding: 16px 0;
+  font-weight: 600;
+}
+#capital-operativo,
+#empresa,
+#documentacion {
+  scroll-margin-top: 24px;
+}
+.admin-workspace h1 {
+  font-size: 32px;
+}
+.admin-workspace h2 {
+  font-size: 22px;
+}
+.admin-workspace h3 {
+  font-size: 18px;
+}
+.admin-workspace .op-panel {
+  margin: 18px 0;
+  padding: 24px;
+  background: #17181b;
+  border: 1px solid #2c2d31;
+  border-radius: 14px;
+}
+.admin-workspace p {
+  color: #a9abb2;
+  line-height: 1.6;
+}
+.admin-filters,
+.admin-tabs {
+  display: flex;
+  gap: 18px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.admin-tabs a {
+  padding: 12px 18px;
+  border: 1px solid #36383d;
+  border-radius: 8px;
+}
+.admin-workspace input:not([type="checkbox"]),
+.admin-workspace select,
+.admin-workspace textarea {
+  display: block;
+  width: 100%;
+  background: #0c0c0e;
+  color: #f2f2ef;
+  border: 1px solid #373940;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+}
+.admin-workspace label {
+  display: block;
+  font-size: 14px;
+}
+.admin-workspace input[type="checkbox"] {
+  margin-right: 10px;
+}
+.admin-decision {
+  max-width: 620px;
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+.admin-counter {
+  display: grid;
+  gap: 16px;
+  text-decoration: none;
+}
+.admin-counter strong {
+  font-size: 36px;
+  font-variant-numeric: tabular-nums;
+}
+.admin-state {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.admin-state.green {
+  color: #34d399;
+}
+.admin-state.orange {
+  color: #fb923c;
+}
+.admin-state.red {
+  color: #f87171;
+}
+.admin-workspace .op-table td {
+  padding: 16px;
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+.admin-workspace a:focus-visible,
+.admin-workspace button:focus-visible {
+  outline: 2px solid #f2f2ef;
+  outline-offset: 4px;
+}
+.admin-workspace details {
+  margin: 20px 0;
+}
+.admin-workspace summary {
+  cursor: pointer;
+  padding: 12px 0;
+}
+.admin-workspace .op-button {
+  background: #f2f2ef;
+  color: #0c0c0e;
+}
+.admin-workspace .secondary {
+  background: transparent;
+  color: #f2f2ef;
+}
+@media (max-width: 850px) {
+  .admin-workspace {
+    display: block;
+  }
+  .admin-workspace .sidebar {
+    position: static;
+    width: auto;
+  }
+  .admin-workspace nav {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .admin-workspace .op-table {
+    display: block;
+    overflow-x: auto;
+  }
+  .admin-workspace .content {
+    margin: 0;
+    padding: 20px;
+  }
+}
+
+.capacity-panel input[type="checkbox"],
+#empresa input[type="checkbox"] {
+  width: auto;
+  display: inline-block;
+  margin-right: 10px;
+}
+.capacity-panel .op-form label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

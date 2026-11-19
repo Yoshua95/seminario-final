@@ -18,6 +18,26 @@ export type CurrencyLimit = {
   valid_until: string | null;
 };
 export type CapacitySnapshot = {
+  capital?: {
+    inconsistent?: boolean;
+    contract_value?: number;
+    review_reason?: string | null;
+    approved: number;
+    committed: number;
+    offers: number;
+    operations: number;
+    available: number | null;
+    requires_review: number;
+  };
+  capital_documents?: { id: string; name: string; status: string }[];
+  requests?: {
+    id: string;
+    requested_total: number;
+    approved_total: number | null;
+    status: string;
+    reason: string | null;
+    created_at: string;
+  }[];
   limits: CapacityLimits | null;
   currencies: CurrencyLimit[];
   usage: {

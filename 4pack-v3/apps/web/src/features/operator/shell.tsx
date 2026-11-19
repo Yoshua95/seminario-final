@@ -9,7 +9,6 @@ import type { Company, Profile } from "./types";
 import { Icon, Badge } from "./ui";
 import { signOutOperator } from "./actions";
 const navigation = [
-  ["capacidad", "Capacidad", "operations"],
   ["oportunidades", "Cargas Disponibles", "cargo"],
   ["mis-ofertas", "Mis Ofertas", "offers"],
   ["operaciones", "Operaciones", "operations"],
@@ -117,7 +116,7 @@ export function OperatorShell({
           </button>
         )}
         <Link href={`${base}/oportunidades`} className="op-brand">
-          <BrandMark/>
+          <BrandMark />
         </Link>
         <nav aria-label="Panel del operador">
           <p className="op-nav-caption">PANEL</p>

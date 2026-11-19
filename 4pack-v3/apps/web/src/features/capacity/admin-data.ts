@@ -8,7 +8,8 @@ import type { CapacitySnapshot } from "./types";
 export async function capacityAdmin(demo: boolean) {
   if (demo) {
     assertDemo();
-    if(isMultiroleDemo()) await (await import("../multirole/session")).rehearsalSession("admin");
+    if (isMultiroleDemo())
+      await (await import("../multirole/session")).rehearsalSession("admin");
     return null;
   }
   const client = await createSupabaseServerClient();
@@ -91,8 +92,10 @@ export async function loadCapacityAdmin(
         "select o.user_id,o.company_name,o.verification_status from public.operator_profiles o join public.profiles p on p.id=o.user_id where p.role='operator' order by o.company_name",
       )
     ).rows;
-  operators = operators.filter((o) =>
-    o.company_name.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+  operators = operators.filter(
+    (o) =>
+      o.verification_status === "approved" &&
+      o.company_name.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
   );
   const selected = operators.find((o) => o.user_id === target) ?? operators[0];
   if (selected) {
