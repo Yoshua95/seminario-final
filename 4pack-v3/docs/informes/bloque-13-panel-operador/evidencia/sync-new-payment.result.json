@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-19T13:54:56.562Z",
+  "id": "sync-new-payment",
+  "data": {
+    "operationId": "971af114-98ce-46c2-91dc-866ad672c9e0",
+    "creationDisabledThroughout": true,
+    "existingPreferenceOnly": true,
+    "before": [],
+    "after": [],
+    "result": null,
+    "error": {
+      "httpStatus": 409,
+      "error": "No se pudo verificar el pago de prueba. Reintenta desde la operacion; no se confirmo por el retorno.",
+      "diagnostic": {
+        "stage": "payment.validate",
+        "outcome": "error",
+        "code": "PAYMENT_CONTRACT_MISMATCH",
+        "checks": {
+          "seller": true,
+          "test_mode": false,
+          "reference": true,
+          "currency": true,
+          "amount": true,
+          "payment_id": true
+        },
+        "observation": {
+          "live_mode": true,
+          "status": "approved",
+          "provider_payment_id": "189418265535"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "date": "2026-11-19T14:08:40.793Z",
+  "id": "inspect-registered",
+  "data": {
+    "before": [],
+    "after": [],
+    "evidence": {
+      "status": "pending",
+      "checkout_url": null,
+      "checked_at": null,
+      "action": "inspect",
+      "operation_id": "971af114-98ce-46c2-91dc-866ad672c9e0",
+      "preference_id": "3858067934-58de5f3a-27d2-422f-b756-0fcec93ccd45",
+      "payments": [
+        {
+          "payment_id": "189418265535",
+          "status": "approved",
+          "live_mode": true,
+          "classification": "test_accounts_linked_preference",
+          "evidence": {
+            "version": 1,
+            "classification": "test_accounts_linked_preference",
+            "project_ref": "umiracgmhjglqoftoljn",
+            "operation_id": "971af114-98ce-46c2-91dc-866ad672c9e0",
+            "payment_id": "189418265535",
+            "preference_id": "3858067934-58de5f3a-27d2-422f-b756-0fcec93ccd45",
+            "order_id": "46276101328",
+            "seller_id": "3858067934",
+            "buyer_id": "3858067936",
+            "external_reference": "97dd8a5f-77c5-42a5-99f0-d46a74224329",
+            "amount": 120000,
+            "currency": "ARS",
+            "seller_test_user": true,
+            "buyer_identity_source": "owner_supplied_test_account_id_confirmed_by_provider",
+            "buyer_test_user_tag": false,
+            "provider_live_mode": true,
+            "provider_is_test_present": false,
+            "provider_is_test": null,
+            "checks": {
+              "registered_operation": true,
+              "registered_preference": true,
+              "registered_reference": true,
+              "registered_amount": true,
+              "payment_id": true,
+              "seller": true,
+              "seller_test_account": true,
+              "expected_buyer": true,
+              "reference": true,
+              "currency": true,
+              "amount": true,
+              "live_mode_boolean": true,
+              "order_id": true,
+              "order_payment": true,
+              "order_seller": true,
+              "order_buyer": true,
+              "order_preference": true,
+              "order_reference": true,
+              "order_amount": true,
+              "preference_id": true,
+              "preference_seller": true,
+              "preference_reference": true,
+              "preference_operation": true,
+              "preference_test_marker": true,
+              "preference_item": true
+            },
+            "checked_at": "2026-11-19T14:08:40.640Z",
+            "provider_response_sha256": {
+              "search": "3679504ca836b5367471189d794d651873ee4722e1ec04a57bd0c24ec5b73c89",
+              "preference": "eca927d84a02f928b88c6d64becb4574450695b1ebbedc56e4065ca9ca019b49",
+              "seller": "4b4f27acf69a181ec661f73717658095c8547bcf61b4b016cd31242762b0e0c8",
+              "buyer": "41d40a0a5154fc85acbff22723b7241c552964b0c1fd598ae7df747bb46bf05c",
+              "payment": "77032038ef200bec80d969c794248eed96df8ef62a38205e259c7d33b8df6e7d",
+              "order": "402af24ad51d7534c81403f071a677d744e01fa6cdb5b0e64b2179301340a034"
+            }
+          }
+        }
+      ],
+      "calls": [
+        {
+          "path": "/v1/payments/search?external_reference=97dd8a5f-77c5-42a5-99f0-d46a74224329&sort=date_created&criteria=desc&limit=100",
+          "status": 200
+        },
+        {
+          "path": "/checkout/preferences/3858067934-58de5f3a-27d2-422f-b756-0fcec93ccd45",
+          "status": 200
+        },
+        {
+          "path": "/users/me",
+          "status": 200
+        },
+        {
+          "path": "/users/3858067936",
+          "status": 200
+        },
+        {
+          "path": "/v1/payments/189418265535",
+          "status": 200
+        },
+        {
+          "path": "/merchant_orders/46276101328",
+          "status": 200
+        }
+      ]
+    }
+  }
+}

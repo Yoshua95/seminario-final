@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-19T14:06:18.970Z",
+  "projectRef": "umiracgmhjglqoftoljn",
+  "version": "20261119140102",
+  "sha256": "8af4c50d612f423f07930357535630f502e1cbe8e684bef2e7843436dcc19c5a",
+  "before": [
+    {
+      "snapshot": {
+        "counts": {
+          "users": 5,
+          "cargos": 11,
+          "offers": 7,
+          "payments": 1,
+          "profiles": 5,
+          "documents": 3,
+          "operations": 6
+        },
+        "historical": {
+          "state": "requires_review",
+          "currency": "USD",
+          "volume_m3": 0.31,
+          "weight_kg": 18.4,
+          "operator_id": "b8b0c7a8-f3a1-4bf6-a001-a87b9a71569f",
+          "released_at": null,
+          "reserved_at": "2026-11-17T21:58:39.922794+00:00",
+          "activated_at": null,
+          "operation_id": "61000000-0000-0000-0000-000000000001",
+          "release_reason": null,
+          "idempotency_key": "reserve:61000000-0000-0000-0000-000000000001",
+          "contract_exposure": 565,
+          "contracting_source": "legacy",
+          "working_capital_required": null
+        }
+      }
+    }
+  ],
+  "after": [
+    {
+      "snapshot": {
+        "counts": {
+          "users": 5,
+          "cargos": 11,
+          "offers": 7,
+          "payments": 1,
+          "profiles": 5,
+          "documents": 3,
+          "operations": 6
+        },
+        "historical": {
+          "state": "requires_review",
+          "currency": "USD",
+          "volume_m3": 0.31,
+          "weight_kg": 18.4,
+          "operator_id": "b8b0c7a8-f3a1-4bf6-a001-a87b9a71569f",
+          "released_at": null,
+          "reserved_at": "2026-11-17T21:58:39.922794+00:00",
+          "activated_at": null,
+          "operation_id": "61000000-0000-0000-0000-000000000001",
+          "release_reason": null,
+          "idempotency_key": "reserve:61000000-0000-0000-0000-000000000001",
+          "contract_exposure": 565,
+          "contracting_source": "legacy",
+          "working_capital_required": null
+        }
+      }
+    }
+  ],
+  "dataPreserved": true,
+  "checks": [
+    {
+      "migration_count": 1,
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    }
+  ]
+}

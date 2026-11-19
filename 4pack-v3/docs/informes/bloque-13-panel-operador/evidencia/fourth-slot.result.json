@@ -1,0 +1,10 @@
+{
+  "date": "2026-11-19T13:38:35.724Z",
+  "id": "fourth-slot",
+  "data": {
+    "operatorId": "fffa6167-bb2c-4c73-8b68-2bf0714db6ba",
+    "before": 3,
+    "after": 4,
+    "monetaryLimitsUnchanged": true
+  }
+}

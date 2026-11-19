@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-19T14:21:01.095Z",
+  "sourceCommit": "4cad7d4ad52e1216f3ade9989a155b506deb4e85",
+  "projectRef": "umiracgmhjglqoftoljn",
+  "apk": {
+    "version": "3.0.3",
+    "versionCode": 4,
+    "path": ".4pack-demo/mobile-redesign/build/outputs/apk/release/app-release.apk",
+    "sha256": "61b8317b448301a6017343fab705942090d8e524a4534cb6d3e027d6d336b39f",
+    "rebuiltInThisBlock": false
+  },
+  "files": [
+    {
+      "path": "apps/web/src/features/operator/quote-composer.tsx",
+      "sha256": "6bd9fa8cd601c44dab4183025e557f30218a4596bafe6c4a9ea785273b6435c2"
+    },
+    {
+      "path": "apps/web/src/features/operator/drawer.tsx",
+      "sha256": "6edaf44d4d9bc07b11b5ae1d31937ad0c31cdf1e1ffa1da8e9aa695f6eec6207"
+    },
+    {
+      "path": "apps/web/src/features/operator/journey.ts",
+      "sha256": "964a8d42b47d65c935f40bf2bf74f575230ec679e8da93cd23eaa6490c0f7bc8"
+    },
+    {
+      "path": "apps/web/src/features/operator/offers-list.tsx",
+      "sha256": "0cb7b86705fdeb64559902e8d873f2b376c0b1d31144db7e5842020b8c2356dc"
+    },
+    {
+      "path": "apps/web/src/features/operator/collections.tsx",
+      "sha256": "165e9f3f16b9dba822e681d3876b1ae65329f489f93b6db9865973b1b2d88408"
+    },
+    {
+      "path": "apps/web/src/features/operator/forms.tsx",
+      "sha256": "38533d914c00fe84a83d7d6b3d86bf58d6865cd16ced3a3202db6af8a519213e"
+    },
+    {
+      "path": "apps/web/src/features/operator/panel.tsx",
+      "sha256": "7e5ea686607930913689835f7c5dd61e7dd1eae8cd2ed808ed3ca2e97ea2f7b0"
+    },
+    {
+      "path": "apps/web/src/features/operator/data.ts",
+      "sha256": "ed4b6bc5049cbaba54fb8d58b054be3c151c4c02ee7e4450f778f327e2c6dfae"
+    },
+    {
+      "path": "apps/web/src/features/operator/shell.tsx",
+      "sha256": "9cc52b23dd18f56a815744fb34db7a2562d4f912407737baf44e7bfe7e1c02e4"
+    },
+    {
+      "path": "apps/web/src/features/capacity/view.tsx",
+      "sha256": "887c7b346f619528dad58c40b726392d60128ea495df6529ccdf588cfc5eeb50"
+    },
+    {
+      "path": "apps/web/src/features/marketplace/quote-terms.tsx",
+      "sha256": "b737bbac1e7fe8652c4f6a161ff327425f8b57e66b2722ba743264b53f4e3fde"
+    },
+    {
+      "path": "apps/web/src/app/operator-journey.css",
+      "sha256": "d9d8260aee34afccd0da81c0c7b078d334739b2106d0e964dd712358959e99e0"
+    },
+    {
+      "path": "supabase/migrations/20261119140102_mp_registered_test_preference_evidence.sql",
+      "sha256": "8af4c50d612f423f07930357535630f502e1cbe8e684bef2e7843436dcc19c5a"
+    },
+    {
+      "path": "supabase/functions/mercado-pago-test/index.ts",
+      "sha256": "eecc46334ebbaaadf05110b876981e3c6d77b08420639d1537f100fabf51c376"
+    },
+    {
+      "path": "supabase/functions/mercado-pago-reconcile-registered-test/index.ts",
+      "sha256": "9d59d01602fa48667d9f9886f22327e3bd6443d411736cc2cef8f08c81ccea28"
+    },
+    {
+      "path": "supabase/functions/_shared/mercado-pago-linked-test.mjs",
+      "sha256": "74af30002031c26d91731ed89301380513fd7dcea120e3147041937b0e38e03b"
+    },
+    {
+      "path": "tests/operator-journey.test.mjs",
+      "sha256": "73743016e2765194a37749a71dde91009b9a10714394f4edbf24b41e60dbdb4d"
+    },
+    {
+      "path": "tests/mercado-pago-registered-test.test.mjs",
+      "sha256": "ca132429881ec8739d991db7f159513d4fe94bed08a87801a8d88e4c6180b7f2"
+    },
+    {
+      "path": "tests/mercado-pago-registered-http.test.mjs",
+      "sha256": "c0a51fc5a24aa6da39dbf86f5fda6647a65eccf9ed71d2fc51ef89de51f4655c"
+    }
+  ]
+}

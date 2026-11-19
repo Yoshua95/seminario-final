@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-19T13:36:34.801Z",
+  "id": "new-quote-1",
+  "data": {
+    "cargoId": "a8f4226e-6e36-4c0e-9282-d12b41ef3c2d",
+    "review": "Esto recibirá el importador\n\nPrecio final $ 120.000,00. Revisá alcance y condiciones antes de enviar.\n\nServicios\nTransporte internacional · Entrega nacional\nAlcance\nTransporte internacional y entrega nacional de piezas de muestra.\nPrecio total\nARS 120000\nPlazo\n9 días\nVigencia\n22/11/2026, 10:36:00\nIncluye\nTransporte internacional · Entrega nacional\nNo incluye\nServicios no seleccionados\nSeguro / cobertura\nSin seguro incluido\nCondiciones de pago\nPago de prueba o garantía según la operación; sin liberación por hitos.\nDocumentación requerida\nPacking list · Factura comercial\nResponsabilidades\nOperador: servicios cotizados. Importador: datos y documentación de la carga.\nObservaciones\nSin carga peligrosa. Prueba funcional del panel del operador.\nVolver a editar\nEnviar oferta",
+    "offers": [
+      {
+        "id": "12876e9d-396f-4998-ac4d-3322f5716ca3",
+        "payment_currency": "ARS",
+        "total_usd": 120000,
+        "normalized_quote": {
+          "mode": "sea",
+          "scope": "Transporte internacional y entrega nacional de piezas de muestra.",
+          "amount": "120000",
+          "currency": "ARS",
+          "excluded": [
+            "Servicios no seleccionados"
+          ],
+          "included": [
+            "Transporte internacional",
+            "Entrega nacional"
+          ],
+          "services": [
+            "international_transport",
+            "domestic_delivery"
+          ],
+          "insurance": "Sin seguro incluido",
+          "valid_until": "2026-11-22T10:36:00-03:00",
+          "observations": "Sin carga peligrosa. Prueba funcional del panel del operador.",
+          "payment_terms": "Pago de prueba o garantía según la operación; sin liberación por hitos.",
+          "estimated_days": "9",
+          "responsibilities": "Operador: servicios cotizados. Importador: datos y documentación de la carga.",
+          "required_documents": [
+            "Packing list",
+            "Factura comercial"
+          ],
+          "working_capital_amount": "25000",
+          "working_capital_currency": "ARS"
+        }
+      }
+    ]
+  }
+}
