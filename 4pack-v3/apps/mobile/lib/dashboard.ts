@@ -555,7 +555,10 @@ export async function loadCargoOperation(cargoId: string) {
   if (error) throw error;
   return data?.id as string | undefined;
 }
-export async function awardImporterOffer(id: string) {
+export async function awardImporterOffer(
+  id: string,
+  paymentIntent: "legacy" | "checkout-test" = "legacy",
+) {
   await importerSession();
   const offer = await supabase!
     .from("offers")
@@ -564,6 +567,13 @@ export async function awardImporterOffer(id: string) {
     .single();
   if (offer.error) throw offer.error;
   assertNewContractCurrency(offer.data.payment_currency);
+  if (paymentIntent === "checkout-test") {
+    const result = await supabase!.rpc("award_offer_for_test_checkout", {
+      target_offer_id: id,
+    });
+    if (result.error) throw Error(result.error.message);
+    return result.data as string;
+  }
   return (await importerOperationAction("award", id, (name, args) =>
     supabase!.rpc(name, args),
   )) as string;

@@ -481,7 +481,12 @@ function Operations({
       <PageHeader
         title={`${cargo?.origin ?? "Origen"} → ${cargo?.destination ?? "Destino"}`}
         description={`#${code(operation)} · ${cargo?.title ?? "Operación"}`}
-        action={<Badge status={operation.phase} />}
+        action={
+          <>
+            <Badge status={operation.phase} />
+            <small>Operación: {operation.id}</small>
+          </>
+        }
       />
       <section className="op-panel op-next-step">
         <div>
@@ -752,7 +757,7 @@ function Operations({
                           (p) =>
                             p.operation_id === id && p.status === "approved",
                         )
-                      ? "Aprobado · verificado por backend"
+                      ? "Pago de prueba aprobado"
                       : "Pendiente de pago verificado"}
                 </span>
               ) : (

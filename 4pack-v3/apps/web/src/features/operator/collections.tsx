@@ -92,14 +92,17 @@ export function Collections({ data, demo }: { data: Snapshot; demo: boolean }) {
                   : Number(offer?.total_usd ?? 0),
                 commission = g ? Number(g.commission_usd) : null;
               return (
-                <tr key={o.id}>
+                <tr key={o.id} data-operation-id={o.id}>
                   <td>
                     <Link href={`${base}/operaciones/${o.id}`}>#{code(o)}</Link>
                     <small>
                       {cargo?.origin} → {cargo?.destination}
                     </small>
                   </td>
-                  <td className="op-number">{money(amount, "ARS")}</td>
+                  <td className="op-number">
+                    {money(amount, "ARS")}
+                    {test && <small>Operación: {o.id}</small>}
+                  </td>
                   <td className="op-number">
                     {commission === null
                       ? "Por verificar"
@@ -118,7 +121,7 @@ export function Collections({ data, demo }: { data: Snapshot; demo: boolean }) {
                           {data.paymentsUnavailable
                             ? "No pudimos consultar la verificación"
                             : payments.some((p) => p.status === "approved")
-                              ? "Aprobado · verificado por backend"
+                              ? "Pago de prueba aprobado"
                               : payments.length
                                 ? payments.map((p) => p.status).join(" · ")
                                 : "Sin pago verificado"}

@@ -1,4 +1,9 @@
 import { OffersView } from "../../features/importer/views";
+import {
+  acceptOfferAndPay,
+  CheckoutAfterAwardError,
+} from "../../lib/accept-and-pay";
+import { testPayment } from "../../lib/test-payments";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -60,12 +65,30 @@ export default function CargoDetailScreen() {
     setBusy(true);
     setError("");
     try {
-      const op = await awardImporterOffer(id);
+      const payment = await acceptOfferAndPay(id, {
+        award: (id) => awardImporterOffer(id, "checkout-test"),
+        checkout: (id) => testPayment(id, "checkout"),
+      });
+      const op = payment.operationId;
+      setOperation(op);
+      if (payment.checkoutUrl) {
+        const { openBrowserAsync } = await import("expo-web-browser");
+        await openBrowserAsync(payment.checkoutUrl);
+      }
       router.push({
         pathname: "/operation/[operationId]",
         params: { operationId: op },
       });
     } catch (e) {
+      if (e instanceof CheckoutAfterAwardError) {
+        setOperation(e.operationId);
+        setError(
+          "La oferta fue aceptada. " +
+            e.message +
+            " Abrí el seguimiento para reintentar el pago en la misma operación.",
+        );
+        return;
+      }
       setError(e instanceof Error ? e.message : "No se pudo adjudicar.");
     } finally {
       setBusy(false);
@@ -104,11 +127,11 @@ export default function CargoDetailScreen() {
         }
         onAward={(id) =>
           Alert.alert(
-            "Confirmar eleccion",
-            "Se creara una operacion. Luego confirma la garantia simulada.",
+            "Aceptar oferta y pagar",
+            "Se creará una operación en ARS y se abrirá Mercado Pago en modo de prueba. El backend debe verificar el pago; volver del checkout no lo aprueba.",
             [
               { text: "Volver", style: "cancel" },
-              { text: "Elegir esta oferta", onPress: () => void award(id) },
+              { text: "Aceptar oferta y pagar", onPress: () => void award(id) },
             ],
           )
         }

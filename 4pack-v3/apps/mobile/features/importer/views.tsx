@@ -602,7 +602,7 @@ export function OffersView({
         />
       ) : (
         <Action
-          label={busy ? "Confirmando…" : "Elegir esta oferta"}
+          label={busy ? "Preparando pago…" : "Aceptar oferta y pagar"}
           disabled={
             !selected ||
             busy ||
@@ -612,8 +612,9 @@ export function OffersView({
         />
       )}
       <Copy muted>
-        La decisión es tuya. Confirmar crea una operación; la garantía se
-        confirma en el siguiente paso.
+        La decisión es tuya. Al aceptar se crea una operación y se abre el
+        checkout de prueba. La aprobación se confirma únicamente desde el
+        backend.
       </Copy>
     </Page>
   );
@@ -695,11 +696,17 @@ export function TrackingView({
             <Copy>{next}</Copy>
             <Copy muted>{o.route}</Copy>
             {o.paymentMode === "mercado_pago_test" && (
+              <Copy muted>
+                Operación: {o.id} · {o.currency}{" "}
+                {o.totalUsd.toLocaleString("es-AR")}
+              </Copy>
+            )}
+            {o.paymentMode === "mercado_pago_test" && (
               <>
                 <Tag tone={o.paymentStatus === "approved" ? "green" : "yellow"}>
                   Mercado Pago · PRUEBA ·{" "}
                   {o.paymentStatus === "approved"
-                    ? "Aprobado"
+                    ? "Pago de prueba aprobado"
                     : o.paymentStatus === "rejected"
                       ? "Rechazado"
                       : (o.paymentStatus ?? "Pendiente")}
