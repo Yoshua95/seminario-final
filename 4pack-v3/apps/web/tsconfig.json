@@ -35,7 +35,15 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     ".next-e2e/types/**/*.ts",
-    ".next-e2e/dev/types/**/*.ts"
+    ".next-e2e/dev/types/**/*.ts",
+    ".next/multirole/types/**/*.ts",
+    ".next/multirole/dev/types/**/*.ts",
+    ".next/multirole-test/types/**/*.ts",
+    ".next/multirole-test/dev/types/**/*.ts",
+    ".next/hazmat-build/types/**/*.ts",
+    ".next/hazmat-build/dev/types/**/*.ts",
+    ".next-e2e/block07/types/**/*.ts",
+    ".next-e2e/block07/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

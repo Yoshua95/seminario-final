@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { assertNewContractCurrency } from "@4pack/domain";
 
 export function AwardOfferButton({ offerId }: { offerId: string }) {
   const router = useRouter();
@@ -19,6 +20,8 @@ export function AwardOfferButton({ offerId }: { offerId: string }) {
       return;
     }
 
+    const offer=await supabase.from("offers").select("payment_currency").eq("id",offerId).single();
+    try {if(offer.error)throw offer.error;assertNewContractCurrency(offer.data.payment_currency);}catch{setError("Las nuevas adjudicaciones deben contratarse en ARS.");setLoading(false);return;}
     const { error: awardError } = await supabase.rpc("award_offer", { target_offer_id: offerId });
     setLoading(false);
     if (awardError) {

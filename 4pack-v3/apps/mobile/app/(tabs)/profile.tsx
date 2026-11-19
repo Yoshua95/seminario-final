@@ -59,13 +59,13 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#07070A" },
+  safe: { flex: 1, backgroundColor: "#0C0C0E" },
   container: { flex: 1, padding: 24, paddingTop: 48 },
-  kicker: { color: "#F59E0B", fontSize: 10, fontWeight: "900", letterSpacing: 1.8 },
-  title: { color: "white", fontSize: 32, fontWeight: "900", marginTop: 10, marginBottom: 28 },
-  card: { backgroundColor: "#0C0D12", borderColor: "#1F2029", borderWidth: 1, borderRadius: 18, padding: 20 },
+  kicker: { color: "#F2F2EF", fontSize: 10, fontWeight: "900", letterSpacing: 1.8 },
+  title: { color: "#F2F2EF", fontSize: 32, fontWeight: "900", marginTop: 10, marginBottom: 28 },
+  card: { backgroundColor: "#17181B", borderColor: "#1F2029", borderWidth: 1, borderRadius: 18, padding: 20 },
   label: { color: "#777A84", fontSize: 9, fontWeight: "900", letterSpacing: 1.3, marginBottom: 7, marginTop: 8 },
   value: { color: "#F2F2F4", fontSize: 15, fontWeight: "700", marginBottom: 18 },
   button: { borderColor: "#343641", borderWidth: 1, borderRadius: 12, alignItems: "center", padding: 15, marginTop: 18 },
-  buttonText: { color: "#F59E0B", fontSize: 13, fontWeight: "900" }
+  buttonText: { color: "#F2F2EF", fontSize: 13, fontWeight: "900" }
 });

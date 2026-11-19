@@ -2,6 +2,7 @@
 import { unstable_rethrow } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { capacityAdminRpc } from "./admin-data";
+import { assertNewContractCurrency } from "@4pack/domain";
 export async function capacityAction(
   demo: boolean,
   _previous: { message: string; ok: boolean },
@@ -11,6 +12,7 @@ export async function capacityAction(
     const text = (key: string) => String(form.get(key) ?? "").trim();
     const command = text("command");
     if (command === "configure") {
+      assertNewContractCurrency(text("currency"));
       const payload: Record<string, string> = {};
       for (const key of [
         "operational_status",

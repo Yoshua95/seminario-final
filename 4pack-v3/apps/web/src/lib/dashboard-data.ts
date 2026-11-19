@@ -220,7 +220,7 @@ export async function getOperatorReviews(): Promise<OperatorReview[]> {
 
   const { data } = await supabase
     .from("operator_profiles")
-    .select("user_id, company_name, tax_id, description, verification_status, profiles(full_name)")
+    .select("user_id, company_name, tax_id, description, verification_status, profiles!operator_profiles_user_id_fkey(full_name)")
     .order("verification_status", { ascending: false });
 
   return (data ?? []).map((operator) => {

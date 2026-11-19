@@ -54,6 +54,7 @@ export function NewOfferForm({ cargoOptions }: { cargoOptions: CargoOption[] }) 
       terms: String(form.get("terms")).trim(),
       valid_until: new Date(validUntil).toISOString(),
       status: "submitted"
+      ,payment_currency: "ARS"
     });
 
     if (insertError) {
@@ -76,9 +77,9 @@ export function NewOfferForm({ cargoOptions }: { cargoOptions: CargoOption[] }) 
         <label className="wide">Carga<select name="cargoId" required>{cargoOptions.map((cargo) => <option key={cargo.id} value={cargo.id}>{cargo.title} · {cargo.origin} → {cargo.destination}</option>)}</select></label>
         <label>Modalidad<select name="mode" required><option value="air">Aéreo</option><option value="sea">Marítimo</option><option value="consolidated">Consolidado</option></select></label>
         <label>Tiempo estimado (días)<input min="1" name="estimatedDays" required type="number" /></label>
-        <label>Flete (USD)<input min="0" name="freightUsd" required step="0.01" type="number" /></label>
-        <label>Aduana (USD)<input defaultValue="0" min="0" name="customsUsd" required step="0.01" type="number" /></label>
-        <label>Otros costos (USD)<input defaultValue="0" min="0" name="otherCostsUsd" required step="0.01" type="number" /></label>
+        <label>Flete (ARS)<input min="0" name="freightUsd" required step="0.01" type="number" /></label>
+        <label>Aduana (ARS)<input defaultValue="0" min="0" name="customsUsd" required step="0.01" type="number" /></label>
+        <label>Otros costos (ARS)<input defaultValue="0" min="0" name="otherCostsUsd" required step="0.01" type="number" /></label>
         <label>Válida hasta<input name="validUntil" required type="datetime-local" /></label>
         <label className="checkbox-field"><input name="includesCustoms" type="checkbox" /> Incluye gestión aduanera</label>
         <label className="wide">Condiciones<textarea name="terms" required rows={5} /></label>

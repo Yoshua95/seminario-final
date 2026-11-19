@@ -7,11 +7,12 @@ import { revalidatePath } from "next/cache";
 import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { validateOffer, validateDocument } from "@4pack/domain";
-import { validateQuote, type NormalizedQuote } from "@4pack/domain";
+import { validateQuote, assertNewContractCurrency, type NormalizedQuote } from "@4pack/domain";
 import {
   loadSnapshot,
   executeCommand,
   executeQuoteCommand,
+  executeVolumeProposal,
   submitOperatorRating,
   registerDemoDocument,
   operatorSession,
@@ -21,6 +22,15 @@ import {
   assertDemo,
 } from "./data";
 import type { ActionResult } from "./types";
+
+export async function proposeVolume(demo:boolean,_previous:ActionResult,form:FormData):Promise<ActionResult>{
+ try{
+  const volume=Number(form.get('volume_m3')),cargo=String(form.get('cargo_id')??'');
+  if(!Number.isFinite(volume)||volume<=0||volume>=1000000)throw Error('Ingresá un volumen válido.');
+  const id=await executeVolumeProposal(demo,cargo,volume);revalidatePath(demo?'/demo/operador':'/operador','layout');
+  return{ok:true,id,message:'Volumen propuesto. El importador debe confirmarlo antes de reservar capacidad.'};
+ }catch(error){unstable_rethrow(error);return{ok:false,message:error instanceof Error?error.message:'No se pudo proponer el volumen.'};}
+}
 
 export async function startDemo(form: FormData) {
   assertDemo();
@@ -88,6 +98,8 @@ export async function operatorAction(
       if (validUntil && !/Z$|[+-]\d{2}:\d{2}$/.test(validUntil)) validUntil += (validUntil.length===16?":00":"")+"-03:00";
       const quote={working_capital_amount:String(form.get("working_capital_amount")??""),working_capital_currency:String(form.get("working_capital_currency")??""),mode:String(form.get("mode")??""),services:form.getAll("services").map(String),scope:String(form.get("scope")??""),amount:String(form.get("amount")??""),currency:String(form.get("currency")??""),included:lines("included"),excluded:lines("excluded"),insurance:String(form.get("insurance")??""),estimated_days:String(form.get("estimated_days")??""),valid_until:validUntil,payment_terms:String(form.get("payment_terms")??""),required_documents:lines("required_documents"),responsibilities:String(form.get("responsibilities")??""),observations:String(form.get("observations")??"")} as NormalizedQuote;
       if (intent !== "withdraw") {
+        assertNewContractCurrency(quote.currency);
+        assertNewContractCurrency(quote.working_capital_currency);
         if(intent!=="save") {const error=validateQuote(quote); if(error) throw new Error(error);}
         input.quote=quote;
       }
@@ -121,6 +133,7 @@ export async function operatorAction(
       payload.occurred_at +=
         (payload.occurred_at.length === 16 ? ":00" : "") + "-03:00";
     if (command === "offer") {
+      assertNewContractCurrency(payload.currency);
       const snapshot = await loadSnapshot(demo);
       const cargo = snapshot.cargos.find((c) => c.id === payload.id);
       if (!cargo) throw new Error("La carga ya no está disponible.");

@@ -6,6 +6,7 @@ import type {
   MobileOperation,
   MobileOperationDetail,
   MobileCargoDetail,
+  MobileCargo,
 } from "../../lib/dashboard";
 import {
   compareImporterOffers,
@@ -22,56 +23,82 @@ import {
   colors,
   s,
 } from "./ui";
+import { JourneyMap } from "./journey-map";
+import { homeAction, categories } from "../../lib/journey";
 export function HomeView({
   operation,
   loading,
   error,
   onNew,
   onTrack,
+  cargo = null,
+  onOffers,
+  lastMilestone,
 }: {
   operation: MobileOperation | null;
   loading?: boolean;
   error?: string;
   onNew: () => void;
   onTrack: () => void;
+  cargo?: MobileCargo | null;
+  onOffers?: () => void;
+  lastMilestone?: { title: string; location: string } | null;
 }) {
+  const action = homeAction(operation, cargo);
+  const current = action.kind === "offers" ? cargo : operation;
   return (
     <Page
-      title="Tu próxima carga empieza acá."
-      subtitle="Publicá, compará y seguí tu operación."
+      title="Tu carga, en movimiento."
+      subtitle="Una vista clara de lo que sigue."
       error={error}
       loading={loading}
     >
-      <Action label="Nueva carga" icon="add" onPress={onNew} />
-      {operation ? (
-        <>
-          <Copy style={s.section}>En curso</Copy>
-          <Card>
-            <Tag>{phaseLabels[operation.phase]}</Tag>
-            <Copy style={s.section}>{operation.title}</Copy>
-            <Copy muted>{operation.route}</Copy>
-            <View style={s.divider} />
-            <LinkAction label="Ir al seguimiento" onPress={onTrack} />
-          </Card>
-        </>
-      ) : (
-        !loading && (
-          <Card>
-            <Ionicons name="cube-outline" color={colors.brand} size={28} />
+      <JourneyMap
+        route={current?.route}
+        lastMilestone={action.kind === "tracking" ? lastMilestone : null}
+      />
+      <Card>
+        <Copy muted style={{ fontSize: 10, letterSpacing: 1.4 }}>
+          TU PRÓXIMO PASO
+        </Copy>
+        {current ? (
+          <>
+            <Copy style={s.section}>{current.title}</Copy>
+            <Copy muted>{current.route}</Copy>
+          </>
+        ) : (
+          <>
             <Copy style={s.section}>Todo listo para empezar</Copy>
             <Copy muted>
-              Cuando contrates un servicio, vas a ver su avance acá.
+              Publicá qué querés importar. Vas a poder comparar propuestas antes
+              de elegir.
             </Copy>
-          </Card>
-        )
-      )}
-      <Card>
-        <Copy style={s.section}>Vos elegís cómo seguir</Copy>
-        <Copy muted>
-          Recibí propuestas privadas y revisá precio, plazo y alcance antes de
-          decidir.
-        </Copy>
+          </>
+        )}
+        {action.kind === "tracking" && operation && (
+          <Tag>{phaseLabels[operation.phase]}</Tag>
+        )}
+        {action.kind === "offers" && cargo && (
+          <Copy muted>
+            {cargo.offerCount ?? 0} propuestas ·{" "}
+            {cargo.volumeM3 === null
+              ? "Volumen por confirmar"
+              : "Listo para comparar"}
+          </Copy>
+        )}
+        <Action
+          label={action.label}
+          icon={action.kind === "publish" ? "add" : "arrow-forward"}
+          onPress={
+            action.kind === "publish"
+              ? onNew
+              : action.kind === "offers"
+                ? (onOffers ?? onNew)
+                : onTrack
+          }
+        />
       </Card>
+      {current && <LinkAction label="Publicar otra carga" onPress={onNew} />}
     </Page>
   );
 }
@@ -97,6 +124,8 @@ export function CargoFormView({
   loading,
   error,
   onBack,
+  volumeUnknown = false,
+  onVolumeUnknown,
 }: {
   fields: CargoFields;
   onChange: (key: keyof CargoFields, value: string) => void;
@@ -109,6 +138,8 @@ export function CargoFormView({
   loading: boolean;
   error: string;
   onBack: () => void;
+  volumeUnknown?: boolean;
+  onVolumeUnknown?: (value: boolean) => void;
 }) {
   const [step, setStep] = useState(0),
     [localError, setLocalError] = useState("");
@@ -132,7 +163,9 @@ export function CargoFormView({
             (v) => v.trim().length >= 2,
           ) &&
           Number(fields.weight.replace(",", ".")) > 0 &&
-          Number(fields.volume.replace(",", ".")) > 0 &&
+          (volumeUnknown || Number(fields.volume.replace(",", ".")) > 0) &&
+          (fields.category !== "Otro" ||
+            fields.description.trim().length >= 10) &&
           fields.fob.trim() !== "" &&
           Number(fields.fob.replace(",", ".")) >= 0;
     if (!valid) {
@@ -144,6 +177,7 @@ export function CargoFormView({
   }
   return (
     <Page
+      centered
       key={step}
       title="Nueva carga"
       kicker={`PUBLICAR · PASO ${step + 1} DE 3`}
@@ -179,11 +213,53 @@ export function CargoFormView({
           </>
         ) : step === 1 ? (
           <>
-            {input("description", "Descripción")}
-            {input("category", "Categoría")}
+            <Copy muted>Tipo de mercadería</Copy>
+            <CategorySelector
+              value={fields.category}
+              onChange={(value) => onChange("category", value)}
+            />
+            {input(
+              "description",
+              fields.category === "Otro"
+                ? "Descripción de la mercadería"
+                : "Descripción",
+            )}
+            {fields.category === "Otro" && (
+              <Copy muted style={{ fontSize: 12 }}>
+                Contanos qué es, de qué material está hecho y cuántas unidades
+                querés traer.
+              </Copy>
+            )}
             {input("weight", "Peso (kg)", true)}
-            {input("volume", "Volumen (m³)", true)}
-            {input("fob", "Valor FOB (USD)", true)}
+            <TouchableOpacity
+              accessibilityRole="checkbox"
+              accessibilityLabel="No sé el volumen"
+              accessibilityState={{ checked: volumeUnknown }}
+              onPress={() => onVolumeUnknown?.(!volumeUnknown)}
+              style={[s.row, { justifyContent: "flex-start", minHeight: 48 }]}
+            >
+              <Ionicons
+                name={volumeUnknown ? "checkbox" : "square-outline"}
+                color={colors.text}
+                size={24}
+              />
+              <Copy>No sé el volumen</Copy>
+            </TouchableOpacity>
+            {!volumeUnknown ? (
+              input("volume", "Volumen (m³)", true)
+            ) : (
+              <Copy muted>
+                Se guarda como desconocido. El operador propone el volumen y vos
+                lo confirmás antes de contratar.
+              </Copy>
+            )}
+            <Field
+              label="Valor FOB"
+              suffix="USD"
+              number
+              value={fields.fob}
+              onChange={(value) => onChange("fob", value)}
+            />
             <Copy muted>Modalidad preferida</Copy>
             <View
               style={[
@@ -193,11 +269,23 @@ export function CargoFormView({
             >
               {(
                 [
-                  ["air", "Aéreo"],
-                  ["sea", "Marítimo"],
-                  ["consolidated", "Consolidado"],
+                  [
+                    "air",
+                    "Aéreo",
+                    "Para priorizar rapidez. Ejemplo orientativo: 7 días, sujeto a ruta y operador.",
+                  ],
+                  [
+                    "sea",
+                    "Marítimo",
+                    "Para mayor volumen y menor urgencia. Ejemplo orientativo: 30 días, sujeto a ruta y operador.",
+                  ],
+                  [
+                    "consolidated",
+                    "Consolidado",
+                    "Para cargas pequeñas que comparten espacio. Salidas según disponibilidad.",
+                  ],
                 ] as const
-              ).map(([value, label]) => (
+              ).map(([value, label, detail]) => (
                 <TouchableOpacity
                   key={value}
                   accessibilityRole="radio"
@@ -210,7 +298,8 @@ export function CargoFormView({
                     borderWidth: 1,
                     borderColor: value === mode ? colors.brand : colors.line,
                     backgroundColor:
-                      value === mode ? "#ff762e15" : colors.secondary,
+                      value === mode ? "#F2F2EF10" : colors.secondary,
+                    width: "100%",
                   }}
                 >
                   <Copy
@@ -219,6 +308,9 @@ export function CargoFormView({
                     }}
                   >
                     {label}
+                  </Copy>
+                  <Copy muted style={{ fontSize: 12, marginTop: 4 }}>
+                    {detail}
                   </Copy>
                 </TouchableOpacity>
               ))}
@@ -234,7 +326,9 @@ export function CargoFormView({
               {fields.origin} → {fields.destination}
             </Copy>
             <Copy>
-              {fields.weight} kg · {fields.volume} m³ · FOB USD {fields.fob}
+              {fields.weight} kg ·{" "}
+              {volumeUnknown ? "Volumen desconocido" : `${fields.volume} m³`} ·
+              FOB USD {fields.fob}
             </Copy>
             <View style={s.divider} />
             {requiresMsds ? (
@@ -273,6 +367,47 @@ export function CargoFormView({
     </Page>
   );
 }
+function CategorySelector({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ gap: 8 }}>
+      <Action
+        secondary
+        label={value || "Elegí una categoría"}
+        icon={open ? "chevron-up" : "chevron-down"}
+        onPress={() => setOpen(!open)}
+      />
+      {open &&
+        categories.map((category) => (
+          <TouchableOpacity
+            key={category}
+            accessibilityRole="radio"
+            accessibilityLabel={category}
+            accessibilityState={{ selected: value === category }}
+            onPress={() => {
+              onChange(category);
+              setOpen(false);
+            }}
+            style={{
+              minHeight: 48,
+              padding: 13,
+              borderRadius: 10,
+              backgroundColor:
+                value === category ? colors.secondary : colors.bg,
+            }}
+          >
+            <Copy>{category}</Copy>
+          </TouchableOpacity>
+        ))}
+    </View>
+  );
+}
 export function OffersView({
   cargo,
   onRefresh,
@@ -286,6 +421,7 @@ export function OffersView({
   onAward,
   onTrack,
   onBack,
+  onConfirmVolume,
 }: {
   cargo?: MobileCargoDetail | null;
   onRefresh?: () => void;
@@ -299,9 +435,14 @@ export function OffersView({
   onAward: (id: string) => void;
   onTrack: () => void;
   onBack: () => void;
+  onConfirmVolume?: (proposalId: string, volume: number) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null),
     [details, setDetails] = useState<string | null>(null);
+  const [selectedVolume, setSelectedVolume] = useState<{
+    id: string;
+    volumeM3: number;
+  } | null>(null);
   return (
     <Page
       title="Elegí tu propuesta"
@@ -312,6 +453,27 @@ export function OffersView({
       error={error}
       back={onBack}
     >
+      {cargo?.volumeM3 === null && (
+        <Card>
+          <Tag tone="yellow">Volumen por confirmar</Tag>
+          <Copy>
+            El operador propone el volumen. Confirmalo antes de elegir una
+            oferta; todavía no se reserva Capacity.
+          </Copy>
+          {cargo.volumeProposals
+            ?.filter((p) => p.status === "proposed")
+            .map((p, i) => (
+              <LinkAction
+                key={p.id}
+                label={`${selectedVolume?.id === p.id ? "Seleccionado" : "Elegir propuesta de volumen"} · ${p.volumeM3.toLocaleString("es-AR")} m³ · propuesta ${i + 1}`}
+                onPress={() => setSelectedVolume(p)}
+              />
+            ))}
+          {!cargo.volumeProposals?.some((p) => p.status === "proposed") && (
+            <Copy muted>Esperando una propuesta de volumen del operador.</Copy>
+          )}
+        </Card>
+      )}
       {compareImporterOffers(offers) && (
         <Card>
           <Tag tone="yellow">Compará el alcance</Tag>
@@ -330,7 +492,9 @@ export function OffersView({
       )}
       {offers.map((o, i) => {
         const eligible =
-          o.status === "submitted" && Date.parse(o.validUntil) > Date.now();
+          o.status === "submitted" &&
+          o.currency === "ARS" &&
+          Date.parse(o.validUntil) > Date.now();
         return (
           <View
             key={o.id}
@@ -398,13 +562,48 @@ export function OffersView({
           </View>
         );
       })}
-      {cargo && <><LinkAction label="Ver datos de mi carga" onPress={()=>setDetails(details==="cargo"?null:"cargo")}/>{details==="cargo"&&<Card><Copy>{cargo.description}</Copy><Copy>{cargo.category} · {cargo.weightKg} kg · {cargo.volumeM3} m³</Copy><Copy>FOB USD {cargo.fobUsd.toLocaleString("es-AR")}</Copy>{cargo.msdsRequired&&<Tag tone="yellow">MSDS requerido</Tag>}</Card>}</>}
+      {cargo && (
+        <>
+          <LinkAction
+            label="Ver datos de mi carga"
+            onPress={() => setDetails(details === "cargo" ? null : "cargo")}
+          />
+          {details === "cargo" && (
+            <Card>
+              <Copy>{cargo.description}</Copy>
+              <Copy>
+                {cargo.category} · {cargo.weightKg} kg ·{" "}
+                {cargo.volumeM3 === null
+                  ? "Volumen desconocido"
+                  : `${cargo.volumeM3} m³`}
+              </Copy>
+              <Copy>FOB USD {cargo.fobUsd.toLocaleString("es-AR")}</Copy>
+              {cargo.msdsRequired && <Tag tone="yellow">MSDS requerido</Tag>}
+            </Card>
+          )}
+        </>
+      )}
       {operationId ? (
         <Action label="Ir al seguimiento" onPress={onTrack} />
+      ) : cargo?.volumeM3 === null ? (
+        <Action
+          label={
+            busy ? "Confirmando volumen…" : "Confirmar volumen seleccionado"
+          }
+          disabled={busy || !selectedVolume}
+          onPress={() =>
+            selectedVolume &&
+            onConfirmVolume?.(selectedVolume.id, selectedVolume.volumeM3)
+          }
+        />
       ) : (
         <Action
           label={busy ? "Confirmando…" : "Elegir esta oferta"}
-          disabled={!selected || busy}
+          disabled={
+            !selected ||
+            busy ||
+            offers.find((o) => o.id === selected)?.currency !== "ARS"
+          }
           onPress={() => selected && onAward(selected)}
         />
       )}
@@ -425,6 +624,7 @@ export function TrackingView({
   busy,
   error,
   onGuarantee,
+  onPaymentSync,
   onComplete,
   onRate,
   onEvidence,
@@ -443,6 +643,7 @@ export function TrackingView({
   busy: boolean;
   error: string;
   onGuarantee: () => void;
+  onPaymentSync?: () => void;
   onComplete: () => void;
   onRate: () => void;
   onEvidence: (id: string) => void;
@@ -457,7 +658,9 @@ export function TrackingView({
   const next = !o
     ? "Cargando operación"
     : o.guaranteeStatus === "pending"
-      ? "Confirmá la garantía simulada para iniciar el servicio."
+      ? o.paymentMode === "mercado_pago_test"
+        ? "Completá el checkout de prueba y verificá el resultado con Mercado Pago."
+        : "Confirmá la garantía simulada para iniciar el servicio."
       : o.phase === "awaiting_delivery_confirmation"
         ? "Tu carga está lista. Confirmá que la recibiste."
         : o.phase === "completed"
@@ -487,6 +690,27 @@ export function TrackingView({
             <Copy style={s.section}>Tu próximo paso</Copy>
             <Copy>{next}</Copy>
             <Copy muted>{o.route}</Copy>
+            {o.paymentMode === "mercado_pago_test" && (
+              <>
+                <Tag tone={o.paymentStatus === "approved" ? "green" : "yellow"}>
+                  Mercado Pago · PRUEBA ·{" "}
+                  {o.paymentStatus === "approved"
+                    ? "Aprobado"
+                    : o.paymentStatus === "rejected"
+                      ? "Rechazado"
+                      : (o.paymentStatus ?? "Pendiente")}
+                </Tag>
+                <Copy muted>
+                  Sin dinero real. El retorno del checkout no confirma el pago.
+                  La liberación por entrega continúa siendo una simulación
+                  académica.
+                </Copy>
+                <LinkAction
+                  label="Verificar pago con Mercado Pago"
+                  onPress={onPaymentSync ?? onRefresh}
+                />
+              </>
+            )}
             {o.guaranteeStatus === "pending" && o.role === "importer" ? (
               <>
                 <Tag tone="yellow">Garantía pendiente</Tag>
@@ -495,7 +719,11 @@ export function TrackingView({
                   Simulación académica, sin fondos reales.
                 </Copy>
                 <Action
-                  label="Confirmar garantía simulada"
+                  label={
+                    o.paymentMode === "mercado_pago_test"
+                      ? "Pagar con Mercado Pago · prueba"
+                      : "Confirmar garantía simulada"
+                  }
                   disabled={busy}
                   onPress={onGuarantee}
                 />
@@ -509,7 +737,8 @@ export function TrackingView({
               />
             ) : (
               o.phase !== "completed" && (
-                <LinkAction
+                <Action
+                  secondary={tab !== "Hitos"}
                   label="Actualizar seguimiento"
                   onPress={onRefresh}
                 />
@@ -633,7 +862,7 @@ export function TrackingView({
               <Field
                 label="Mensaje de la operación"
                 value={message}
-                onChange={text=>onMessage(text.slice(0,2000))}
+                onChange={(text) => onMessage(text.slice(0, 2000))}
                 multiline
               />
               <Action
@@ -655,7 +884,12 @@ export function TrackingView({
                 ? "liberada · simulación"
                 : o.guaranteeStatus === "held_simulated"
                   ? "confirmada · simulación"
-                  : ({pending:"pendiente",proof_uploaded:"comprobante cargado",verified:"verificada",rejected:"rechazada"}[o.guaranteeStatus])}
+                  : {
+                      pending: "pendiente",
+                      proof_uploaded: "comprobante cargado",
+                      verified: "verificada",
+                      rejected: "rechazada",
+                    }[o.guaranteeStatus]}
             </Copy>
             <Copy muted>
               Comisión: {o.currency} {o.commissionUsd.toLocaleString("es-AR")}

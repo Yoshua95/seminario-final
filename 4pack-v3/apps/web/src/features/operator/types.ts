@@ -41,7 +41,7 @@ export type Cargo = {
   destination: string;
   category: string;
   weight_kg: number;
-  volume_m3: number;
+  volume_m3: number | null;
   fob_usd: number;
   status: string;
   hazmat_review_required: boolean;
@@ -75,6 +75,8 @@ export type Offer = {
   review_started_at: string | null;
 };
 export type Operation = {
+  payment_mode?: "legacy_simulated" | "mercado_pago_test";
+  contract_currency?: string;
   id: string;
   public_code?: string;
   cargo_id: string;
@@ -90,6 +92,7 @@ export type Operation = {
   commission_rate: number;
 };
 export type Milestone = {
+  created_by?: string;
   id: string;
   operation_id: string;
   status: string;
@@ -178,6 +181,8 @@ export type SupportMessage = {
   created_at: string;
 };
 export type Snapshot = {
+  payments?: {operation_id:string;status:string;amount:number;currency:string;provider_payment_id:string}[];
+  paymentsUnavailable?: boolean;
   multirole?: boolean;
   capacity: CapacitySnapshot;
   commercial: CommercialProfile | null;

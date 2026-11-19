@@ -1,6 +1,7 @@
 "use client";
 import type { CapacitySnapshot } from "../capacity/types";
 import { QuoteEditor } from "./quote-editor";
+import { proposeVolume } from "./actions";
 import {
   useActionState,
   useEffect,
@@ -17,6 +18,7 @@ import type { ActionResult, Cargo, DocumentRecord } from "./types";
 import { money, modeLabel } from "./types";
 import { phaseLabels } from "@4pack/domain";
 import { Icon } from "./ui";
+import { Drawer } from "./drawer";
 const initial: ActionResult = { ok: false, message: "" };
 export function ActionForm({
   demo,
@@ -192,8 +194,79 @@ export function ActionForm({
     </>
   );
 }
-export function OfferForm({demo,cargo,alreadyOffered,capacity}:{capacity:CapacitySnapshot;demo:boolean;cargo:Cargo;alreadyOffered:boolean}) {
- return <aside className="op-quote"><h2>Tu Oferta</h2>{alreadyOffered ? <p className="op-notice success">Tu oferta está presentada y sellada. Podés retirarla o reemplazarla desde Mis Ofertas antes del cierre.</p> : <QuoteEditor capacity={capacity} weight={cargo.weight_kg} volume={cargo.volume_m3} demo={demo} cargoId={cargo.id} deadline={cargo.bidding_deadline} />}</aside>;
+export function OfferForm({
+  demo,
+  cargo,
+  alreadyOffered,
+  capacity,
+}: {
+  capacity: CapacitySnapshot;
+  demo: boolean;
+  cargo: Cargo;
+  alreadyOffered: boolean;
+}) {
+  return (
+    <aside className="op-quote"><p className="op-caption">TU PRÓXIMO PASO</p><h2>{alreadyOffered ? "Oferta presentada" : "Prepará tu cotización"}</h2>
+<Drawer primary={!alreadyOffered} title="Cotizar esta carga" label={alreadyOffered?"Ver cotización presentada":"Cotizar"}>
+<p>{cargo.origin} → {cargo.destination} · {cargo.weight_kg} kg · {cargo.volume_m3===null?"Volumen por confirmar":`${cargo.volume_m3} m³`}</p>
+      {cargo.volume_m3 === null && (
+        <VolumeProposalForm demo={demo} cargoId={cargo.id} />
+      )}
+      {alreadyOffered ? (
+        <p className="op-notice success">
+          Tu oferta está presentada y sellada. Podés retirarla o reemplazarla
+          desde Mis Ofertas antes del cierre.
+        </p>
+      ) : (
+        <QuoteEditor
+          capacity={capacity}
+          weight={cargo.weight_kg}
+          volume={cargo.volume_m3}
+          demo={demo}
+          cargoId={cargo.id}
+          requestedMode={cargo.preferred_mode}
+          deadline={cargo.bidding_deadline}
+        />
+      )}
+    </Drawer></aside>
+  );
+}
+function VolumeProposalForm({
+  demo,
+  cargoId,
+}: {
+  demo: boolean;
+  cargoId: string;
+}) {
+  const [state, action, pending] = useActionState(
+    proposeVolume.bind(null, demo),
+    { ok: false, message: "" },
+  );
+  return (
+    <form action={action} className="op-form">
+      <h3>Volumen por confirmar</h3>
+      <p>
+        El importador todavía no conoce el volumen. Proponé una medición
+        estimada; no reserva capacidad hasta que la confirme.
+      </p>
+      <input type="hidden" name="cargo_id" value={cargoId} />
+      <label>
+        Volumen propuesto (m³)
+        <input
+          name="volume_m3"
+          type="number"
+          min="0.001"
+          max="999999"
+          step="0.001"
+          required
+        />
+      </label>
+      <button className="op-button secondary" disabled={pending}>
+        {pending ? "Enviando…" : "Proponer volumen"}
+      </button>
+      {state.message && <p role="status">{state.message}</p>}
+    </form>
+  );
 }
 export function DocumentButton({
   demo,

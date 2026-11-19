@@ -17,6 +17,7 @@ import {
   loadImporterOffers,
   loadCargoOperation,
   awardImporterOffer,
+  confirmCargoVolume,
   type MobileCargoDetail,
 } from "../../lib/dashboard";
 import {
@@ -73,7 +74,9 @@ export default function CargoDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <OffersView cargo={cargo} onRefresh={()=>void refresh()}
+      <OffersView
+        cargo={cargo}
+        onRefresh={() => void refresh()}
         title={cargo?.title ?? "Mi carga"}
         route={cargo?.route ?? ""}
         offers={offers}
@@ -82,6 +85,16 @@ export default function CargoDetailScreen() {
         busy={busy}
         error={error}
         onBack={() => router.back()}
+        onConfirmVolume={(id, volume) => {
+          setBusy(true);
+          setError("");
+          void confirmCargoVolume(id, volume)
+            .then(() => refresh())
+            .catch((e) =>
+              setError(e.message ?? "No pudimos confirmar el volumen."),
+            )
+            .finally(() => setBusy(false));
+        }}
         onTrack={() =>
           operation &&
           router.push({

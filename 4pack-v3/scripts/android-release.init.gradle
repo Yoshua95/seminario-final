@@ -1,0 +1,18 @@
+allprojects { project ->
+    project.plugins.withId('com.android.library') {
+        project.android.defaultConfig.externalNativeBuild.cmake.arguments '-DCMAKE_CXX_FLAGS=--driver-mode=g++'
+    }
+    project.plugins.withId('com.android.application') {
+        project.android.defaultConfig.externalNativeBuild.cmake.arguments '-DCMAKE_CXX_FLAGS=--driver-mode=g++'
+        if (project.hasProperty('fourpackBuildDir')) {
+            project.layout.buildDirectory.set(new File(project.property('fourpackBuildDir').toString()))
+        }
+        project.tasks.matching { it.name == 'createBundleReleaseJsAndAssets' }.configureEach {
+            doFirst {
+                println "4PACK bundle root: ${root.get().asFile}"
+                println "4PACK bundle entryFile: ${entryFile.get().asFile}"
+                println "4PACK Expo arguments: ${extraPackagerArgs.get()}"
+            }
+        }
+    }
+}

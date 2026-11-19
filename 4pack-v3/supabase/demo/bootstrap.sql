@@ -2,6 +2,7 @@
 create schema if not exists auth;
 create schema if not exists storage;
 create role authenticated nologin;
+create role anon nologin;
 do $$ begin if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if; end $$;
 grant usage on schema auth,storage to authenticated;
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;

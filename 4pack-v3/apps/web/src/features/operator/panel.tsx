@@ -1,6 +1,9 @@
+import { Drawer } from "./drawer";
+import { OffersList } from "./offers-list";
+import { Collections } from "./collections";
+import { nextOperationStep, isProviderTest } from "./journey";
 import { CapacityView } from "../capacity/view";
 import { CommercialEditor } from "./commercial-editor";
-import { QuoteEditor, WithdrawQuote } from "./quote-editor";
 import { QuoteTerms } from "@/features/marketplace/quote-terms";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -31,7 +34,6 @@ import {
   number,
   localDateTime,
   modeLabel,
-  offerStatus,
   sections,
 } from "./types";
 export type Search = Record<string, string | string[] | undefined>;
@@ -76,12 +78,13 @@ function Manifest({
           <Icon name="lock" />
         </div>
         <div>
-          <h2>Detalles de Carga</h2>
+          <h2>{cargo.title}</h2>
           <p>Manifiesto declarado para licitación internacional</p>
         </div>
         <span className="op-badge mono">#{code(cargo)}</span>
       </div>
       <div className="op-facts">
+        <Fact label="Modalidad solicitada">{modeLabel(cargo.preferred_mode)}</Fact>
         <Fact icon="pin" label="Origen de Carga">
           {cargo.origin}
         </Fact>
@@ -95,7 +98,7 @@ function Manifest({
           {Number(cargo.weight_kg).toLocaleString("es-AR")} kg
         </Fact>
         <Fact icon="volume" label="Volumen Métrico">
-          {number(cargo.volume_m3, 2)} m³
+          {cargo.volume_m3===null?'Por confirmar':`${number(cargo.volume_m3, 2)} m³`}
         </Fact>
         <Fact icon="offers" label="Unidades / Bultos">
           {cargo.units_description || `${cargo.packages} bultos`}
@@ -201,8 +204,8 @@ function Opportunities({
     <div className="op-market-layout">
       <div className="op-market-main">
         <PageHeader
-          title="Mesa de Licitación Ciega"
-          description="Seleccioná una carga de la mesa para auditar sus detalles y presentá tu cotización oculta al importador."
+          title="Cargas disponibles"
+          description="Revisá la carga y prepará una oferta en ARS. La ficha permanece visible mientras cotizás."
           action={
             <span className="op-blind-label">
               <Icon name="eye" />
@@ -308,9 +311,9 @@ function Opportunities({
                   <span> • {c.category}</span>
                 </div>
                 <p>
-                  {c.origin.split(" (")[0]} —{" "}
+                  {c.origin} → {c.destination} · {c.title} —{" "}
                   {Number(c.weight_kg).toLocaleString("es-AR")} kg /{" "}
-                  {number(c.volume_m3, 2)} m³
+                  {c.volume_m3===null?'Volumen por confirmar':`${number(c.volume_m3, 2)} m³`}
                 </p>
               </div>
               <div className="op-cargo-tags">
@@ -365,193 +368,7 @@ function Opportunities({
     </div>
   );
 }
-function Offers({
-  data,
-  demo,
-  search,
-}: {
-  data: Snapshot;
-  demo: boolean;
-  search: Search;
-}) {
-  const base = basePath(demo);
-  const query = val(search, "q").toLowerCase();
-  const offers = data.offers.filter(
-    (o) =>
-      (!val(search, "offer") || o.id === val(search, "offer")) &&
-      (!val(search, "status") || offerStatus(o) === val(search, "status")) &&
-      (!query ||
-        `${o.id} ${cargoById(data, o.cargo_id)?.public_code ?? ""}`
-          .toLowerCase()
-          .includes(query)),
-  );
-  return (
-    <>
-      <PageHeader
-        title="Mis Ofertas Presentadas"
-        description="Historial de cotizaciones activas en mesas de licitación ciega."
-      />
-      {data.drafts.map(d=><details className="op-panel" key={d.id}><summary>Borrador de cotización · {cargoById(data,d.cargo_id)?.public_code}</summary><QuoteEditor capacity={data.capacity} weight={cargoById(data,d.cargo_id)?.weight_kg} volume={cargoById(data,d.cargo_id)?.volume_m3} demo={demo} cargoId={d.cargo_id} draftId={d.id} replacesOfferId={d.replaces_offer_id??undefined} initial={d.content} deadline={cargoById(data,d.cargo_id)?.bidding_deadline} /></details>)}
-      <form className="op-search-bar" method="get">
-        <label className="sr-only" htmlFor="offer-search">
-          Buscar oferta
-        </label>
-        <input
-          id="offer-search"
-          name="q"
-          placeholder="Buscar por identificador…"
-          aria-label="Buscar oferta"
-          defaultValue={val(search, "q")}
-        />
-        <label className="sr-only" htmlFor="offer-status">
-          Estado de oferta
-        </label>
-        <select
-          id="offer-status"
-          name="status"
-          aria-label="Estado de oferta"
-          defaultValue={val(search, "status")}
-        >
-          <option value="">Todos los estados</option>
-          {[
-            "submitted",
-            "under_review",
-            "awarded",
-            "rejected",
-            "expired",
-            "cancelled",
-          ].map((s) => (
-            <option key={s} value={s}>
-              {
-                {
-                  submitted: "Presentada",
-                  under_review: "Bajo revisión",
-                  awarded: "Adjudicada",
-                  rejected: "Rechazada",
-                  expired: "Vencida",
-                  cancelled: "Cancelada",
-                }[s]
-              }
-            </option>
-          ))}
-        </select>
-        <button className="op-button secondary">Filtrar</button>
-      </form>
-      <div className="op-stack">
-        {offers.map((o) => {
-          const cargo = cargoById(data, o.cargo_id);
-          const operation = data.operations.find(
-            (p) => p.accepted_offer_id === o.id,
-          );
-          return (
-            <article className="op-panel op-offer-card" key={o.id}>
-              <div className="op-card-top">
-                <div>
-                  <h2>
-                    Licitación #
-                    {cargo ? code(cargo) : "Referencia no disponible"} •{" "}
-                    {cargo?.category ?? "Carga"}
-                  </h2>
-                  <p>
-                    Ruta: {cargo?.origin} → {cargo?.destination}
-                  </p>
-                </div>
-                <Badge status={offerStatus(o)} />
-              </div>
-              <div className="op-mini-facts">
-                <span>
-                  Peso del Paquete:<strong>{cargo?.weight_kg ?? "—"} kg</strong>
-                </span>
-                <span>
-                  Volumen Total:<strong>{cargo?.volume_m3 ?? "—"} m³</strong>
-                </span>
-                <span>
-                  Cant. Artículos:
-                  <strong>
-                    {cargo?.units_description ||
-                      `${cargo?.packages ?? "—"} bultos`}
-                  </strong>
-                </span>
-                <span>
-                  Carga Peligrosa:
-                  <strong>
-                    {cargo?.hazmat_review_required
-                      ? "SÍ · Requiere MSDS"
-                      : "NO"}
-                  </strong>
-                </span>
-              </div>
-              <div className="op-offer-values">
-                <div>
-                  <span>Modalidad de Cobro</span>
-                  <strong>
-                    {o.payment_currency} · {modeLabel(o.mode)}
-                  </strong>
-                </div>
-                <div>
-                  <span>Tarifa Ofertada</span>
-                  <strong className="mono">{money(o.total_usd, o.payment_currency)}</strong>
-                </div>
-                <div>
-                  <span>Tiempo Estimado</span>
-                  <strong>{o.estimated_days} días</strong>
-                </div>
-                <div>
-                  <span>Doc. Exigida</span>
-                  <strong>
-                    {o.documentation_terms || "No declarado · Requiere revisión"}
-                  </strong>
-                </div>
-              </div>
-              <p className="op-small">Revisión {o.revision} {o.replaces_offer_id ? "· Reemplaza una propuesta anterior" : ""}</p>
-              <Link href={base+"/mis-ofertas?offer="+o.id}>Detalle de oferta</Link>
-              <QuoteTerms quote={o.normalized_quote} />
-              {cargo?.status==="open" && (cargo.bidding_deadline===null || Date.parse(cargo.bidding_deadline)>Date.now()) && Date.parse(o.valid_until)>Date.now() && ["submitted","withdrawn"].includes(o.status) && !data.offers.some(next=>next.replaces_offer_id===o.id) && <>
-                {o.status==="submitted"&&<WithdrawQuote demo={demo} id={o.id} />}
-                <details><summary>Reemplazar con nueva revisión</summary><QuoteEditor demo={demo} cargoId={o.cargo_id} replacesOfferId={o.id} initial={o.normalized_quote??{}} deadline={cargo.bidding_deadline} /></details>
-              </>}
-              <div className="op-card-bottom">
-                <span>
-                  <Icon name="lock" /> Sellada · {date(o.created_at)}
-                </span>
-                {operation ? (
-                  <Link
-                    className="op-text-link"
-                    href={`${base}/operaciones/${operation.id}`}
-                  >
-                    Ver operación <Icon name="arrow" />
-                  </Link>
-                ) : demo && !data.multirole && o.status === "submitted" && o.normalized_quote ? (
-                  <ActionForm
-                    demo
-                    command="demo_award"
-                    label="Simular adjudicación del importador"
-                    confirm
-                  >
-                    <input type="hidden" name="id" value={o.id} />
-                    <span className="op-small">
-                      Función disponible únicamente en la demostración.
-                    </span>
-                  </ActionForm>
-                ) : (
-                  <span className="op-small">
-                    Esperando resolución de la licitación
-                  </span>
-                )}
-              </div>
-            </article>
-          );
-        })}
-        {offers.length === 0 && (
-          <Empty title="Todavía no hay ofertas para mostrar">
-            Presentá tu cotización desde Cargas Disponibles o ajustá los
-            filtros.
-          </Empty>
-        )}
-      </div>
-    </>
-  );
-}
+function Offers(props: {data:Snapshot;demo:boolean;search:Search}) { return <OffersList {...props}/>; }
 function Operations({
   data,
   demo,
@@ -669,10 +486,11 @@ function Operations({
         ← Volver a operaciones
       </Link>
       <PageHeader
-        title={cargo?.title ?? "Detalle de operación"}
-        description={`#${code(operation)} · ${cargo?.origin} → ${cargo?.destination}`}
+        title={`${cargo?.origin ?? "Origen"} → ${cargo?.destination ?? "Destino"}`}
+        description={`#${code(operation)} · ${cargo?.title ?? "Operación"}`}
         action={<Badge status={operation.phase} />}
       />
+      <section className="op-panel op-next-step"><div><p className="op-caption">PRÓXIMO PASO</p><h2>{nextOperationStep(operation.phase, guarantee?.status === "held_simulated")}</h2></div><a href="#registrar-hito" className="op-button secondary">Ver acciones de esta operación</a></section>
       <div className="op-operation-layout">
         <div className="op-stack">
           <section className="op-panel">
@@ -693,7 +511,7 @@ function Operations({
                       ? `Estado: ${phaseLabels[e.event_type as keyof typeof phaseLabels] ?? "Actualizado"}`
                       : e.title}
                   </h3>
-                  <p>{e.description}</p>
+                  <p>{e.description}</p><small>Responsable: {e.created_by === data.profile.id ? data.profile.full_name : e.created_by === operation.importer_id ? operation.importer_name : e.created_by ? `Cuenta ${e.created_by}` : "No informado en el registro histórico"}</small>
                   <small>
                     <Icon name="pin" />
                     {e.location || "Sin ubicación informada"}
@@ -712,7 +530,7 @@ function Operations({
             </div>
           </section>
           {!["completed", "cancelled", "failed"].includes(operation.phase) && (
-            <section className="op-panel">
+            <section className="op-panel" id="registrar-hito">
               <h2>Registrar hito</h2>
               <p className="op-small">
                 Los hitos publicados quedan auditados y no se editan. No
@@ -777,7 +595,7 @@ function Operations({
               </ActionForm>
             </section>
           )}
-          <section className="op-panel op-chat">
+          <Drawer label="Enviar mensaje" title="Chat de esta operación" wide><section className="op-panel op-chat">
             <div className="op-chat-header">
               <span className="op-avatar">
                 {operation.importer_name?.slice(0, 2).toUpperCase() || "IM"}
@@ -832,7 +650,7 @@ function Operations({
               />
             </ActionForm>
             <MarkRead demo={demo} id={id} />
-          </section>
+          </section></Drawer>
         </div>
         <aside className="op-stack">
           {operation.phase === "completed" && (
@@ -872,19 +690,17 @@ function Operations({
               )}
             </Fact>
             <Fact label="Modalidad">{modeLabel(offer?.mode ?? null)}</Fact>
-            <h3>Snapshot contractual</h3>
-            <QuoteTerms quote={data.contracts.find(c=>c.operation_id===operation.id)?.content?.quote??null} />
+            <Drawer label="Ver contrato" title={`Contrato · ${code(operation)}`} wide><h3>{cargo?.origin} → {cargo?.destination}</h3><QuoteTerms quote={data.contracts.find(c=>c.operation_id===operation.id)?.content?.quote??null} /></Drawer>
             <Fact label="Precio acordado">{money(offer?.total_usd ?? 0, offer?.payment_currency ?? "USD")}</Fact>
-            <Fact label="Escrow académico">
-              <Badge status={guarantee?.status ?? "pending"} />
+            <Fact label={isProviderTest(operation)?"Pago de prueba":"Garantía simulada"}>
+              {isProviderTest(operation) ? <span>{data.paymentsUnavailable?"Verificación no disponible":data.payments?.some(p=>p.operation_id===id&&p.status==="approved")?"Aprobado · verificado por backend":"Pendiente de pago verificado"}</span> : <Badge status={guarantee?.status ?? "pending"} />}
             </Fact>
             <Fact label="Comisión 4PACK">
               {money(guarantee?.commission_usd ?? 0, guarantee?.currency ?? "USD")}
             </Fact>
             <Fact label="Adjudicación">{date(operation.awarded_at)}</Fact>
             <p className="op-small">
-              La garantía es una simulación académica. No custodia fondos
-              reales.
+              {isProviderTest(operation)?"Pago de prueba. Liberación por hitos aún no disponible.":"Garantía simulada: no representa fondos custodiados."}
             </p>
           </section>
           <section className="op-panel">
@@ -894,6 +710,7 @@ function Operations({
                 <ActionForm
                   demo={demo}
                   command="advance"
+                  variant="secondary"
                   key={p}
                   label={
                     p === "awaiting_delivery_confirmation"
@@ -955,7 +772,8 @@ function Operations({
             )}
           </section>
           <section className="op-panel">
-            <h2>Documentación de la operación</h2>
+            <h2>Documentación de la operación</h2><p className="op-small">Packing list y factura: el importador aporta los datos de la mercadería. Podés adjuntar el archivo recibido; comprobantes del servicio: operador.</p>
+            {[...new Set(["Packing list",...(cargo?.required_documents??[]),...(cargo?.msds_required?["MSDS"]:[])])].map(type=>{const doc=documents.find(d=>d.document_type.toLowerCase()===type.toLowerCase())??data.documents.find(d=>d.cargo_id===cargo?.id&&d.document_type.toLowerCase()===type.toLowerCase());return <div className="op-document-task" key={type}><strong>{type}</strong><small>Responsable: {type==="Comprobante de entrega"?"Operador":"Importador"}</small><span>{doc?<Badge status={doc.validation_status}/>:"Falta adjuntar"}</span></div>;})}
             {documents.map((d) => (
               <div className="op-document-inline" key={d.id}>
                 <div>
@@ -966,10 +784,10 @@ function Operations({
               </div>
             ))}
             <Link
-              href={`${base}/documentos?operacion=${id}`}
+              href={`${base}/documentos?operacion=${id}&tipo=${encodeURIComponent("Packing list")}`}
               className="op-text-link"
             >
-              Subir un comprobante <Icon name="arrow" />
+              Subir packing list <Icon name="arrow" />
             </Link>
           </section>
         </aside>
@@ -1010,8 +828,8 @@ function Documents({
   return (
     <>
       <PageHeader
-        title="Repositorio Documental"
-        description="Documentos de tu empresa, manifiestos y comprobantes de las operaciones."
+        title="Archivo documental"
+        description="Consulta secundaria y carga contextual. La documentación propia se administra desde Perfil empresarial."
       />
       <section className="op-panel">
         <h2>{replacing ? "Reemplazar documento" : "Subir documentación"}</h2>
@@ -1066,7 +884,7 @@ function Documents({
               Tipo documental
               <select
                 name="document_type"
-                defaultValue={replacing?.document_type}
+                defaultValue={replacing?.document_type ?? val(search,"tipo")}
               >
                 {documentTypes.map((t) => (
                   <option key={t}>{t}</option>
@@ -1184,7 +1002,7 @@ function Documents({
 }
 function History({ data, demo }: { data: Snapshot; demo: boolean }) {
   const operations = data.operations.filter((o) =>
-    o.phase === "completed",
+    o.phase === "completed" || data.offers.find(f=>f.id===o.accepted_offer_id)?.payment_currency === "USD",
   );
   const scores = data.ratings.filter((r) => r.recipient_id === data.profile.id && data.operations.some(o=>o.id===r.operation_id && o.phase==="completed"));
   const rep = reputation(scores.map((r) => Number(r.score)));
@@ -1192,7 +1010,7 @@ function History({ data, demo }: { data: Snapshot; demo: boolean }) {
     <>
       <PageHeader
         title="Historial de Operaciones"
-        description="Registro de fletes completados y calificaciones recibidas en la plataforma."
+        description="Operaciones cerradas e históricos en USD, conservando moneda e importes originales."
       />
       <div className="op-rank-card">
         <span className="op-icon-box">
@@ -1293,190 +1111,7 @@ function History({ data, demo }: { data: Snapshot; demo: boolean }) {
     </>
   );
 }
-function Wallet({ data, demo }: { data: Snapshot; demo: boolean }) {
-  const available = data.movements
-    .filter((m) => m.currency === "USD")
-    .reduce((sum, m) => sum + Number(m.amount), 0);
-  const ars = data.movements
-    .filter((m) => m.currency === "ARS")
-    .reduce((sum, m) => sum + Number(m.amount), 0);
-  const held = data.guarantees.filter((g) => g.status === "held_simulated");
-  return (
-    <>
-      <PageHeader
-        title="Control de Capital y Garantías"
-        description="Consultá los saldos y garantías de tus operaciones en la simulación académica de 4PACK."
-      />
-      <div className="op-notice info">
-        <Icon name="shield" />
-        <span>
-          ENTORNO ACADÉMICO · No representa fondos custodiados ni transacciones
-          bancarias. Los retiros son solicitudes simuladas.
-        </span>
-      </div>
-      <h2 className="op-caption op-section-gap">
-        DISPONIBLE PARA RETIRO SIMULADO
-      </h2>
-      <div className="op-balance-grid">
-        {[["USD", available], ...(ars !== 0 ? [["ARS", ars]] : [])].map(
-          ([currency, amount]) => (
-            <section className="op-panel op-balance" key={currency}>
-              <div>
-                <span>
-                  <Icon name="wallet" /> Fondo Simulado{" "}
-                  {currency === "USD" ? "Dólares" : "Pesos"}
-                </span>
-                <strong className="mono">
-                  {money(Number(amount), String(currency))}
-                </strong>
-              </div>
-              <details>
-                <summary className="op-button secondary small">
-                  Solicitar retiro <Icon name="arrow" />
-                </summary>
-                <ActionForm
-                  demo={demo}
-                  command="withdraw"
-                  label="Solicitar retiro simulado"
-                  confirm
-                  summary={
-                    <p>
-                      Esta solicitud descuenta el saldo de demostración. No
-                      transfiere dinero ni se conecta con bancos.
-                    </p>
-                  }
-                >
-                  <input
-                    type="hidden"
-                    name="currency"
-                    value={String(currency)}
-                  />
-                  <label>
-                    Importe
-                    <input
-                      name="amount"
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      max={Number(amount)}
-                      required
-                    />
-                  </label>
-                </ActionForm>
-              </details>
-            </section>
-          ),
-        )}
-      </div>
-      <h2 className="op-caption op-section-gap">
-        MONTOS ASEGURADOS / RETENIDOS · SIMULACIÓN
-      </h2>
-      <p className="op-small">
-        Se liberan al completar la operación, descontando la comisión registrada
-        de 4PACK.
-      </p>
-      <div className="op-stack">
-        {held.map((g) => {
-          const op = data.operations.find((o) => o.id === g.operation_id);
-          const cargo = op ? cargoById(data, op.cargo_id) : undefined;
-          return (
-            <article className="op-panel op-held" key={g.id}>
-              <span className="op-icon-box">
-                <Icon name="lock" />
-              </span>
-              <div>
-                <h3>
-                  Operación #{op ? code(op) : "Referencia no disponible"} •{" "}
-                  {cargo?.category}
-                </h3>
-                <p>Estado: {op ? phaseLabels[op.phase] : "En revisión"}</p>
-                <small>Comisión 4PACK: {money(g.commission_usd, g.currency)}</small>
-              </div>
-              <div>
-                <strong className="mono">+{money(g.amount_usd, g.currency)}</strong>
-                <Badge status={g.status} />
-              </div>
-            </article>
-          );
-        })}
-        {held.length === 0 && <Empty title="No hay garantías retenidas" />}
-      </div>
-      <section className="op-panel op-academic-clause op-section-gap">
-        <Icon name="shield" />
-        <div>
-          <h3>CONDICIONES DE LA SIMULACIÓN ACADÉMICA</h3>
-          <p>
-            Los saldos se generan desde eventos de operaciones. La liberación,
-            comisión y solicitud de retiro quedan auditadas. Esta demostración
-            no establece plazos legales, abandono de mercadería ni apropiación
-            de bienes.
-          </p>
-        </div>
-      </section>
-      <h2 className="op-section-gap">Movimientos y fondos liberados</h2>
-      <div
-        className="op-table-wrap"
-        tabIndex={0}
-        role="region"
-        aria-label="Movimientos de la billetera académica"
-      >
-        <table className="op-table">
-          <thead>
-            <tr>
-              <th>FECHA</th>
-              <th>CONCEPTO / OPERACIÓN</th>
-              <th>MONEDA</th>
-              <th>IMPORTE</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.movements.map((m) => (
-              <tr key={m.id}>
-                <td>{date(m.created_at)}</td>
-                <td>
-                  {m.description}
-                  {m.operation_id && (
-                    <small>
-                      #
-                      {code(
-                        data.operations.find(
-                          (o) => o.id === m.operation_id,
-                        ) ?? { id: m.operation_id },
-                      )}
-                    </small>
-                  )}
-                </td>
-                <td>{m.currency}</td>
-                <td
-                  className={
-                    Number(m.amount) > 0 ? "op-positive" : "op-negative"
-                  }
-                >
-                  {money(m.amount, m.currency)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {data.movements.length === 0 && (
-          <Empty title="Sin movimientos registrados" />
-        )}
-      </div>
-      {data.withdrawals.length > 0 && (
-        <section className="op-panel op-section-gap">
-          <h2>Solicitudes de retiro simuladas</h2>
-          {data.withdrawals.map((w) => (
-            <Fact key={w.id} label={date(w.created_at)}>
-              <span>
-                {money(w.amount, w.currency)} <Badge status={w.status} />
-              </span>
-            </Fact>
-          ))}
-        </section>
-      )}
-    </>
-  );
-}
+function Wallet(props:{data:Snapshot;demo:boolean}) { return <Collections {...props}/>; }
 function Support({
   data,
   demo,
@@ -1734,6 +1369,7 @@ function Profile({ data, demo }: { data: Snapshot; demo: boolean }) {
         description="Tu identidad logística, alcance operativo y documentación de validación."
         action={<Badge status={c.verification_status} />}
       />
+      <section className="op-panel"><h2>Documentos de tu empresa</h2><p>Certificaciones e identidad empresarial para revisión administrativa.</p><Link className="op-button secondary" href={`${basePath(demo)}/documentos?empresa=1`}>Gestionar documentación empresarial</Link><Link className="op-text-link" href={`${basePath(demo)}/documentos`}>Consultar archivo general</Link></section>
       <CommercialEditor demo={demo} profile={data.commercial} />
       <div className="op-profile-layout">
         <section className="op-panel">

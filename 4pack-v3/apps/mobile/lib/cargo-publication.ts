@@ -11,7 +11,7 @@ export type NativeMsds = {
 };
 type Result = { data: unknown; error: { message: string } | null };
 export async function publishMobileCargo(
-  payload: Record<string, string | number>,
+  payload: Record<string, string | number | boolean | null>,
   attempt: PublicationAttempt,
   file: NativeMsds | null,
   api: {

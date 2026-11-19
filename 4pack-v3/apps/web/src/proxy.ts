@@ -8,6 +8,8 @@ import {
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  // Public return only: this page never changes or confirms payment state.
+  if (request.nextUrl.pathname === "/pagos/retorno") return response;
   if(isMultiroleDemo()) {
     const alias:Record<string,string>={"/acceso":"/demo/acceso","/cargas/nueva":"/demo/importador/cargas/nueva","/admin":"/demo/admin","/admin/operadores":"/demo/admin/operadores","/admin/capacidad":"/demo/admin/capacidad"};
     const destination=alias[request.nextUrl.pathname];

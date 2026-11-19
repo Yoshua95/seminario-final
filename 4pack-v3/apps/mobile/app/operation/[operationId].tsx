@@ -1,9 +1,11 @@
 import { TrackingView } from "../../features/importer/views";
+import { testPayment } from '../../lib/test-payments';
 import { phaseLabels } from "@4pack/domain";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  AppState,
   Alert,
   Linking,
   RefreshControl,
@@ -93,15 +95,42 @@ export default function OperationDetailScreen() {
     void refresh();
   }, [refresh]);
 
+  async function syncPayment() {
+    if (operation?.paymentMode !== 'mercado_pago_test') return;
+    setActionLoading(true);
+    try {
+      await testPayment(operationId, 'sync');
+      await refresh(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo verificar el pago.');
+    } finally { setActionLoading(false); }
+  }
+  useEffect(() => {
+    if (operation?.paymentMode !== 'mercado_pago_test') return;
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') void syncPayment();
+    });
+    return () => subscription.remove();
+  }, [operation?.paymentMode, operationId]);
+
   async function runGuarantee() {
     if (!operationId) return;
     setActionLoading(true);
     setError("");
     try {
-      await simulateGuarantee(operationId);
+      if (operation?.paymentMode === 'mercado_pago_test') {
+        const payment = await testPayment(operationId, 'checkout');
+        if (payment.checkout_url) {
+          const { openBrowserAsync } = await import('expo-web-browser');
+          await openBrowserAsync(payment.checkout_url);
+        }
+        await testPayment(operationId, 'sync');
+      } else {
+        await simulateGuarantee(operationId);
+      }
       await refresh(true);
-    } catch {
-      setError("No pudimos confirmar la garantía. Revisá el estado actual.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No pudimos confirmar el pago de prueba.');
     } finally {
       setActionLoading(false);
     }
@@ -159,6 +188,7 @@ export default function OperationDetailScreen() {
         busy={actionLoading}
         error={error}
         onGuarantee={() => void runGuarantee()}
+        onPaymentSync={() => void syncPayment()}
         onComplete={() =>
           Alert.alert(
             "Confirmar entrega",

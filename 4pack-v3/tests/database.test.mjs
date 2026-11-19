@@ -440,14 +440,13 @@ test("códigos humanos únicos y estables en operaciones, documentos y tickets",
       result.rows.length,
     );
   }
-  await assert.rejects(
-    query(
-      "importer",
-      "update public.cargo_requests set public_code='LC-FAKE' where id=$1",
-      [cargo],
-    ),
-    /referencia|código/,
+  const changed = await query(
+    "importer",
+    "update public.cargo_requests set public_code='LC-FAKE' where id=$1 returning id",
+    [cargo],
   );
+  assert.equal(changed.rows.length, 0, "RLS excludes contracted cargo before its code trigger");
+  assert.notEqual((await query("importer", "select public_code from cargo_requests where id=$1", [cargo])).rows[0].public_code, "LC-FAKE");
 });
 
 test("CUIT y razón social aprobados bloqueados por RPC y por escritura directa", async () => {

@@ -12,8 +12,7 @@ const navigation = [
   ["mis-ofertas", "Mis Ofertas", "offers"],
   ["operaciones", "Operaciones", "operations"],
   ["historial", "Historial", "history"],
-  ["billetera", "Mi Billetera", "wallet"],
-  ["documentos", "Documentos", "offers"],
+  ["billetera", "Cobros", "wallet"],
   ["soporte", "Soporte", "support"],
   ["perfil", "Perfil Empresarial", "profile"],
 ];

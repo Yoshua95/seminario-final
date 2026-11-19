@@ -9,6 +9,8 @@ export function CapacityView({
   operationBase: string;
 }) {
   const { limits: l, usage: u } = data;
+  const ars = data.currencies.find(c => c.currency === "ARS");
+  const committed = u.currencies?.ARS?.working_capital;
   const available = (maximum: number, used: number) =>
     Math.max(0, Number(maximum) - Number(used));
   const valid = (row: {
@@ -23,9 +25,13 @@ export function CapacityView({
     <section className="op-panel capacity-panel">
       <h1>Capacidad</h1>
       <p>
-        Limites aprobados por administracion. No representan fondos custodiados
-        ni una garantia de adjudicacion.
+        Tu capital propio para ejecutar servicios. Los límites aprobados no son un saldo bancario ni dinero de tus clientes.
       </p>
+      <div className="op-summary-grid op-section-gap">
+        <section className="op-panel"><span>Capital propio disponible · ARS</span><strong className="mono">{!l || !ars || committed === null || u.requires_review || !valid(l) || !valid(ars) ? "Requiere revisión" : money(available(ars.approved_working_capital,committed??0),"ARS")}</strong><p>Capital aprobado menos lo comprometido. Se vuelve a comprobar al adjudicar.</p></section>
+        <section className="op-panel"><span>Capital ya comprometido · ARS</span><strong className="mono">{committed===null?"No determinado":money(committed??0,"ARS")}</strong><p>Reservas activas de tus operaciones.</p></section>
+        <section className="op-panel"><span>Próximo paso</span><h2>{u.requires_review?"Solicitá revisión administrativa":!l||!ars?"Solicitá límites aprobados":u.operations>=l.max_operations?"Completá una operación para liberar un cupo":"Podés revisar nuevas cargas"}</h2><Link className="op-button secondary" href={operationBase.replace(/\/operaciones$/, "/oportunidades")}>Ver cargas disponibles</Link></section>
+      </div>
       {!l ? (
         <p role="status">Pendiente de aprobacion: sin limites configurados.</p>
       ) : (

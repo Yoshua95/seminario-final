@@ -19,7 +19,7 @@ const baseQuote = {
   services: ["international_transport"],
   scope: "Transporte marítimo consolidado",
   amount: "1250",
-  currency: "USD" as const,
+  currency: "ARS" as const,
   included: ["Flete internacional", "Seguimiento"],
   excluded: ["Tributos de importación"],
   insurance: "Opcional, no incluido",
@@ -35,7 +35,7 @@ const offers: ImporterOffer[] = [
     id: "visual-offer-1",
     operatorId: "visual-operator",
     amount: 1250,
-    currency: "USD",
+    currency: "ARS",
     days: 28,
     status: "submitted",
     validUntil: baseQuote.valid_until,
@@ -45,7 +45,7 @@ const offers: ImporterOffer[] = [
     id: "visual-offer-2",
     operatorId: "visual-operator-2",
     amount: 1490,
-    currency: "USD",
+    currency: "ARS",
     days: 22,
     status: "submitted",
     validUntil: baseQuote.valid_until,
@@ -62,7 +62,7 @@ const operation: MobileOperationDetail = {
   title: "Repuestos para mi taller",
   route: "Shenzhen → Buenos Aires",
   phase: "in_progress",
-  currency: "USD",
+  currency: "ARS",
   status: "in_transit",
   role: "importer",
   mode: "sea",
@@ -113,6 +113,7 @@ const initialFields: CargoFields = {
 export default function VisualPreview() {
   const [screen, setScreen] = useState("Inicio"),
     [fields, setFields] = useState<CargoFields>(initialFields);
+  const[volumeUnknown,setVolumeUnknown]=useState(false),[published,setPublished]=useState(false),[contracted,setContracted]=useState(true);
   const [mode, setMode] = useState<"sea" | "air" | "consolidated">("sea"),
     [file, setFile] = useState<string>(),
     [phase, setPhase] = useState<MobileOperationDetail["phase"]>("in_progress");
@@ -120,6 +121,7 @@ export default function VisualPreview() {
     [comment, setComment] = useState(""),
     [message, setMessage] = useState(""),
     [rating, setRating] = useState<{ id: string } | null>(null);
+  const[localMessages,setLocalMessages]=useState(operation.messages);
   const notice = () =>
     Alert.alert(
       "Vista visual aislada",
@@ -127,6 +129,9 @@ export default function VisualPreview() {
     );
   const o = {
     ...operation,
+    title:published?fields.title:operation.title,
+    route:published?`${fields.origin} → ${fields.destination}`:operation.route,
+    messages:localMessages,
     phase,
     guaranteeStatus:
       phase === "created"
@@ -156,13 +161,15 @@ export default function VisualPreview() {
       <View style={{ flex: 1 }}>
         {screen === "Inicio" ? (
           <HomeView
-            operation={o}
+            operation={contracted?o:null}
             onNew={() => setScreen("Publicar")}
             onTrack={() => setScreen("Seguimiento")}
           />
         ) : screen === "Publicar" ? (
           <CargoFormView
             fields={fields}
+            volumeUnknown={volumeUnknown}
+            onVolumeUnknown={setVolumeUnknown}
             onChange={(key, value) => setFields({ ...fields, [key]: value })}
             mode={mode}
             onMode={setMode}
@@ -174,19 +181,19 @@ export default function VisualPreview() {
               setFile("MSDS-ficticia.pdf");
               notice();
             }}
-            onPublish={notice}
+            onPublish={()=>{setPublished(true);setContracted(false);setScreen('Ofertas');}}
             loading={false}
             error=""
             onBack={() => setScreen("Inicio")}
           />
         ) : screen === "Ofertas" ? (
           <OffersView
-            title={operation.title}
-            route={operation.route}
+            title={o.title}
+            route={o.route}
             offers={offers}
             busy={false}
             error=""
-            onAward={notice}
+            onAward={()=>{setContracted(true);setPhase('created');setScreen('Seguimiento');}}
             onTrack={() => setScreen("Seguimiento")}
             onBack={() => setScreen("Inicio")}
           />
@@ -200,8 +207,8 @@ export default function VisualPreview() {
             onComment={setComment}
             busy={false}
             error=""
-            onGuarantee={notice}
-            onComplete={notice}
+            onGuarantee={()=>setPhase('confirmed')}
+            onComplete={()=>setPhase('completed')}
             onRate={() => {
               setRating({ id: "visual-rating" });
               notice();
@@ -209,8 +216,8 @@ export default function VisualPreview() {
             onEvidence={notice}
             message={message}
             onMessage={setMessage}
-            onSend={notice}
-            onRefresh={notice}
+            onSend={()=>{if(message.trim()){setLocalMessages([...localMessages,{id:'visual-message-'+Date.now(),senderId:'visual-importer',senderName:'Importador ficticio',body:message.trim(),createdAt:new Date().toISOString()}]);setMessage('');}}}
+            onRefresh={()=>setPhase(p=>p==='confirmed'?'in_progress':p)}
             onBack={() => setScreen("Inicio")}
           />
         )}

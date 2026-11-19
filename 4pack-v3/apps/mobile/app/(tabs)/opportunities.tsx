@@ -1,30 +1,72 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { loadCurrentProfile, loadOpenCargos, type MobileCargo, type MobileProfile } from "../../lib/dashboard";
-
-function formatNumber(value: number) {
-  return value.toLocaleString("es-AR", { maximumFractionDigits: 3 });
-}
-
+import { loadOpenCargos, type MobileCargo } from "../../lib/dashboard";
+import { Page, Card, Copy, Action, Tag, s } from "../../features/importer/ui";
 export default function OpportunitiesScreen() {
-  const [opportunities, setOpportunities] = useState<MobileCargo[]>([]);
-  const [profile, setProfile] = useState<MobileProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useFocusEffect(useCallback(() => {
+  const [cargos, setCargos] = useState<MobileCargo[]>([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState("");
+  const refresh = useCallback(() => {
     setLoading(true);
     setError("");
-    Promise.all([loadOpenCargos(), loadCurrentProfile()])
-      .then(([cargos, currentProfile]) => { setOpportunities(cargos); setProfile(currentProfile); })
-      .catch(() => setError("No pudimos cargar las oportunidades."))
+    void loadOpenCargos()
+      .then(setCargos)
+      .catch(() =>
+        setError(
+          "No pudimos cargar tus solicitudes. Deslizá hacia abajo para reintentar.",
+        ),
+      )
       .finally(() => setLoading(false));
-  }, []));
-
-  return <SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.container}><Text style={styles.kicker}>LICITACIONES</Text><Text style={styles.title}>Cargas abiertas</Text><Text style={styles.subtitle}>{profile?.role === "importer" ? "Publicá y consultá tus solicitudes logísticas." : "Cotizá oportunidades verificadas."}</Text>{profile?.role === "importer" ? <TouchableOpacity onPress={() => router.push("/cargo/new")} style={styles.createButton}><Text style={styles.createButtonText}>+ Publicar nueva carga</Text></TouchableOpacity> : null}{loading && <ActivityIndicator color="#FF6B2C" style={styles.loader} />}{error ? <Text style={styles.message}>{error}</Text> : null}{opportunities.map((item) => <View style={styles.card} key={item.id}><View style={styles.row}><Text style={styles.code}>{item.id.slice(0, 8).toUpperCase()}</Text><Text style={styles.tag}>{item.hazmatReviewRequired ? "Revisión HAZMAT" : "Carga general"}</Text></View><Text style={styles.cardTitle}>{item.title}</Text><Text style={styles.route}>{item.route}</Text><Text style={styles.detail}>{formatNumber(item.weightKg)} kg · {formatNumber(item.volumeM3)} m³</Text><TouchableOpacity onPress={() => router.push(`/cargo/${item.id}`)} style={styles.button}><Text style={styles.buttonText}>{"Ver ofertas y avance"}</Text></TouchableOpacity></View>)}{!loading && !error && opportunities.length === 0 ? <Text style={styles.message}>Todavia no publicaste cargas.</Text> : null}</ScrollView></SafeAreaView>;
+  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
+  return (
+    <Page
+      title="Cargas abiertas"
+      kicker="TUS SOLICITUDES"
+      subtitle="Todo lo que publicaste y todavía podés comparar."
+      loading={loading}
+      error={error}
+      onRefresh={refresh}
+    >
+      <Action
+        label="Publicar carga"
+        icon="add"
+        onPress={() => router.push("/cargo/new")}
+      />
+      {cargos.map((c) => (
+        <Card key={c.id}>
+          <Tag tone={c.hazmatReviewRequired ? "yellow" : "brand"}>
+            {c.hazmatReviewRequired
+              ? "HAZMAT · MSDS vinculado"
+              : "Licitación abierta"}
+          </Tag>
+          <Copy style={s.section}>{c.title}</Copy>
+          <Copy muted>{c.route}</Copy>
+          <Copy muted style={{ fontSize: 12 }}>
+            {c.weightKg} kg ·{" "}
+            {c.volumeM3 === null ? "Volumen desconocido" : `${c.volumeM3} m³`} ·{" "}
+            {c.offerCount ?? 0} ofertas
+          </Copy>
+          <Action
+            secondary
+            label="Ver ofertas"
+            onPress={() => router.push(`/cargo/${c.id}`)}
+          />
+        </Card>
+      ))}
+      {!loading && !cargos.length && (
+        <Card>
+          <Copy style={s.section}>Tu primera carga empieza acá</Copy>
+          <Copy muted>
+            Publicá una solicitud para recibir propuestas privadas de
+            operadores.
+          </Copy>
+        </Card>
+      )}
+    </Page>
+  );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#F5F6F8" }, container: { padding: 22, paddingBottom: 40 }, kicker: { color: "#FF6B2C", fontSize: 10, fontWeight: "900", letterSpacing: 1.5, marginTop: 18 }, title: { color: "#111318", fontSize: 30, fontWeight: "900", marginTop: 8 }, subtitle: { color: "#707580", marginTop: 6, marginBottom: 18 }, createButton: { backgroundColor: "#FF6B2C", borderRadius: 10, alignItems: "center", padding: 14, marginBottom: 20 }, createButtonText: { color: "#2A1208", fontWeight: "900", fontSize: 12 }, loader: { marginVertical: 30 }, message: { color: "#707580", backgroundColor: "white", borderColor: "#E7E8EB", borderWidth: 1, borderRadius: 14, padding: 20, textAlign: "center" }, card: { backgroundColor: "white", borderWidth: 1, borderColor: "#E7E8EB", borderRadius: 16, padding: 19, marginBottom: 14 }, row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }, code: { color: "#747984", fontSize: 10, fontWeight: "900" }, tag: { color: "#9A5A00", backgroundColor: "#FFF1DC", paddingHorizontal: 8, paddingVertical: 5, borderRadius: 20, fontSize: 9, fontWeight: "800" }, cardTitle: { color: "#111318", fontSize: 18, fontWeight: "800", marginTop: 18 }, route: { color: "#5E636D", marginTop: 6 }, detail: { color: "#777C86", fontSize: 12, marginTop: 12 }, button: { backgroundColor: "#111318", borderRadius: 9, alignItems: "center", padding: 13, marginTop: 20 }, buttonText: { color: "white", fontWeight: "800", fontSize: 12 }
-});

@@ -1,0 +1,15 @@
+import{test,after}from'node:test';import assert from'node:assert/strict';import{readFile}from'node:fs/promises';import ts from'typescript';
+let handler,authenticated=true,owner=true,enabled='false',databaseEnabled=false,url='https://umiracgmhjglqoftoljn.supabase.co',rpcCalls=0;
+globalThis.__linkedClient=()=>({auth:{getUser:async()=>({data:{user:authenticated?{id:'importer'}:null},error:authenticated?null:{}})},from:table=>{const chain={select:()=>chain,eq:()=>chain,single:async()=>table==='operations'?{data:{importer_id:'importer',payment_mode:'mercado_pago_test',contract_currency:'ARS'},error:owner?null:{}}:table==='mp_test_settings'?{data:{enabled:databaseEnabled},error:null}:{data:{},error:null}};return chain;},rpc:async()=>{rpcCalls++;return{data:null,error:null};}});
+const oldDeno=globalThis.Deno;globalThis.Deno={env:{get:k=>k==='SUPABASE_URL'?url:k==='MP_TEST_ENABLED'?enabled:'test'},serve:h=>{handler=h;}};
+const helper=new URL('../supabase/functions/_shared/mercado-pago-linked-test.mjs',import.meta.url).href;
+const source=(await readFile(new URL('../supabase/functions/mercado-pago-reconcile-existing/index.ts',import.meta.url),'utf8')).replace('import { createClient } from "npm:@supabase/supabase-js@2.119.0";','const createClient=globalThis.__linkedClient;').replace('"../_shared/mercado-pago-linked-test.mjs"',JSON.stringify(helper));
+const js=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+const call=body=>handler(new Request('https://example.invalid',{method:'POST',body:JSON.stringify(body)}));
+test('endpoint no permite GET ni operaciones arbitrarias',async()=>{assert.equal((await handler(new Request('https://example.invalid'))).status,405);assert.equal((await call({action:'checkout'})).status,400);assert.equal((await call({action:'reconcile',payment_id:'another'})).status,400);assert.equal(rpcCalls,0);});
+test('endpoint exige sesión real',async()=>{authenticated=false;assert.equal((await call({action:'inspect'})).status,401);authenticated=true;assert.equal(rpcCalls,0);});
+test('otra cuenta no llega al proveedor ni a la RPC',async()=>{owner=false;assert.equal((await call({action:'reconcile'})).status,403);owner=true;assert.equal(rpcCalls,0);});
+test('otro proyecto no puede usar la excepción',async()=>{url='https://other.supabase.co';const r=await call({action:'reconcile'});assert.equal(r.status,409);url='https://umiracgmhjglqoftoljn.supabase.co';assert.equal(rpcCalls,0);});
+test('la función exige creación de checkouts apagada',async()=>{enabled='true';assert.equal((await call({action:'reconcile'})).status,409);enabled='false';assert.equal(rpcCalls,0);});
+test('la base también debe mantener checkouts apagados',async()=>{databaseEnabled=true;assert.equal((await call({action:'reconcile'})).status,409);databaseEnabled=false;assert.equal(rpcCalls,0);});
+after(()=>{globalThis.Deno=oldDeno;delete globalThis.__linkedClient;});

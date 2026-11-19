@@ -14,13 +14,13 @@ import {
 import type { ReactNode } from "react";
 import { useState } from "react";
 export const colors = {
-  bg: "#07070a",
-  card: "#171718",
-  secondary: "#202021",
-  line: "#303033",
-  text: "#f4f4f5",
-  muted: "#b1b1ba",
-  brand: "#ff762e",
+  bg: "#0C0C0E",
+  card: "#17181B",
+  secondary: "#202125",
+  line: "#303237",
+  text: "#F2F2EF",
+  muted: "#A9ABB2",
+  brand: "#F2F2EF",
   green: "#34d399",
   yellow: "#fbbf24",
   red: "#fb7185",
@@ -40,9 +40,18 @@ export function Copy({
     </Text>
   );
 }
-export function Heading({ children }: { children: ReactNode }) {
+export function Heading({
+  children,
+  centered = false,
+}: {
+  children: ReactNode;
+  centered?: boolean;
+}) {
   return (
-    <Text accessibilityRole="header" style={s.title}>
+    <Text
+      accessibilityRole="header"
+      style={[s.title, centered && { textAlign: "center" }]}
+    >
       {children}
     </Text>
   );
@@ -132,6 +141,8 @@ export function Field({
   number = false,
   multiline = false,
   placeholder,
+  suffix,
+  disabled = false,
 }: {
   label: string;
   value: string;
@@ -139,6 +150,8 @@ export function Field({
   number?: boolean;
   multiline?: boolean;
   placeholder?: string;
+  suffix?: string;
+  disabled?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -146,23 +159,37 @@ export function Field({
       <Copy muted style={s.label}>
         {label}
       </Copy>
-      <TextInput
-        accessibilityLabel={label}
-        value={value}
-        onChangeText={onChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        keyboardType={number ? "decimal-pad" : "default"}
-        multiline={multiline}
-        placeholder={placeholder}
-        placeholderTextColor="#73737f"
-        selectionColor={colors.brand}
+      <View
         style={[
-          s.input,
-          focused && { borderColor: colors.brand },
-          multiline && { minHeight: 88, textAlignVertical: "top" },
+          s.inputShell,
+          focused && { borderColor: colors.text },
+          disabled && { opacity: 0.45 },
         ]}
-      />
+      >
+        <TextInput
+          accessibilityLabel={suffix ? `${label} (${suffix})` : label}
+          editable={!disabled}
+          value={value}
+          onChangeText={onChange}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          keyboardType={number ? "decimal-pad" : "default"}
+          multiline={multiline}
+          placeholder={placeholder}
+          placeholderTextColor="#73737f"
+          selectionColor={colors.brand}
+          style={[
+            s.input,
+            focused && { borderColor: colors.brand },
+            multiline && { minHeight: 88, textAlignVertical: "top" },
+          ]}
+        />
+        {suffix && (
+          <Copy muted style={{ paddingRight: 16, fontWeight: "700" }}>
+            {suffix}
+          </Copy>
+        )}
+      </View>
     </View>
   );
 }
@@ -175,6 +202,7 @@ export function Page({
   loading,
   back,
   onRefresh,
+  centered = false,
 }: {
   children: ReactNode;
   title: string;
@@ -184,14 +212,23 @@ export function Page({
   loading?: boolean;
   back?: () => void;
   onRefresh?: () => void;
+  centered?: boolean;
 }) {
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
       <StatusBar style="light" />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={s.page}
-        refreshControl={onRefresh ? <RefreshControl refreshing={Boolean(loading)} onRefresh={onRefresh} tintColor={colors.brand}/> : undefined}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={Boolean(loading)}
+              onRefresh={onRefresh}
+              tintColor={colors.brand}
+            />
+          ) : undefined
+        }
       >
         <View style={s.header}>
           <View style={s.brand}>
@@ -213,9 +250,15 @@ export function Page({
             </TouchableOpacity>
           )}
         </View>
-        <Text style={s.kicker}>{kicker}</Text>
-        <Heading>{title}</Heading>
-        {subtitle && <Copy muted>{subtitle}</Copy>}
+        <Text style={[s.kicker, centered && { textAlign: "center" }]}>
+          {kicker}
+        </Text>
+        <Heading centered={centered}>{title}</Heading>
+        {subtitle && (
+          <Copy muted style={centered ? { textAlign: "center" } : {}}>
+            {subtitle}
+          </Copy>
+        )}
         {error && (
           <View accessibilityRole="alert" style={s.error}>
             <Copy style={{ color: colors.red }}>{error}</Copy>
@@ -233,7 +276,7 @@ export function Page({
 }
 export const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  page: { padding: 22, paddingBottom: 32, gap: 16 },
+  page: { padding: 22, paddingBottom: 32, gap: 18, flexGrow: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -243,8 +286,8 @@ export const s = StyleSheet.create({
   brand: { flexDirection: "row", alignItems: "center", gap: 10 },
   brandIcon: {
     borderWidth: 1,
-    borderColor: "#ff762e40",
-    backgroundColor: "#ff762e12",
+    borderColor: "#F2F2EF30",
+    backgroundColor: "#F2F2EF08",
     padding: 9,
     borderRadius: 10,
   },
@@ -264,8 +307,8 @@ export const s = StyleSheet.create({
   },
   title: {
     fontFamily: "Geist",
-    fontSize: 31,
-    lineHeight: 36,
+    fontSize: 29,
+    lineHeight: 35,
     fontWeight: "700",
     letterSpacing: -1,
     color: colors.text,
@@ -324,14 +367,20 @@ export const s = StyleSheet.create({
   },
   input: {
     fontFamily: "Geist",
-    borderColor: colors.line,
-    borderWidth: 1,
-    borderRadius: 9,
-    backgroundColor: colors.secondary,
     color: colors.text,
     padding: 14,
     fontSize: 14,
     minHeight: 50,
+    flex: 1,
+    textAlign: "left",
+  },
+  inputShell: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderColor: colors.line,
+    borderWidth: 1,
+    borderRadius: 12,
+    backgroundColor: colors.bg,
   },
   label: { fontSize: 12, fontWeight: "600" },
   back: {

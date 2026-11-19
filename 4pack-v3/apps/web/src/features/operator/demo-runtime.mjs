@@ -41,6 +41,8 @@ async function prepareHazmatFixtures(db, directory) {
 }
 export async function refreshLocalSchema(db) {
   if (!isDemoEnabled()) throw new Error("La demostración no está disponible.");
+  // Older local databases predate the anon role; hosted Supabase already has it.
+  await db.exec("do $$ begin if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if; end $$;");
   for (const [name, sql] of Object.entries(assets.migrations)) {
     const checksum = createHash("sha256").update(sql).digest("hex");
     const applied = await db.query(

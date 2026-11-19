@@ -44,6 +44,7 @@ const modes: Array<{ value: TransportMode; label: string }> = [
 export default function NewCargoScreen() {
   const [fields, setFields] = useState(initialFields);
   const [msds, setMsds] = useState<NativeMsds | null>(null);
+  const [volumeUnknown, setVolumeUnknown] = useState(false);
   const attempt = useRef({ requestId: randomUUID(), uploadId: randomUUID() });
   const requiresMsds = requiresHazmatReview(
     `${fields.title} ${fields.description} ${fields.category}`,
@@ -78,14 +79,17 @@ export default function NewCargoScreen() {
 
   async function publish() {
     const weightKg = Number(fields.weight.replace(",", "."));
-    const volumeM3 = Number(fields.volume.replace(",", "."));
+    const volumeM3 = volumeUnknown
+      ? null
+      : Number(fields.volume.replace(",", "."));
     const fobUsd = Number(fields.fob.replace(",", "."));
     if (
-      Object.values(fields).some((value) => !value.trim()) ||
+      Object.entries(fields).some(
+        ([key, value]) => !(volumeUnknown && key === "volume") && !value.trim(),
+      ) ||
       !Number.isFinite(weightKg) ||
       weightKg <= 0 ||
-      !Number.isFinite(volumeM3) ||
-      volumeM3 <= 0 ||
+      (!volumeUnknown && (!Number.isFinite(volumeM3) || volumeM3! <= 0)) ||
       !Number.isFinite(fobUsd) ||
       fobUsd < 0
     ) {
@@ -127,6 +131,11 @@ export default function NewCargoScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <CargoFormView
         fields={fields}
+        volumeUnknown={volumeUnknown}
+        onVolumeUnknown={(value) => {
+          attempt.current = { requestId: randomUUID(), uploadId: randomUUID() };
+          setVolumeUnknown(value);
+        }}
         onChange={(key, value) => update(key)(value)}
         mode={mode}
         onMode={(value) => {

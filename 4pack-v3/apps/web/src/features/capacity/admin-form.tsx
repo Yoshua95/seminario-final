@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { capacityAction } from "./admin-actions";
 import type { CapacitySnapshot } from "./types";
 export function CapacityAdminForm({
@@ -15,7 +15,7 @@ export function CapacityAdminForm({
     capacityAction.bind(null, demo),
     { ok: false, message: "" },
   );
-  const [currency, setCurrency] = useState("USD");
+  const currency = "ARS";
   const m = data.currencies.find((c) => c.currency === currency),
     l = data.limits;
   return (
@@ -26,14 +26,7 @@ export function CapacityAdminForm({
         <input type="hidden" name="operator_id" value={operatorId} />
         <label>
           Moneda
-          <select
-            name="currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-          >
-            <option>USD</option>
-            <option>ARS</option>
-          </select>
+          <input name="currency" value={currency} readOnly />
         </label>
         <fieldset key={currency}>
           <legend>

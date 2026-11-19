@@ -2,6 +2,10 @@ import services from "./services.json" with { type: "json" };
 export const serviceTaxonomy = services;
 export type ServiceKind = keyof typeof services;
 export type ContractCurrency = "USD" | "ARS";
+export const NEW_CONTRACT_CURRENCY = "ARS" as const;
+export function assertNewContractCurrency(currency: unknown): asserts currency is "ARS" {
+  if (currency !== NEW_CONTRACT_CURRENCY) throw new Error("Las nuevas ofertas, adjudicaciones y limites monetarios deben estar en ARS.");
+}
 export type NormalizedQuote = {
   mode: "air" | "sea" | "consolidated";
   services: ServiceKind[];

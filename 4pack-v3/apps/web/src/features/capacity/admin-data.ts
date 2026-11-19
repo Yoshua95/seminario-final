@@ -72,7 +72,9 @@ export async function loadCapacityAdmin(
   if (client) {
     const result = await client
       .from("operator_profiles")
-      .select("user_id,company_name,verification_status,profiles!inner(role)")
+      .select(
+        "user_id,company_name,verification_status,profiles!operator_profiles_user_id_fkey!inner(role)",
+      )
       .eq("profiles.role", "operator")
       .order("company_name");
     if (result.error) throw new Error("No se pudieron cargar operadores");

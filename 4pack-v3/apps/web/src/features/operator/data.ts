@@ -115,6 +115,9 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
   const capacity = await client.rpc("operator_capacity_snapshot");
   if (capacity.error) throw new Error("No pudimos cargar capacidad.");
   snapshot.capacity = capacity.data;
+  const payments = await client.from("mp_test_payments").select("operation_id,status,amount,currency,provider_payment_id");
+  snapshot.payments = payments.data ?? [];
+  snapshot.paymentsUnavailable = !!payments.error;
   return snapshot;
 });
 export async function executeCommand(
@@ -158,6 +161,11 @@ export async function executeQuoteCommand(demo: boolean, command: string, payloa
   const {data,error} = await client.rpc("quote_command",{command,payload});
   if (error) throw new Error(error.code==="P0001"?error.message:"No pudimos guardar la cotización.");
   return data as {id:string};
+}
+export async function executeVolumeProposal(demo:boolean,cargo:string,volume:number){
+ if(demo){const actor=await demoIdentity(),db=await localDatabase();const r=await asUser<{id:string}>(db,actor,'select public.propose_cargo_volume($1,$2) id',[cargo,volume]);return r.rows[0].id;}
+ const{client}=await operatorSession();const r=await client.rpc('propose_cargo_volume',{target_cargo:cargo,proposed_volume:volume});
+ if(r.error)throw new Error(r.error.code==='P0001'?r.error.message:'No pudimos proponer el volumen.');return r.data as string;
 }
 export async function demoAward(offerId: string) {
   if(isMultiroleDemo()) throw new Error("La adjudicacion corresponde a la sesion del importador.");
