@@ -1,0 +1,14 @@
+{
+  "publicRoles": [
+    "operator",
+    "admin"
+  ],
+  "defaultRole": "operator",
+  "operationsHttp": 200,
+  "unchangedRows": 4,
+  "nullSnapshotRow": "OP-1001",
+  "completeContractRow": "OP-1005",
+  "errors": [],
+  "internalImporter": true,
+  "forgedImporterBlocked": true
+}
