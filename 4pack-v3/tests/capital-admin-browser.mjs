@@ -1,6 +1,7 @@
 import { chromium } from "playwright-core";
 import fs from "node:fs/promises";
 import assert from "node:assert/strict";
+import {internalImporterSession} from '../scripts/internal-importer-session.mjs';
 const base = process.env.FOURPACK_CAPITAL_TEST_URL ?? "http://localhost:3015";
 if (!/^http:\/\/(localhost|127\.0\.0\.1):3015$/.test(base))
   throw Error("ISOLATED_LOOPBACK_REQUIRED");
@@ -20,6 +21,7 @@ async function actor(role) {
   contexts.push(c);
   const p = await c.newPage();
   await p.goto(base + "/demo/acceso");
+  if(role==='importer'){await internalImporterSession(c,base,process.env.FOURPACK_INTERNAL_TEST_DIRECTORY);await p.goto(base+'/demo/importador');pages[role]=p;return p;}
   await p.locator("[name=account]").selectOption(role);
   await p.getByRole("button", { name: "Entrar al ensayo multirrol" }).click();
   await p.waitForURL((u) => !u.pathname.includes("/acceso"));

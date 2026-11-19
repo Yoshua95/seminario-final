@@ -1,5 +1,6 @@
 import { chromium } from "playwright-core";
 import assert from "node:assert/strict";
+import {internalImporterSession} from '../scripts/internal-importer-session.mjs';
 import {
   mkdir,
   mkdtemp,
@@ -112,6 +113,7 @@ async function login(context, role) {
   const page = await context.newPage();
   page.on("pageerror", (e) => report.errors.push(e.message));
   await page.goto(base + "/demo/acceso");
+  if(role==='importer'){await internalImporterSession(context,base,directory);await page.goto(base+'/demo/importador');return page;}
   await page.locator("[name=account]").selectOption(role);
   await page
     .getByRole("button", { name: "Entrar al ensayo multirrol" })

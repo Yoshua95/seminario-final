@@ -12,7 +12,7 @@ export type Capital = {
 export type Workbench = {
   contracts?: {
     operation_id: string;
-    content: { quote?: { required_documents?: string[] } };
+    content: { quote?: { required_documents?: string[] | null } | null } | null;
   }[];
   guarantees?: { operation_id: string; status: string }[];
   actor: string;

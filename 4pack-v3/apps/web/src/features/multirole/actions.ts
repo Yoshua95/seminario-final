@@ -12,7 +12,7 @@ import { localDatabase } from "../operator/data";
 import { asUser } from "../operator/demo-runtime.mjs";
 export async function enterRehearsal(form: FormData) {
   const role = String(form.get("account"));
-  if (!["importer", "operator", "admin"].includes(role))
+  if (!["operator", "admin"].includes(role))
     throw new Error("Cuenta de ensayo no disponible.");
   await openRehearsalSession(role as DemoRole);
   redirect(roleHome(role as DemoRole));

@@ -43,9 +43,29 @@ export function operationTask(
     )
   )
     return { label: "Revisar reclamo y evidencia", owner: "Administración" };
-  const required =
-    data.contracts?.find((c) => c.operation_id === op.id)?.content.quote
-      ?.required_documents ?? [];
+  // Legacy operations can have no contract row, SQL/JSON null content, or
+  // incomplete quote terms. Missing terms never mean "no documents required".
+  const contract = data.contracts?.find((c) => c.operation_id === op.id);
+  const required = contract?.content?.quote?.required_documents;
+  if (
+    !Array.isArray(required) ||
+    required.some((type) => typeof type !== "string")
+  ) {
+    if (op.phase === "awaiting_delivery_confirmation")
+      return { label: "Confirmar recepción", owner: "Importador" };
+    const guarantee = data.guarantees?.find((g) => g.operation_id === op.id);
+    if (
+      guarantee &&
+      ["pending", "proof_uploaded", "verified", "rejected"].includes(
+        guarantee.status,
+      )
+    )
+      return {
+        label: "Confirmar pago o garantía pendiente",
+        owner: "Importador",
+      };
+    return { label: "Contrato pendiente de revisión", owner: "Administración" };
+  }
   const documents = data.documents.filter(
     (d) => d.operation_id === op.id || d.cargo_id === op.cargo_id,
   );

@@ -59,13 +59,11 @@ export function MultiroleAccess() {
           Usá una ventana o perfil de navegador separado por rol para grabar el
           recorrido.
         </p>
+        <p>El importador usa la aplicación Android.</p>
         <form action={enterRehearsal} className="op-form">
           <label>
             Cuenta ficticia
-            <select name="account">
-              <option value="importer">
-                Importador · {rehearsalAccounts.importer.email}
-              </option>
+            <select name="account" defaultValue="operator">
               <option value="operator">
                 Operador · {rehearsalAccounts.operator.email}
               </option>
