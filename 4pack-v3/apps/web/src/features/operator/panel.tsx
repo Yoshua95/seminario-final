@@ -1,3 +1,4 @@
+import { OperationRow } from "./operation-row";
 import { Drawer } from "./drawer";
 import { OffersList } from "./offers-list";
 import { Collections } from "./collections";
@@ -384,7 +385,7 @@ function Operations({
   const active = data.operations.filter(
     (o) => !["completed", "cancelled", "failed"].includes(o.phase),
   );
-  const filtered = active.filter(
+  const filtered = (val(search,"estado")==="completed" ? data.operations.filter(o=>o.phase==="completed") : active).filter(
     (o) => !val(search, "estado") || o.phase === val(search, "estado"),
   );
   if (!id)
@@ -418,7 +419,7 @@ function Operations({
             <select name="estado" defaultValue={val(search, "estado")}>
               <option value="">Todos los estados activos</option>
               {Object.entries(phaseLabels)
-                .filter(([key]) => !["completed", "cancelled", "failed"].includes(key))
+                .filter(([key]) => !["cancelled", "failed"].includes(key))
                 .map(([key, label]) => (
                   <option key={key} value={key}>
                     {label}
@@ -432,36 +433,7 @@ function Operations({
           </Link>
         </form>
         <div className="op-stack">
-          {filtered.map((o) => {
-            const cargo = cargoById(data, o.cargo_id);
-            const offer = data.offers.find((f) => f.id === o.accepted_offer_id);
-            return (
-              <Link
-                href={`${base}/operaciones/${o.id}`}
-                className="op-panel op-operation-row"
-                key={o.id}
-              >
-                <span className="op-icon-box">
-                  <Icon name="operations" />
-                </span>
-                <div>
-                  <span className="op-caption">#{code(o)}</span>
-                  <h2>{cargo?.title}</h2>
-                  <p>
-                    {cargo?.origin} → {cargo?.destination}
-                  </p>
-                  <small>{date(o.awarded_at)}</small>
-                </div>
-                <div>
-                  <Badge status={o.phase} />
-                  <strong className="mono">
-                    {money(offer?.total_usd ?? 0, offer?.payment_currency ?? "USD")}
-                  </strong>
-                </div>
-                <Icon name="arrow" />
-              </Link>
-            );
-          })}
+          {filtered.map(o=><OperationRow key={o.id} data={data} id={o.id} base={base}/>)}
           {filtered.length === 0 && (
             <Empty title="Sin operaciones activas">
               Tus ofertas adjudicadas aparecerán acá.
@@ -595,7 +567,7 @@ function Operations({
               </ActionForm>
             </section>
           )}
-          <Drawer label="Enviar mensaje" title="Chat de esta operación" wide><section className="op-panel op-chat">
+          <Drawer label="Enviar mensaje" title="Chat de esta operación" initialOpen={val(search,"panel")==="chat"} wide><section className="op-panel op-chat">
             <div className="op-chat-header">
               <span className="op-avatar">
                 {operation.importer_name?.slice(0, 2).toUpperCase() || "IM"}

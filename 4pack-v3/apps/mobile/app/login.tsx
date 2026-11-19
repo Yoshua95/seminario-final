@@ -1,3 +1,4 @@
+import { BrandMark } from "../features/importer/brand";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
@@ -31,7 +32,7 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
-        <View><Text style={styles.logo}>4PACK<Text style={styles.dot}>●</Text></Text><Text style={styles.kicker}>ACCESO SEGURO</Text><Text style={styles.title}>Tu operación empieza acá.</Text><Text style={styles.subtitle}>Acceso exclusivo para importadores. Operador y administracion usan la web.</Text></View>
+        <View><BrandMark/><Text style={styles.kicker}>ACCESO SEGURO</Text><Text style={styles.title}>Tu operación empieza acá.</Text><Text style={styles.subtitle}>Acceso exclusivo para importadores. Operador y administracion usan la web.</Text></View>
         <View style={styles.card}>
           <Text style={styles.label}>Correo electrónico</Text>
           <TextInput autoCapitalize="none" autoComplete="email" keyboardType="email-address" onChangeText={setEmail} placeholder="nombre@empresa.com" placeholderTextColor="#656873" style={styles.input} value={email} />

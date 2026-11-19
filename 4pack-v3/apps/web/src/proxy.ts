@@ -1,4 +1,4 @@
-import {isMultiroleDemo} from "./features/multirole/environment.mjs";
+import { isMultiroleDemo } from "./features/multirole/environment.mjs";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
@@ -10,10 +10,20 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   // Public return only: this page never changes or confirms payment state.
   if (request.nextUrl.pathname === "/pagos/retorno") return response;
-  if(isMultiroleDemo()) {
-    const alias:Record<string,string>={"/acceso":"/demo/acceso","/cargas/nueva":"/demo/importador/cargas/nueva","/admin":"/demo/admin","/admin/operadores":"/demo/admin/operadores","/admin/capacidad":"/demo/admin/capacidad"};
-    const destination=alias[request.nextUrl.pathname];
-    if(destination) { const url=request.nextUrl.clone();url.pathname=destination;return NextResponse.redirect(url); }
+  if (isMultiroleDemo()) {
+    const alias: Record<string, string> = {
+      "/acceso": "/demo/acceso",
+      "/cargas/nueva": "/demo/importador/cargas/nueva",
+      "/admin": "/demo/admin",
+      "/admin/operadores": "/demo/admin/operadores",
+      "/admin/capacidad": "/demo/admin/capacidad",
+    };
+    const destination = alias[request.nextUrl.pathname];
+    if (destination) {
+      const url = request.nextUrl.clone();
+      url.pathname = destination;
+      return NextResponse.redirect(url);
+    }
   }
   if (isVercelPreview() && !request.nextUrl.pathname.startsWith("/demo/"))
     return NextResponse.redirect(new URL("/demo/acceso", request.url));
@@ -23,7 +33,8 @@ export async function proxy(request: NextRequest) {
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!url || !publishableKey) {
-    if (request.nextUrl.pathname === "/acceso") return response;
+    if (["/", "/acceso", "/admin/acceso"].includes(request.nextUrl.pathname))
+      return response;
     return NextResponse.redirect(
       new URL("/acceso?configuracion=pendiente", request.url),
     );
@@ -45,18 +56,47 @@ export async function proxy(request: NextRequest) {
   });
 
   const { data } = await supabase.auth.getUser();
-  const isAccessPage = request.nextUrl.pathname === "/acceso";
+  const isAccessPage = ["/acceso", "/admin/acceso"].includes(
+    request.nextUrl.pathname,
+  );
 
-  if (!data.user && !isAccessPage) {
+  if (!data.user && !isAccessPage && request.nextUrl.pathname !== "/") {
     const accessUrl = request.nextUrl.clone();
-    accessUrl.pathname = "/acceso";
+    accessUrl.pathname = request.nextUrl.pathname.startsWith("/admin")
+      ? "/admin/acceso"
+      : "/acceso";
     return NextResponse.redirect(accessUrl);
   }
 
   if (data.user && isAccessPage) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
     const homeUrl = request.nextUrl.clone();
-    homeUrl.pathname = "/";
+    homeUrl.pathname =
+      profile?.role === "admin"
+        ? "/admin"
+        : profile?.role === "operator"
+          ? "/operador/oportunidades"
+          : "/";
     return NextResponse.redirect(homeUrl);
+  }
+
+  if (data.user && request.nextUrl.pathname.startsWith("/admin")) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+    if (profile?.role !== "admin")
+      return NextResponse.redirect(
+        new URL(
+          profile?.role === "operator" ? "/operador/oportunidades" : "/",
+          request.url,
+        ),
+      );
   }
 
   if (

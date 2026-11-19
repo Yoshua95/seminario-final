@@ -3,13 +3,13 @@
     "name": "4PACK",
     "slug": "4pack",
     "owner": "yoshua95",
-    "version": "3.0.3",
+    "version": "3.0.4",
     "orientation": "portrait",
     "scheme": "fourpack",
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.yoshuachavez.fourpack",
-      "versionCode": 4
+      "versionCode": 5
     },
     "plugins": [
       "expo-router"

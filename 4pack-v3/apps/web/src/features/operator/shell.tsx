@@ -1,4 +1,6 @@
 "use client";
+import { BrandMark } from "@/components/brand-mark";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
@@ -115,15 +117,7 @@ export function OperatorShell({
           </button>
         )}
         <Link href={`${base}/oportunidades`} className="op-brand">
-          <span className="op-brand-icon">
-            <Icon name="anchor" />
-          </span>
-          <span>
-            <strong>
-              4PACK<span className="op-brand-dot">●</span>
-            </strong>
-            <small>Operador Logístico</small>
-          </span>
+          <BrandMark/>
         </Link>
         <nav aria-label="Panel del operador">
           <p className="op-nav-caption">PANEL</p>

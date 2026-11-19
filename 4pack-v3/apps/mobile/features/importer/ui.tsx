@@ -1,3 +1,4 @@
+import { BrandMark } from "./brand";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -231,14 +232,7 @@ export function Page({
         }
       >
         <View style={s.header}>
-          <View style={s.brand}>
-            <View style={s.brandIcon}>
-              <Ionicons name="cube-outline" color={colors.brand} size={20} />
-            </View>
-            <Text style={s.wordmark}>
-              4PACK<Text style={{ color: colors.brand }}>●</Text>
-            </Text>
-          </View>
+          <BrandMark/>
           {back && (
             <TouchableOpacity
               accessibilityRole="button"

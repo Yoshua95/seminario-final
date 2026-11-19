@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Snapshot } from "./types";
 import { money, code, date } from "./types";
 import { Badge, PageHeader, Empty } from "./ui";
-import { collectionSummary, isProviderTest } from "./journey";
+import { isProviderTest } from "./journey";
+import { netCollections } from "./workbench-state";
 
 export function Collections({ data, demo }: { data: Snapshot; demo: boolean }) {
   const base = demo ? "/demo/operador" : "/operador";
@@ -12,15 +13,7 @@ export function Collections({ data, demo }: { data: Snapshot; demo: boolean }) {
       data.offers.find((f) => f.id === o.accepted_offer_id)
         ?.payment_currency === "ARS",
   );
-  const legacyIds = new Set(
-    ars.filter((o) => !isProviderTest(o)).map((o) => o.id),
-  );
-  const amounts = collectionSummary(
-    data.guarantees.filter((g) => legacyIds.has(g.operation_id)),
-    data.movements.filter(
-      (m) => m.operation_id === null || legacyIds.has(m.operation_id),
-    ),
-  );
+  const amounts = netCollections(data);
   const approved = (data.payments ?? []).filter(
     (p) => p.currency === "ARS" && p.status === "approved",
   );
@@ -30,34 +23,44 @@ export function Collections({ data, demo }: { data: Snapshot; demo: boolean }) {
         title="Cobros"
         description="Qué se confirmó, qué sigue pendiente y qué importe te corresponde por operación."
       />
-      <div className="op-summary-grid">
-        <section className="op-panel">
-          <span>Pagos de prueba aprobados · ARS</span>
-          <strong className="mono">
-            {data.paymentsUnavailable
-              ? "No disponible"
-              : money(
-                  approved.reduce((n, p) => n + Number(p.amount), 0),
-                  "ARS",
-                )}
-          </strong>
-          <p>Verificados por backend. No representan saldo retirable.</p>
+      <div className="op-summary-grid op-net-balances">
+        <section className="op-panel balance-available">
+          <span>Disponible por operaciones completadas</span>
+          <strong className="mono">{money(amounts.available, "ARS")}</strong>
+          <small className="op-balance-source">Saldo de prueba</small>
+          <p>
+            Liberaciones netas registradas en el libro, descontando los débitos
+            registrados. No es saldo bancario.
+          </p>
         </section>
-        <section className="op-panel">
-          <span>Disponible simulado · ARS</span>
-          <strong className="mono">
-            {money(amounts.simulatedAvailable, "ARS")}
-          </strong>
-          <p>Saldo del libro simulado. No es dinero bancario.</p>
-        </section>
-        <section className="op-panel">
-          <span>Pendiente simulado neto · ARS</span>
-          <strong className="mono">
-            {money(amounts.simulatedPending, "ARS")}
-          </strong>
-          <p>Garantías simuladas retenidas, menos comisión registrada.</p>
+        <section className="op-panel balance-pending">
+          <span>Pendiente de liberación</span>
+          <strong className="mono">{money(amounts.pending, "ARS")}</strong>
+          <small className="op-balance-source">Saldo de prueba</small>
+          <p>
+            {amounts.pendingCount} operaciones: completar el servicio y
+            confirmar la entrega. Si hay controversia, requiere resolución.
+            Liberación por hitos aún no disponible.
+          </p>
         </section>
       </div>
+      <details className="op-panel op-section-gap">
+        <summary>
+          Pagos de prueba aprobados · detalle del cobro al comprador
+        </summary>
+        <strong className="mono">
+          {data.paymentsUnavailable
+            ? "No disponible"
+            : money(
+                approved.reduce((n, p) => n + Number(p.amount), 0),
+                "ARS",
+              )}
+        </strong>
+        <p>
+          Verificados por backend. Es el total cobrado al comprador, no el neto
+          disponible para el operador.
+        </p>
+      </details>
       <p className="op-small">
         No hay saldo bancario disponible certificado por 4PACK.{" "}
         <Link href={`${base}/historial`}>

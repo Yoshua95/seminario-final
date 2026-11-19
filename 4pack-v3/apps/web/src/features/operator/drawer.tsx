@@ -1,5 +1,5 @@
 "use client";
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 /** Native dialog supplies focus trapping, Escape, and focus restoration. */
 export function Drawer({
@@ -8,14 +8,19 @@ export function Drawer({
   children,
   wide = false,
   primary = false,
+  initialOpen = false,
 }: {
   title: string;
   label: string;
   children: ReactNode;
   wide?: boolean;
   primary?: boolean;
+  initialOpen?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (initialOpen && !dialog.current?.open) dialog.current?.showModal();
+  }, [initialOpen]);
   return (
     <>
       <button

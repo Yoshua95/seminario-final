@@ -1,3 +1,4 @@
+import { BrandMark } from "./brand-mark";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SessionProfile } from "@/components/session-profile";
@@ -27,7 +28,7 @@ export async function DashboardShell({
   return (
     <main className="shell">
       <aside className="sidebar">
-        <Link className="brand" href="/">4PACK<span>●</span></Link>
+        <Link className="brand" href="/"><BrandMark/></Link>
         <nav aria-label="Navegación principal">
           {navigation.filter((item) => !("adminOnly" in item) || role === "admin").map((item) => (
             <Link className={item.key === active ? "active" : undefined} href={item.href} key={item.key}>

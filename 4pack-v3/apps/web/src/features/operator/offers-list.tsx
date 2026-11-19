@@ -3,7 +3,7 @@ import type { Snapshot } from "./types";
 import { code, money, offerStatus, date } from "./types";
 import { PageHeader, Badge, Empty } from "./ui";
 import { Drawer } from "./drawer";
-import { QuoteTerms } from "../marketplace/quote-terms";
+import { OfferDetail } from "./offer-detail";
 import { QuoteEditor, WithdrawQuote } from "./quote-editor";
 import { ActionForm } from "./forms";
 
@@ -153,7 +153,7 @@ export function OffersList({
                           Sellada el {date(o.created_at)} · Revisión{" "}
                           {o.revision}
                         </p>
-                        <QuoteTerms quote={o.normalized_quote} />
+                        <OfferDetail quote={o.normalized_quote} />
                         {editable && (
                           <>
                             {o.status === "submitted" && (
