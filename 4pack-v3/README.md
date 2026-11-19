@@ -23,7 +23,17 @@ Plataforma Web + Android de intermediación y licitación logística para peque�
 npm install
 npm run dev:web
 npm run dev:mobile
+npm test
 npm run typecheck
+npm run lint
 npm run build:web
+npm run build:mobile
 ```
+
+## Validación y demostración
+
+- [Plan de pruebas integral](docs/06-plan-pruebas.md)
+- [Guion de demostración](docs/07-guion-demo.md)
+- [Manual de instalación](docs/08-manual-instalacion.md)
+- [Manual de usuario](docs/09-manual-usuario.md)
 

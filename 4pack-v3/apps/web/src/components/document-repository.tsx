@@ -1,5 +1,6 @@
 "use client";
 
+import { uploadImporterDocument } from "@/app/documentos/actions";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -36,48 +37,18 @@ export function DocumentRepository({ documents, targets }: { documents: Document
       return;
     }
 
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) return setError("No hay conexión disponible.");
-    setLoading(true);
-    setError("");
-    setSuccess("");
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData.user) {
-      setLoading(false);
-      setError("La sesión no está disponible.");
-      return;
-    }
-
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-    const storagePath = `${authData.user.id}/${crypto.randomUUID()}-${safeName}`;
-    const { error: storageError } = await supabase.storage.from("documents").upload(storagePath, file, { contentType: "application/pdf", upsert: false });
-    if (storageError) {
-      setLoading(false);
-      setError("No pudimos subir el archivo.");
-      return;
-    }
-
-    const { error: documentError } = await supabase.from("documents").insert({
-      uploaded_by: authData.user.id,
-      kind,
-      storage_path: storagePath,
-      original_name: file.name,
-      mime_type: "application/pdf",
-      cargo_id: selectedTarget.type === "cargo" ? selectedTarget.id : null,
-      operation_id: selectedTarget.type === "operation" ? selectedTarget.id : null
-    });
-    if (documentError) {
-      await supabase.storage.from("documents").remove([storagePath]);
-      setLoading(false);
-      setError("No pudimos vincular el documento. Verificá tus permisos.");
-      return;
-    }
-
-    setFile(null);
-    setLoading(false);
-    setSuccess("Documento cargado y vinculado correctamente.");
-    event.currentTarget.reset();
-    router.refresh();
+    const formElement = event.currentTarget;
+    setLoading(true); setError(""); setSuccess("");
+    const form = new FormData();
+    form.set("file", file); form.set("id", selectedTarget.id);
+    form.set("target_type", selectedTarget.type); form.set("kind", kind);
+    form.set("document_type", kindLabels[kind]);
+    try {
+      const result = await uploadImporterDocument(form);
+      if (!result.ok) { setError(result.message); return; }
+      setFile(null); setSuccess(result.message); formElement.reset(); router.refresh();
+    } catch { setError("No pudimos subir el documento."); }
+    finally { setLoading(false); }
   }
 
   async function downloadDocument(document: DocumentSummary) {

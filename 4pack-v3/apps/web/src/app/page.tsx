@@ -1,4 +1,6 @@
+import { PublicLanding } from "@/components/public-landing";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getCurrentRole, getOffers, getOpenCargoRequests, getOperations } from "@/lib/dashboard-data";
 
@@ -8,7 +10,16 @@ const actionLabel = {
   admin: "Panel administrativo"
 };
 
+const cargoAction = {
+  importer: { href: "/ofertas", label: "Ver mis ofertas →" },
+  operator: { href: "/ofertas/nueva", label: "Ver y cotizar →" },
+  admin: { href: "/admin", label: "Administrar →" }
+};
+
 export default async function Home() {
+  const currentRole = await getCurrentRole();
+  if (!currentRole) return <PublicLanding/>;
+  if (currentRole === 'operator') redirect('/operador/oportunidades');
   const [opportunities, offers, operations, role] = await Promise.all([getOpenCargoRequests(), getOffers(), getOperations(), getCurrentRole()]);
 
   return (
@@ -51,7 +62,7 @@ export default async function Home() {
                 <div><dt>Volumen</dt><dd>{cargo.volumeM3} m³</dd></div>
                 <div><dt>Valor FOB</dt><dd>USD {cargo.fobUsd.toLocaleString("es-AR")}</dd></div>
               </dl>
-              <footer><span>{cargo.offersCount} ofertas recibidas</span><button className="link">Ver y cotizar →</button></footer>
+              <footer><span>{cargo.offersCount} ofertas recibidas</span>{role && <Link className="link" href={cargoAction[role].href}>{cargoAction[role].label}</Link>}</footer>
             </article>
           ))}
           {opportunities.length === 0 && <div className="empty-state"><h3>No hay cargas abiertas</h3><p>Las nuevas solicitudes aparecerán acá cuando estén publicadas.</p></div>}

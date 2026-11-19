@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-19T14:26:35.735Z",
+  "project": "umiracgmhjglqoftoljn",
+  "functions": [
+    {
+      "name": "mercado-pago-test",
+      "version": 36,
+      "active": true,
+      "jwt": true
+    },
+    {
+      "name": "mercado-pago-reconcile-registered-test",
+      "version": 4,
+      "active": true,
+      "jwt": true
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-19T14:13:11.161Z",
+  "id": "ui-checks-final",
+  "data": {
+    "contractHasQuote": true,
+    "escapeRestoresFocus": true,
+    "pages": [
+      {
+        "route": "mis-ofertas",
+        "overflow": false
+      },
+      {
+        "route": "billetera",
+        "overflow": false
+      },
+      {
+        "route": "capacidad",
+        "overflow": false
+      },
+      {
+        "route": "oportunidades",
+        "overflow": false
+      }
+    ],
+    "mobileOverflow": false,
+    "errors": []
+  }
+}

@@ -3,15 +3,17 @@
     "name": "4PACK",
     "slug": "4pack",
     "owner": "yoshua95",
-    "version": "3.0.0",
+    "version": "3.0.4",
     "orientation": "portrait",
     "scheme": "fourpack",
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.yoshuachavez.fourpack",
-      "versionCode": 1
+      "versionCode": 5
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "extra": {
       "eas": {
         "projectId": "616757ed-876c-4df8-b211-a4d807288966"

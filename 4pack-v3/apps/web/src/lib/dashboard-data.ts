@@ -1,4 +1,4 @@
-import type { CargoStatus, GuaranteeStatus, TransportMode, UserRole } from "@4pack/domain";
+import type { NormalizedQuote, OperationPhase, CargoStatus, GuaranteeStatus, TransportMode, UserRole } from "@4pack/domain";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type CargoSummary = {
@@ -15,6 +15,7 @@ export type CargoSummary = {
 };
 
 export type OfferSummary = {
+  currency: string;
   id: string;
   cargoId: string;
   cargoTitle: string;
@@ -25,10 +26,15 @@ export type OfferSummary = {
 };
 
 export type OfferComparison = {
+  normalizedQuote: NormalizedQuote | null;
+  publicProfileId: string | null;
+  revision: number;
+  currency: string;
   id: string;
   operatorName: string;
   companyName: string;
-  rating: number;
+  rating: number | null;
+  ratingsCount: number;
   completedOperations: number;
   mode: TransportMode;
   freightUsd: number;
@@ -51,6 +57,7 @@ export type CargoOfferComparison = {
 };
 
 export type OperationSummary = {
+  phase: OperationPhase;
   id: string;
   cargoTitle: string;
   route: string;
@@ -58,6 +65,9 @@ export type OperationSummary = {
 };
 
 export type OperationDetail = {
+  contractQuote: NormalizedQuote | null;
+  phase: OperationPhase;
+  currency: "USD" | "ARS";
   id: string;
   cargoTitle: string;
   route: string;
@@ -110,6 +120,7 @@ export type AdminDashboard = {
     cargoTitle: string;
     operationStatus: CargoStatus;
     guaranteeStatus: GuaranteeStatus;
+    currency: string;
     amountUsd: number;
     commissionUsd: number;
     createdAt: string;
@@ -153,6 +164,7 @@ type OfferRow = {
   id: string;
   cargo_id: string;
   mode: TransportMode;
+  payment_currency: string;
   total_usd: number;
   estimated_days: number;
   status: string;
@@ -160,6 +172,7 @@ type OfferRow = {
 };
 
 type OperationRow = {
+  phase: OperationPhase;
   id: string;
   status: CargoStatus;
   cargo_requests: Array<{ title: string; origin: string; destination: string }> | { title: string; origin: string; destination: string } | null;
@@ -207,7 +220,7 @@ export async function getOperatorReviews(): Promise<OperatorReview[]> {
 
   const { data } = await supabase
     .from("operator_profiles")
-    .select("user_id, company_name, tax_id, description, verification_status, profiles(full_name)")
+    .select("user_id, company_name, tax_id, description, verification_status, profiles!operator_profiles_user_id_fkey(full_name)")
     .order("verification_status", { ascending: false });
 
   return (data ?? []).map((operator) => {
@@ -234,7 +247,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard | null> {
   const [{ data: operators }, { data: operations }, { data: guarantees }, { count: documentsCount }] = await Promise.all([
     supabase.from("operator_profiles").select("verification_status"),
     supabase.from("operations").select("id, status"),
-    supabase.from("payment_guarantees").select("id, operation_id, amount_usd, commission_usd, status, created_at, operations(status, cargo_requests(title))").order("created_at", { ascending: false }).limit(8),
+    supabase.from("payment_guarantees").select("id, operation_id, currency, amount_usd, commission_usd, status, created_at, operations(status, cargo_requests(title))").order("created_at", { ascending: false }).limit(8),
     supabase.from("documents").select("id", { count: "exact", head: true })
   ]);
 
@@ -244,8 +257,8 @@ export async function getAdminDashboard(): Promise<AdminDashboard | null> {
     activeOperations: (operations ?? []).filter((operation) => !["delivered", "cancelled"].includes(operation.status)).length,
     deliveredOperations: (operations ?? []).filter((operation) => operation.status === "delivered").length,
     documentsCount: documentsCount ?? 0,
-    securedVolumeUsd: guaranteeRows.reduce((total, guarantee) => total + Number(guarantee.amount_usd), 0),
-    commissionUsd: guaranteeRows.reduce((total, guarantee) => total + Number(guarantee.commission_usd), 0),
+    securedVolumeUsd: guaranteeRows.filter(g=>g.currency==="USD").reduce((total, guarantee) => total + Number(guarantee.amount_usd), 0),
+    commissionUsd: guaranteeRows.filter(g=>g.currency==="USD").reduce((total, guarantee) => total + Number(guarantee.commission_usd), 0),
     guarantees: guaranteeRows.map((guarantee) => {
       const operation = Array.isArray(guarantee.operations) ? guarantee.operations[0] : guarantee.operations;
       const cargo = Array.isArray(operation?.cargo_requests) ? operation?.cargo_requests[0] : operation?.cargo_requests;
@@ -255,6 +268,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard | null> {
         cargoTitle: cargo?.title ?? "Carga sin título",
         operationStatus: (operation?.status ?? "awarded") as CargoStatus,
         guaranteeStatus: guarantee.status as GuaranteeStatus,
+        currency: guarantee.currency,
         amountUsd: Number(guarantee.amount_usd),
         commissionUsd: Number(guarantee.commission_usd),
         createdAt: guarantee.created_at
@@ -293,7 +307,7 @@ export async function getOffers(): Promise<OfferSummary[]> {
 
   const { data } = await supabase
     .from("offers")
-    .select("id, cargo_id, mode, total_usd, estimated_days, status, cargo_requests(title)")
+    .select("id, cargo_id, mode, payment_currency, total_usd, estimated_days, status, cargo_requests(title)")
     .order("created_at", { ascending: false });
 
   return ((data ?? []) as OfferRow[]).map((offer) => {
@@ -303,6 +317,7 @@ export async function getOffers(): Promise<OfferSummary[]> {
       cargoId: offer.cargo_id,
       cargoTitle: cargo?.title ?? "Carga sin título",
       mode: offer.mode,
+      currency: offer.payment_currency,
       totalUsd: offer.total_usd,
       estimatedDays: offer.estimated_days,
       status: offer.status
@@ -323,15 +338,23 @@ export async function getCargoOfferComparison(cargoId: string): Promise<CargoOff
 
   const { data: offers } = await supabase
     .from("offers")
-    .select("id, operator_id, mode, freight_usd, customs_usd, other_costs_usd, total_usd, estimated_days, includes_customs, terms, valid_until, status")
+    .select("id, operator_id, normalized_quote, revision, payment_currency, mode, freight_usd, customs_usd, other_costs_usd, total_usd, estimated_days, includes_customs, terms, valid_until, status")
     .eq("cargo_id", cargoId)
-    .order("total_usd", { ascending: true });
+    .order("payment_currency", { ascending: true }).order("total_usd", { ascending: true });
 
   const operatorIds = [...new Set((offers ?? []).map((offer) => offer.operator_id))];
-  const { data: profiles } = operatorIds.length > 0
-    ? await supabase.from("profiles").select("id, full_name, operator_profiles(company_name, rating, completed_operations)").in("id", operatorIds)
-    : { data: [] };
-  const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
+  const commercialRows=await Promise.all((offers??[]).map(async offer=> {
+    const {data,error}=await supabase.rpc("offer_public_profile",{target_offer:offer.id});
+    if(error) throw new Error("No pudimos consultar el perfil comercial.");
+    return [offer.id,data] as const;
+  }));
+  const commercialByOffer=new Map(commercialRows);
+  const reputations = await Promise.all(operatorIds.map(async id => {
+    const {data,error} = await supabase.rpc("public_reputation",{target_user:id,target_role:"operator"});
+    if(error) throw new Error("No pudimos verificar la reputacion.");
+    return [id,data] as const;
+  }));
+  const reputationById = new Map(reputations);
 
   return {
     id: cargo.id,
@@ -339,16 +362,20 @@ export async function getCargoOfferComparison(cargoId: string): Promise<CargoOff
     route: `${cargo.origin} → ${cargo.destination}`,
     status: cargo.status as CargoStatus,
     offers: (offers ?? []).map((offer) => {
-      const profile = profileById.get(offer.operator_id);
-      const operatorProfile = Array.isArray(profile?.operator_profiles) ? profile?.operator_profiles[0] : profile?.operator_profiles;
+      const commercial = commercialByOffer.get(offer.id);
       return {
         id: offer.id,
-        operatorName: profile?.full_name ?? "Operador logístico",
-        companyName: operatorProfile?.company_name ?? "Empresa pendiente",
-        rating: Number(operatorProfile?.rating ?? 0),
-        completedOperations: Number(operatorProfile?.completed_operations ?? 0),
+        operatorName: commercial?.trade_name ?? "Operador",
+        companyName: commercial?.trade_name ?? "Perfil comercial no publicado",
+        publicProfileId: commercial?.id ?? null,
+        normalizedQuote: offer.normalized_quote as NormalizedQuote | null,
+        revision: offer.revision,
+        rating: reputationById.get(offer.operator_id)?.average ?? null,
+        ratingsCount: reputationById.get(offer.operator_id)?.count ?? 0,
+        completedOperations: reputationById.get(offer.operator_id)?.completed ?? 0,
         mode: offer.mode,
         freightUsd: Number(offer.freight_usd),
+        currency: offer.payment_currency,
         customsUsd: Number(offer.customs_usd),
         otherCostsUsd: Number(offer.other_costs_usd),
         totalUsd: Number(offer.total_usd),
@@ -368,7 +395,7 @@ export async function getOperations(): Promise<OperationSummary[]> {
 
   const { data } = await supabase
     .from("operations")
-    .select("id, status, cargo_requests(title, origin, destination)")
+    .select("id, phase, status, cargo_requests(title, origin, destination)")
     .order("awarded_at", { ascending: false });
 
   return ((data ?? []) as OperationRow[]).map((operation) => {
@@ -377,6 +404,7 @@ export async function getOperations(): Promise<OperationSummary[]> {
       id: operation.id,
       cargoTitle: cargo?.title ?? "Carga sin título",
       route: cargo ? `${cargo.origin} → ${cargo.destination}` : "Ruta no disponible",
+      phase: operation.phase,
       status: operation.status
     };
   });
@@ -389,7 +417,7 @@ export async function getOperationDetail(operationId: string): Promise<Operation
   const { data: authData } = await supabase.auth.getUser();
   const { data: operation } = await supabase
     .from("operations")
-    .select("id, cargo_id, accepted_offer_id, importer_id, operator_id, status")
+    .select("id, cargo_id, accepted_offer_id, importer_id, operator_id, phase, contract_currency, status")
     .eq("id", operationId)
     .maybeSingle();
   if (!operation) return null;
@@ -406,13 +434,17 @@ export async function getOperationDetail(operationId: string): Promise<Operation
   ]);
 
   if (!cargo || !offer || !guarantee) return null;
+  const {data:contract}=await supabase.from("operation_contract_snapshots").select("content").eq("operation_id",operation.id).maybeSingle();
   return {
     id: operation.id,
     cargoTitle: cargo.title,
     route: `${cargo.origin} → ${cargo.destination}`,
+    phase: operation.phase as OperationPhase,
     status: operation.status as CargoStatus,
     mode: offer.mode as TransportMode,
     totalUsd: Number(offer.total_usd),
+    currency: operation.contract_currency,
+    contractQuote: contract?.content?.quote ?? null,
     guaranteeAmountUsd: Number(guarantee.amount_usd),
     commissionUsd: Number(guarantee.commission_usd),
     guaranteeStatus: guarantee.status as GuaranteeStatus,
@@ -434,7 +466,7 @@ export async function getOperationDetail(operationId: string): Promise<Operation
         createdAt: message.created_at
       };
     }),
-    ratingRecipient: recipient ? { id: recipient.id, name: recipient.full_name } : null,
+    ratingRecipient: recipientId ? { id: recipientId, name: recipient?.full_name ?? "Contraparte" } : null,
     existingRating: rating ? { score: rating.score, comment: rating.comment ?? "" } : null
   };
 }

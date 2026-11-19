@@ -31,8 +31,12 @@
 ## Sprint 3 — 30 de noviembre al 3 de diciembre
 
 - [ ] Seguridad, pruebas, despliegue y generación del APK.
+- [x] Definir plan integral de pruebas y criterios de aceptación.
+- [x] Incorporar pruebas automáticas de las reglas de dominio.
+- [ ] Ejecutar y documentar los casos P0 en producción y Android.
 
 ## Cierre — 4 al 10 de diciembre
 
 - [ ] Documentación académica, manuales, demo, presentación y simulacro.
+- [x] Preparar el guion de demostración funcional.
 

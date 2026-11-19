@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-19T14:09:18.820Z",
+  "id": "reconcile-registered",
+  "data": {
+    "operation": {
+      "id": "971af114-98ce-46c2-91dc-866ad672c9e0",
+      "phase": "confirmed",
+      "payment_mode": "mercado_pago_test",
+      "contract_currency": "ARS"
+    },
+    "guarantee": {
+      "status": "held_simulated",
+      "currency": "ARS",
+      "amount_usd": 120000
+    },
+    "rounds": [
+      {
+        "round": 1,
+        "responseStatus": "approved",
+        "payments": [
+          {
+            "provider_payment_id": "189418265535",
+            "status": "approved",
+            "amount": 120000,
+            "currency": "ARS",
+            "provider_live_mode": true,
+            "internal_classification": "test_accounts_linked_preference"
+          }
+        ]
+      },
+      {
+        "round": 2,
+        "responseStatus": "approved",
+        "payments": [
+          {
+            "provider_payment_id": "189418265535",
+            "status": "approved",
+            "amount": 120000,
+            "currency": "ARS",
+            "provider_live_mode": true,
+            "internal_classification": "test_accounts_linked_preference"
+          }
+        ]
+      }
+    ]
+  }
+}

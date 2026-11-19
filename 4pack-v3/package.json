@@ -2,6 +2,7 @@
   "name": "4pack-platform",
   "version": "3.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -11,10 +12,36 @@
     "dev:mobile": "npm run start --workspace=@4pack/mobile",
     "build:web": "npm run build --workspace=@4pack/web",
     "build:mobile": "npm run export:android --workspace=@4pack/mobile",
+    "test": "npm run test:domain && npm run test:database && npm run test:stage2a && npm run test:stage2b && npm run test:preview && npm run test:multirole && npm run test:hazmat && npm run test:mobile:importer && npm run test:mobile:visual && npm run test:payments",
+    "test:payments": "node --test tests/mercado-pago-test.test.mjs tests/mercado-pago-database.test.mjs tests/mercado-pago-http.test.mjs tests/payment-return-access.test.mjs",
+    "test:preview": "node --test tests/demo-preview.test.mjs",
+    "test:database": "node --test tests/database.test.mjs tests/stage1.test.mjs",
+    "test:web": "node tests/operator-browser.test.mjs",
+    "test:domain": "tsc -p tests/tsconfig.json && node --test tests/domain.test.mjs tests/operator.test.mjs tests/quotes.test.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "check:contract": "node scripts/prepare-operation-contract.mjs --check",
+    "test:stage2a": "node --test tests/stage2a.test.mjs",
+    "test:stage2b": "node --test tests/stage2b.test.mjs",
+    "test:multirole": "node --test tests/multirole-environment.test.mjs tests/multirole-persistence.test.mjs",
+    "test:multirole:web": "node tests/multirole-browser.test.mjs",
+    "test:hazmat": "tsc -p tests/tsconfig.json && node --test tests/hazmat.test.mjs tests/mobile-publication.test.mjs",
+    "test:hazmat:web": "node tests/multirole-browser.test.mjs --hazmat",
+    "test:mobile:importer": "tsc -p tests/tsconfig.json && node --test tests/mobile-importer.test.mjs",
+    "test:mobile:visual": "node --test tests/mobile-visual-environment.test.mjs",
+    "test:mobile:visual:emulator": "node tests/mobile-visual-emulator.mjs",
+    "check:mobile:release": "node scripts/check-mobile-visual-release.mjs"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "playwright-core": "^1.65.0",
+    "prettier": "^3.10.1"
   }
 }

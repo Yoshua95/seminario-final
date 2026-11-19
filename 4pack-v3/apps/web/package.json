@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@4pack/domain": "*",
+    "@electric-sql/pglite": "^0.5.16",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
+    "geist": "^1.9.2",
     "next": "16.4.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

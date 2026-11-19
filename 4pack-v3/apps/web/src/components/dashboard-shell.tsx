@@ -1,9 +1,12 @@
+import { BrandMark } from "./brand-mark";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SessionProfile } from "@/components/session-profile";
 import { getCurrentRole } from "@/lib/dashboard-data";
 
 const navigation = [
+  { key: "capacity", href: "/admin/capacidad", label: "Capacidad", adminOnly: true },
+  { key: "operators", href: "/operadores", label: "Operadores" },
   { key: "opportunities", href: "/", label: "Oportunidades" },
   { key: "offers", href: "/ofertas", label: "Mis ofertas" },
   { key: "operations", href: "/operaciones", label: "Operaciones" },
@@ -25,7 +28,7 @@ export async function DashboardShell({
   return (
     <main className="shell">
       <aside className="sidebar">
-        <Link className="brand" href="/">4PACK<span>●</span></Link>
+        <Link className="brand" href="/"><BrandMark/></Link>
         <nav aria-label="Navegación principal">
           {navigation.filter((item) => !("adminOnly" in item) || role === "admin").map((item) => (
             <Link className={item.key === active ? "active" : undefined} href={item.href} key={item.key}>

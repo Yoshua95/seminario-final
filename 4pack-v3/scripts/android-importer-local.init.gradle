@@ -1,0 +1,12 @@
+// Opt-in local build; does not change the published Android application ID.
+allprojects { project ->
+    project.plugins.withId('com.android.library') {
+        // Windows 8.3 alias CLANG_~1.EXE loses clang++ driver-name detection.
+        project.android.defaultConfig.externalNativeBuild.cmake.arguments '-DCMAKE_CXX_FLAGS=--driver-mode=g++'
+    }
+    project.plugins.withId('com.android.application') {
+        project.android.defaultConfig.externalNativeBuild.cmake.arguments '-DCMAKE_CXX_FLAGS=--driver-mode=g++'
+        // Keep any existing installed APK and its data untouched.
+        project.android.buildTypes.debug.applicationIdSuffix = '.block03'
+    }
+}

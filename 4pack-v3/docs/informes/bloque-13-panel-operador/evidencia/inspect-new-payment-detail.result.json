@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-19T13:58:19.301Z",
+  "id": "inspect-new-payment-detail",
+  "data": {
+    "readOnly": true,
+    "creationRemainedDisabled": true,
+    "result": {
+      "source": "authenticated_payment_detail",
+      "payment_id": "189418265535",
+      "is_test_present": false,
+      "is_test_type": "undefined",
+      "is_test": null,
+      "live_mode": true,
+      "status": "approved",
+      "checks": {
+        "payment_id": true,
+        "seller": true,
+        "reference": true,
+        "currency": true,
+        "amount": true
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-19T13:50:36.025Z",
+  "id": "permission-checks",
+  "data": {
+    "otherOperator": "b8b0c7a8-f3a1-4bf6-a001-a87b9a71569f",
+    "visibleDocuments": 0,
+    "visibleCompetingOffers": 0,
+    "signedUrlDenied": true,
+    "milestoneDenied": {
+      "code": "P0001",
+      "message": "La operación no pertenece al operador"
+    }
+  }
+}

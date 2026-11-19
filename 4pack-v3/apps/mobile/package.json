@@ -1,27 +1,42 @@
 {
   "name": "@4pack/mobile",
-  "version": "3.0.0",
+  "version": "3.0.4",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
+    "web": "expo start --web --localhost",
+    "start:dev-client": "expo start --dev-client",
+    "android": "expo run:android",
+    "build:development": "npx eas-cli build --platform android --profile development",
     "build:apk": "npx eas-cli build --platform android --profile preview",
+    "update:preview": "npx eas-cli update --channel preview",
     "export:android": "expo export --platform android --output-dir dist/android",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@4pack/domain": "*",
+    "@expo/metro-runtime": "~6.1.2",
+    "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.119.0",
     "expo": "~54.0.31",
+    "expo-crypto": "~15.0.9",
+    "expo-dev-client": "~6.0.21",
+    "expo-document-picker": "~14.0.8",
+    "expo-font": "~14.0.12",
     "expo-router": "~6.0.21",
     "expo-status-bar": "~3.0.9",
+    "expo-updates": "~29.0.20",
+    "expo-web-browser": "~15.0.11",
     "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "react-native-url-polyfill": "^4.0.0"
+    "react-native-url-polyfill": "^4.0.0",
+    "react-native-web": "0.21.0"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",

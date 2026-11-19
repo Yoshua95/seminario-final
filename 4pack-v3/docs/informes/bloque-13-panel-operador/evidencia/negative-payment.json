@@ -1,0 +1,94 @@
+{
+  "date": "2026-11-19T14:11:24.526Z",
+  "id": "negative-payment-and-final-state",
+  "data": {
+    "negativeAmount": {
+      "code": "P0001",
+      "message": "Pago incompatible con el contrato de prueba"
+    },
+    "unauthorizedRpc": {
+      "code": "42501"
+    },
+    "before": [
+      {
+        "provider_payment_id": "189418265535",
+        "status": "approved",
+        "amount": 120000,
+        "currency": "ARS",
+        "provider_live_mode": true
+      }
+    ],
+    "after": [
+      {
+        "provider_payment_id": "189418265535",
+        "status": "approved",
+        "amount": 120000,
+        "currency": "ARS",
+        "provider_live_mode": true
+      }
+    ],
+    "checkoutEnabled": false,
+    "usage": {
+      "volume_m3": 2.05,
+      "weight_kg": 40,
+      "currencies": {
+        "ARS": {
+          "exposure": 800000,
+          "requires_review": 0,
+          "working_capital": 275000
+        }
+      },
+      "operations": 4,
+      "requires_review": 0
+    },
+    "limits": {
+      "reason": "Cuarto cupo ficticio autorizado para ensayo del panel B13; límites monetarios sin cambios, no acredita capital real.",
+      "status": "active",
+      "created_at": "2026-11-18T04:14:25.831745+00:00",
+      "updated_at": "2026-11-19T13:38:36.195802+00:00",
+      "valid_from": "2026-11-17T00:00:00+00:00",
+      "approved_at": "2026-11-19T13:38:36.195802+00:00",
+      "approved_by": "5a02943e-abdb-4c64-9240-c83d7d7d5d17",
+      "operator_id": "fffa6167-bb2c-4c73-8b68-2bf0714db6ba",
+      "valid_until": null,
+      "max_volume_m3": null,
+      "max_weight_kg": null,
+      "max_operations": 4
+    },
+    "currencies": [
+      {
+        "reason": "Cuarto cupo ficticio autorizado para ensayo del panel B13; límites monetarios sin cambios, no acredita capital real.",
+        "status": "active",
+        "currency": "ARS",
+        "created_at": "2026-11-18T04:14:25.831745+00:00",
+        "updated_at": "2026-11-19T13:38:36.195802+00:00",
+        "valid_from": "2026-11-17T00:00:00+00:00",
+        "approved_at": "2026-11-19T13:38:36.195802+00:00",
+        "approved_by": "5a02943e-abdb-4c64-9240-c83d7d7d5d17",
+        "operator_id": "fffa6167-bb2c-4c73-8b68-2bf0714db6ba",
+        "valid_until": null,
+        "max_exposure": 900000,
+        "max_per_operation": 300000,
+        "approved_working_capital": 300000,
+        "declared_working_capital": 300000
+      }
+    ],
+    "reservation": {
+      "state": "active",
+      "currency": "ARS",
+      "volume_m3": 0.4,
+      "weight_kg": 8,
+      "operator_id": "fffa6167-bb2c-4c73-8b68-2bf0714db6ba",
+      "public_code": "LC-10019",
+      "released_at": null,
+      "reserved_at": "2026-11-19T13:39:49.507505+00:00",
+      "activated_at": "2026-11-19T14:09:13.736661+00:00",
+      "operation_id": "971af114-98ce-46c2-91dc-866ad672c9e0",
+      "release_reason": null,
+      "idempotency_key": "reserve:971af114-98ce-46c2-91dc-866ad672c9e0",
+      "contract_exposure": 120000,
+      "contracting_source": "tender",
+      "working_capital_required": 25000
+    }
+  }
+}

@@ -1,4 +1,19 @@
-import { requiresHazmatReview, type CargoStatus, type GuaranteeStatus, type TransportMode, type UserRole } from "@4pack/domain";
+import {
+  importerOperationAction,
+  validateImporterRating,
+  type ImporterOffer,
+} from "./importer-flow";
+import { publishMobileCargo, type NativeMsds } from "./cargo-publication";
+import type { PublicationAttempt } from "@4pack/domain";
+import {
+  requiresHazmatReview,
+  assertNewContractCurrency,
+  type OperationPhase,
+  type CargoStatus,
+  type GuaranteeStatus,
+  type TransportMode,
+  type UserRole,
+} from "@4pack/domain";
 import { supabase } from "./supabase";
 
 export type MobileProfile = {
@@ -13,15 +28,21 @@ export type MobileCargo = {
   title: string;
   route: string;
   weightKg: number;
-  volumeM3: number;
+  volumeM3: number | null;
+  status?: string;
+  createdAt?: string;
+  offerCount?: number;
   hazmatReviewRequired: boolean;
 };
 
 export type MobileOperation = {
+  phase: OperationPhase;
+  currency: "USD" | "ARS";
   id: string;
   title: string;
   route: string;
   status: CargoStatus;
+  awardedAt?: string;
 };
 
 export type MobileCargoDetail = MobileCargo & {
@@ -31,6 +52,7 @@ export type MobileCargoDetail = MobileCargo & {
   preferredMode: TransportMode | null;
   msdsRequired: boolean;
   biddingDeadline: string | null;
+  volumeProposals?: Array<{ id: string; volumeM3: number; status: string }>;
   ownOffer: {
     id: string;
     totalUsd: number;
@@ -40,6 +62,8 @@ export type MobileCargoDetail = MobileCargo & {
 };
 
 export type MobileOperationDetail = MobileOperation & {
+  paymentMode?: "legacy_simulated" | "mercado_pago_test";
+  paymentStatus?: string;
   role: UserRole;
   mode: TransportMode;
   totalUsd: number;
@@ -47,6 +71,7 @@ export type MobileOperationDetail = MobileOperation & {
   commissionUsd: number;
   guaranteeStatus: GuaranteeStatus;
   events: Array<{
+    attachmentId: string | null;
     id: string;
     status: CargoStatus;
     title: string;
@@ -69,14 +94,23 @@ type CargoRow = {
   origin: string;
   destination: string;
   weight_kg: number;
-  volume_m3: number;
+  volume_m3: number | null;
+  status: string;
+  created_at: string;
+  offers?: Array<{ count: number }>;
   hazmat_review_required: boolean;
 };
 
 type OperationRow = {
+  phase: OperationPhase;
+  contract_currency: "USD" | "ARS";
   id: string;
   status: CargoStatus;
-  cargo_requests: Array<{ title: string; origin: string; destination: string }> | null;
+  awarded_at: string;
+  cargo_requests:
+    | { title: string; origin: string; destination: string }
+    | Array<{ title: string; origin: string; destination: string }>
+    | null;
 };
 
 export async function loadCurrentProfile(): Promise<MobileProfile | null> {
@@ -92,28 +126,33 @@ export async function loadCurrentProfile(): Promise<MobileProfile | null> {
     .single();
   if (error) throw error;
 
-  const { data: operator } = profile.role === "operator"
-    ? await supabase
-        .from("operator_profiles")
-        .select("verification_status")
-        .eq("user_id", profile.id)
-        .maybeSingle()
-    : { data: null };
+  const { data: operator } =
+    profile.role === "operator"
+      ? await supabase
+          .from("operator_profiles")
+          .select("verification_status")
+          .eq("user_id", profile.id)
+          .maybeSingle()
+      : { data: null };
 
   return {
     id: profile.id,
     fullName: profile.full_name,
     role: profile.role as UserRole,
-    verificationStatus: operator?.verification_status ?? null
+    verificationStatus: operator?.verification_status ?? null,
   };
 }
 
 export async function loadOpenCargos(): Promise<MobileCargo[]> {
   if (!supabase) return [];
+  const profile = await importerSession();
 
   const { data, error } = await supabase
     .from("cargo_requests")
-    .select("id, title, origin, destination, weight_kg, volume_m3, hazmat_review_required")
+    .select(
+      "id, title, origin, destination, weight_kg, volume_m3, hazmat_review_required, status, created_at, offers(count)",
+    )
+    .eq("importer_id", profile.id)
     .eq("status", "open")
     .order("created_at", { ascending: false });
 
@@ -125,7 +164,10 @@ export async function loadOpenCargos(): Promise<MobileCargo[]> {
     route: `${cargo.origin} → ${cargo.destination}`,
     weightKg: cargo.weight_kg,
     volumeM3: cargo.volume_m3,
-    hazmatReviewRequired: cargo.hazmat_review_required
+    status: cargo.status,
+    createdAt: cargo.created_at,
+    offerCount: cargo.offers?.[0]?.count ?? 0,
+    hazmatReviewRequired: cargo.hazmat_review_required,
   }));
 }
 
@@ -134,86 +176,115 @@ export async function loadOperations(): Promise<MobileOperation[]> {
 
   const { data, error } = await supabase
     .from("operations")
-    .select("id, status, cargo_requests(title, origin, destination)")
+    .select(
+      "id, phase, contract_currency, status, awarded_at, cargo_requests(title, origin, destination)",
+    )
     .order("awarded_at", { ascending: false });
 
   if (error) throw error;
 
   return ((data ?? []) as unknown as OperationRow[]).map((operation) => {
-    const cargo = operation.cargo_requests?.[0];
+    const cargo = Array.isArray(operation.cargo_requests)
+      ? operation.cargo_requests[0]
+      : operation.cargo_requests;
     return {
       id: operation.id,
       title: cargo?.title ?? "Carga sin título",
-      route: cargo ? `${cargo.origin} → ${cargo.destination}` : "Ruta no disponible",
-      status: operation.status
+      route: cargo
+        ? `${cargo.origin} → ${cargo.destination}`
+        : "Ruta no disponible",
+      phase: operation.phase,
+      currency: operation.contract_currency,
+      status: operation.status,
+      awardedAt: operation.awarded_at,
     };
   });
 }
 
-export async function loadCargoDetail(cargoId: string): Promise<MobileCargoDetail | null> {
+export async function loadCargoDetail(
+  cargoId: string,
+): Promise<MobileCargoDetail | null> {
   if (!supabase) return null;
   const profile = await loadCurrentProfile();
   if (!profile) return null;
 
   const { data: cargo, error } = await supabase
     .from("cargo_requests")
-    .select("id, title, description, origin, destination, category, weight_kg, volume_m3, fob_usd, preferred_mode, hazmat_review_required, msds_required, bidding_deadline")
+    .select(
+      "id, title, description, origin, destination, category, weight_kg, volume_m3, fob_usd, preferred_mode, hazmat_review_required, msds_required, bidding_deadline",
+    )
     .eq("id", cargoId)
     .maybeSingle();
   if (error) throw error;
   if (!cargo) return null;
+  const proposals = await supabase
+    .from("cargo_volume_proposals")
+    .select("id,volume_m3,status")
+    .eq("cargo_id", cargoId)
+    .order("created_at");
+  if (proposals.error) throw proposals.error;
 
-  const { data: offer } = profile.role === "operator"
-    ? await supabase
-        .from("offers")
-        .select("id, total_usd, estimated_days, status")
-        .eq("cargo_id", cargoId)
-        .eq("operator_id", profile.id)
-        .maybeSingle()
-    : { data: null };
+  const { data: offer } =
+    profile.role === "operator"
+      ? await supabase
+          .from("offers")
+          .select("id, total_usd, estimated_days, status")
+          .eq("cargo_id", cargoId)
+          .eq("operator_id", profile.id)
+          .maybeSingle()
+      : { data: null };
 
   return {
     id: cargo.id,
+    volumeProposals: (proposals.data ?? []).map((p) => ({
+      id: p.id,
+      volumeM3: Number(p.volume_m3),
+      status: p.status,
+    })),
     title: cargo.title,
     description: cargo.description,
     route: `${cargo.origin} → ${cargo.destination}`,
     category: cargo.category,
     weightKg: Number(cargo.weight_kg),
-    volumeM3: Number(cargo.volume_m3),
+    volumeM3: cargo.volume_m3 === null ? null : Number(cargo.volume_m3),
     fobUsd: Number(cargo.fob_usd),
     preferredMode: cargo.preferred_mode as TransportMode | null,
     hazmatReviewRequired: cargo.hazmat_review_required,
     msdsRequired: cargo.msds_required,
     biddingDeadline: cargo.bidding_deadline,
-    ownOffer: offer ? {
-      id: offer.id,
-      totalUsd: Number(offer.total_usd),
-      estimatedDays: offer.estimated_days,
-      status: offer.status
-    } : null
+    ownOffer: offer
+      ? {
+          id: offer.id,
+          totalUsd: Number(offer.total_usd),
+          estimatedDays: offer.estimated_days,
+          status: offer.status,
+        }
+      : null,
   };
 }
 
-export async function createCargo(input: {
-  title: string;
-  description: string;
-  origin: string;
-  destination: string;
-  category: string;
-  weightKg: number;
-  volumeM3: number;
-  fobUsd: number;
-  preferredMode: TransportMode;
-}) {
+export async function createCargo(
+  input: {
+    title: string;
+    description: string;
+    origin: string;
+    destination: string;
+    category: string;
+    weightKg: number;
+    volumeM3: number | null;
+    fobUsd: number;
+    preferredMode: TransportMode;
+  },
+  attempt: PublicationAttempt,
+  msds: NativeMsds | null,
+) {
   if (!supabase) throw new Error("La conexión no está disponible.");
   const profile = await loadCurrentProfile();
-  if (!profile || profile.role !== "importer") throw new Error("Sólo un importador puede publicar cargas.");
+  if (!profile || profile.role !== "importer")
+    throw new Error("Sólo un importador puede publicar cargas.");
 
-  const requiresReview = requiresHazmatReview(input.description);
-  const { data, error } = await supabase
-    .from("cargo_requests")
-    .insert({
-      importer_id: profile.id,
+  return publishMobileCargo(
+    {
       title: input.title,
       description: input.description,
       origin: input.origin,
@@ -221,67 +292,111 @@ export async function createCargo(input: {
       category: input.category,
       weight_kg: input.weightKg,
       volume_m3: input.volumeM3,
+      volume_unknown: input.volumeM3 === null,
       fob_usd: input.fobUsd,
       preferred_mode: input.preferredMode,
-      status: "open",
-      hazmat_review_required: requiresReview,
-      msds_required: requiresReview,
-      bidding_deadline: new Date(Date.now() + 7 * 86400000).toISOString()
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
-  return data.id as string;
+    },
+    attempt,
+    msds,
+    {
+      rpc: (name, args) => supabase!.rpc(name, args),
+      upload: (form) =>
+        supabase!.functions.invoke("document-upload", { body: form }),
+    },
+  );
 }
 
-export async function submitOffer(cargoId: string, input: {
-  mode: TransportMode;
-  freightUsd: number;
-  customsUsd: number;
-  otherCostsUsd: number;
-  estimatedDays: number;
-  includesCustoms: boolean;
-  terms: string;
-}) {
-  if (!supabase) throw new Error("La conexión no está disponible.");
-  const profile = await loadCurrentProfile();
-  if (!profile || profile.role !== "operator") throw new Error("Sólo un operador puede cotizar.");
-  if (profile.verificationStatus !== "approved") throw new Error("El operador todavía no fue aprobado.");
-
-  const { error } = await supabase.from("offers").insert({
-    cargo_id: cargoId,
-    operator_id: profile.id,
-    mode: input.mode,
-    freight_usd: input.freightUsd,
-    customs_usd: input.customsUsd,
-    other_costs_usd: input.otherCostsUsd,
-    estimated_days: input.estimatedDays,
-    includes_customs: input.includesCustoms,
-    terms: input.terms,
-    valid_until: new Date(Date.now() + 7 * 86400000).toISOString()
+export async function confirmCargoVolume(
+  proposalId: string,
+  expectedVolume: number,
+) {
+  if (!supabase) throw Error("Conexión no disponible");
+  const result = await supabase.rpc("confirm_cargo_volume", {
+    target_proposal: proposalId,
+    expected_volume: expectedVolume,
   });
-  if (error) throw error;
+  if (result.error) throw result.error;
+  return result.data;
+}
+export async function loadLastMilestone(operationId: string) {
+  if (!supabase) return null;
+  const r = await supabase
+    .from("tracking_events")
+    .select("title,location")
+    .eq("operation_id", operationId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (r.error) throw r.error;
+  return r.data;
 }
 
-export async function loadOperationDetail(operationId: string): Promise<MobileOperationDetail | null> {
+export async function submitOffer(
+  cargoId: string,
+  input: {
+    mode: TransportMode;
+    freightUsd: number;
+    customsUsd: number;
+    otherCostsUsd: number;
+    estimatedDays: number;
+    includesCustoms: boolean;
+    terms: string;
+  },
+) {
+  void cargoId;
+  void input;
+  throw new Error("Operator offers are managed on web.");
+}
+
+export async function loadOperationDetail(
+  operationId: string,
+): Promise<MobileOperationDetail | null> {
   if (!supabase) return null;
   const profile = await loadCurrentProfile();
   if (!profile) return null;
 
   const { data: operation, error } = await supabase
     .from("operations")
-    .select("id, cargo_id, accepted_offer_id, status")
+    .select("*")
     .eq("id", operationId)
     .maybeSingle();
   if (error) throw error;
   if (!operation) return null;
 
-  const [cargoResult, offerResult, guaranteeResult, eventsResult, messagesResult] = await Promise.all([
-    supabase.from("cargo_requests").select("title, origin, destination").eq("id", operation.cargo_id).single(),
-    supabase.from("offers").select("mode, total_usd").eq("id", operation.accepted_offer_id).single(),
-    supabase.from("payment_guarantees").select("amount_usd, commission_usd, status").eq("operation_id", operation.id).single(),
-    supabase.from("tracking_events").select("id, status, title, description, location, created_at").eq("operation_id", operation.id).order("created_at", { ascending: false }),
-    supabase.from("messages").select("id, sender_id, body, created_at, profiles(full_name)").eq("operation_id", operation.id).order("created_at", { ascending: true })
+  const [
+    cargoResult,
+    offerResult,
+    guaranteeResult,
+    eventsResult,
+    messagesResult,
+  ] = await Promise.all([
+    supabase
+      .from("cargo_requests")
+      .select("title, origin, destination")
+      .eq("id", operation.cargo_id)
+      .single(),
+    supabase
+      .from("offers")
+      .select("mode, total_usd")
+      .eq("id", operation.accepted_offer_id)
+      .single(),
+    supabase
+      .from("payment_guarantees")
+      .select("amount_usd, commission_usd, status")
+      .eq("operation_id", operation.id)
+      .single(),
+    supabase
+      .from("tracking_events")
+      .select(
+        "id, status, title, description, location, created_at, attachment_id",
+      )
+      .eq("operation_id", operation.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("messages")
+      .select("id, sender_id, body, created_at, profiles(full_name)")
+      .eq("operation_id", operation.id)
+      .order("created_at", { ascending: true }),
   ]);
 
   if (cargoResult.error) throw cargoResult.error;
@@ -293,10 +408,24 @@ export async function loadOperationDetail(operationId: string): Promise<MobileOp
   const cargo = cargoResult.data;
   const offer = offerResult.data;
   const guarantee = guaranteeResult.data;
+  let paymentStatus: string | undefined;
+  if (operation.payment_mode === "mercado_pago_test") {
+    const payment = await supabase
+      .from("mp_test_checkouts")
+      .select("status")
+      .eq("operation_id", operation.id)
+      .maybeSingle();
+    if (payment.error) throw payment.error;
+    paymentStatus = payment.data?.status ?? "pending";
+  }
   return {
+    paymentMode: operation.payment_mode ?? "legacy_simulated",
+    paymentStatus,
     id: operation.id,
     title: cargo.title,
     route: `${cargo.origin} → ${cargo.destination}`,
+    phase: operation.phase as OperationPhase,
+    currency: operation.contract_currency,
     status: operation.status as CargoStatus,
     role: profile.role,
     mode: offer.mode as TransportMode,
@@ -305,51 +434,180 @@ export async function loadOperationDetail(operationId: string): Promise<MobileOp
     commissionUsd: Number(guarantee.commission_usd),
     guaranteeStatus: guarantee.status as GuaranteeStatus,
     events: (eventsResult.data ?? []).map((event) => ({
+      attachmentId: event.attachment_id,
       id: event.id,
       status: event.status as CargoStatus,
       title: event.title,
       description: event.description ?? "Sin observaciones adicionales",
       location: event.location ?? "Sin ubicación informada",
-      createdAt: event.created_at
+      createdAt: event.created_at,
     })),
     messages: (messagesResult.data ?? []).map((message) => {
-      const sender = Array.isArray(message.profiles) ? message.profiles[0] : message.profiles;
+      const sender = Array.isArray(message.profiles)
+        ? message.profiles[0]
+        : message.profiles;
       return {
         id: message.id,
         senderId: message.sender_id,
         senderName: sender?.full_name ?? "Participante",
         body: message.body,
-        createdAt: message.created_at
+        createdAt: message.created_at,
       };
-    })
+    }),
   };
 }
 
 export async function simulateGuarantee(operationId: string) {
-  if (!supabase) throw new Error("La conexión no está disponible.");
-  const { error } = await supabase.rpc("simulate_guarantee", { target_operation_id: operationId });
-  if (error) throw error;
+  await importerSession();
+  await importerOperationAction("guarantee", operationId, (name, args) =>
+    supabase!.rpc(name, args),
+  );
 }
 
-export async function advanceOperation(operationId: string, nextStatus: CargoStatus, title: string, location: string) {
-  if (!supabase) throw new Error("La conexión no está disponible.");
-  const { error } = await supabase.rpc("advance_operation", {
-    target_operation_id: operationId,
-    next_status: nextStatus,
-    event_title: title,
-    event_location: location || null
-  });
-  if (error) throw error;
+export async function advanceOperation(
+  operationId: string,
+  nextStatus: CargoStatus,
+  title: string,
+  location: string,
+) {
+  void operationId;
+  void nextStatus;
+  void title;
+  void location;
+  throw new Error("El operador gestiona la operación desde web.");
+}
+
+export async function confirmDelivery(operationId: string) {
+  await importerSession();
+  await importerOperationAction("complete", operationId, (name, args) =>
+    supabase!.rpc(name, args),
+  );
 }
 
 export async function sendOperationMessage(operationId: string, body: string) {
   if (!supabase) throw new Error("La conexión no está disponible.");
   const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user) throw authError ?? new Error("La sesión no está disponible.");
+  if (authError || !authData.user)
+    throw authError ?? new Error("La sesión no está disponible.");
   const { error } = await supabase.from("messages").insert({
     operation_id: operationId,
     sender_id: authData.user.id,
-    body
+    body,
   });
   if (error) throw error;
+}
+
+async function importerSession() {
+  if (!supabase) throw new Error("Falta configurar el entorno compartido.");
+  const profile = await loadCurrentProfile();
+  if (profile?.role !== "importer")
+    throw new Error("Acceso exclusivo del importador.");
+  return profile;
+}
+export async function loadImporterOffers(
+  cargoId: string,
+): Promise<ImporterOffer[]> {
+  await importerSession();
+  const { data, error } = await supabase!
+    .from("offers")
+    .select(
+      "id,operator_id,total_usd,payment_currency,estimated_days,status,valid_until,normalized_quote",
+    )
+    .eq("cargo_id", cargoId)
+    .order("created_at");
+  if (error) throw error;
+  return (data ?? []).map((o) => ({
+    id: o.id,
+    operatorId: o.operator_id,
+    amount: Number(o.total_usd),
+    currency: o.payment_currency,
+    days: o.estimated_days,
+    status: o.status,
+    validUntil: o.valid_until,
+    quote: o.normalized_quote,
+  }));
+}
+export async function loadCargoOperation(cargoId: string) {
+  const profile = await importerSession();
+  const { data, error } = await supabase!
+    .from("operations")
+    .select("id")
+    .eq("cargo_id", cargoId)
+    .eq("importer_id", profile.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id as string | undefined;
+}
+export async function awardImporterOffer(id: string) {
+  await importerSession();
+  const offer = await supabase!
+    .from("offers")
+    .select("payment_currency")
+    .eq("id", id)
+    .single();
+  if (offer.error) throw offer.error;
+  assertNewContractCurrency(offer.data.payment_currency);
+  return (await importerOperationAction("award", id, (name, args) =>
+    supabase!.rpc(name, args),
+  )) as string;
+}
+export async function operationEvidenceUrl(documentId: string) {
+  await importerSession();
+  const { data, error } = await supabase!
+    .from("documents")
+    .select("storage_path")
+    .eq("id", documentId)
+    .single();
+  if (error) throw error;
+  const signed = await supabase!.storage
+    .from("documents")
+    .createSignedUrl(data.storage_path, 60);
+  if (signed.error) throw signed.error;
+  return signed.data.signedUrl;
+}
+export async function loadOwnRating(operationId: string) {
+  const profile = await importerSession();
+  const { data, error } = await supabase!
+    .from("ratings")
+    .select("id,score,comment")
+    .eq("operation_id", operationId)
+    .eq("author_id", profile.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+export async function rateCompletedOperator(
+  operationId: string,
+  score: number,
+  comment: string,
+) {
+  validateImporterRating(score, comment);
+  const profile = await importerSession();
+  const { data: operation, error } = await supabase!
+    .from("operations")
+    .select("operator_id,phase")
+    .eq("id", operationId)
+    .eq("importer_id", profile.id)
+    .single();
+  if (error || operation?.phase !== "completed")
+    throw new Error("Solo podes evaluar una operacion propia completada.");
+  const existing = await loadOwnRating(operationId);
+  if (existing) return existing.id;
+  const result = await supabase!
+    .from("ratings")
+    .insert({
+      operation_id: operationId,
+      author_id: profile.id,
+      recipient_id: operation.operator_id,
+      score,
+      comment: comment.trim() || null,
+    })
+    .select("id")
+    .single();
+  if (result.error) {
+    if (result.error.code === "23505")
+      return (await loadOwnRating(operationId))!.id;
+    throw result.error;
+  }
+  return result.data.id;
 }
