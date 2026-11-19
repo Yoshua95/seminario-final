@@ -1,0 +1,50 @@
+{
+  "base": "http://localhost:3015",
+  "environment": "Local PGlite; Auth y Storage simulados, sesiones por rol",
+  "results": [
+    {
+      "name": "navegacion administrativa exclusiva y acceso por rol",
+      "result": "PASS"
+    },
+    {
+      "name": "alta de postulacion con capital inicial desde pantalla",
+      "result": "PASS"
+    },
+    {
+      "name": "perfil integrado, suspendidos registrados y adjuntos por rol",
+      "result": "PASS"
+    },
+    {
+      "name": "importador publica carga nueva con FOB USD 1100",
+      "result": "PASS"
+    },
+    {
+      "name": "operador presenta oferta respaldada desde panel lateral",
+      "result": "PASS"
+    },
+    {
+      "name": "importador compara y adjudica; confirma garantia simulada",
+      "result": "PASS"
+    },
+    {
+      "name": "rechazo por capital insuficiente desde cotizacion",
+      "result": "PASS"
+    },
+    {
+      "name": "solicitud de ampliacion y aprobacion parcial",
+      "result": "PASS"
+    },
+    {
+      "name": "alta individual de importador existente",
+      "result": "PASS"
+    },
+    {
+      "name": "filtro de operaciones por empresa y contexto de reclamo",
+      "result": "PASS"
+    },
+    {
+      "name": "cierre desde importador y liberacion de capital",
+      "result": "PASS"
+    }
+  ]
+}

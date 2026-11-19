@@ -1,0 +1,50 @@
+﻿ M .gitignore
+ M apps/mobile/features/importer/views.tsx
+ M apps/mobile/lib/dashboard.ts
+ M apps/mobile/lib/importer-flow.ts
+ M apps/web/eslint.config.mjs
+ M apps/web/next-env.d.ts
+ M apps/web/next.config.ts
+ M apps/web/src/app/admin/capacidad/page.tsx
+ M apps/web/src/app/admin/operadores/page.tsx
+ M apps/web/src/app/admin/page.tsx
+ M apps/web/src/app/demo/admin/capacidad/page.tsx
+ M apps/web/src/app/demo/admin/operadores/page.tsx
+ M apps/web/src/app/demo/admin/page.tsx
+ M apps/web/src/app/layout.tsx
+ M apps/web/src/app/ofertas/[cargoId]/page.tsx
+ M apps/web/src/components/dashboard-shell.tsx
+ M apps/web/src/features/capacity/admin-data.ts
+ M apps/web/src/features/capacity/types.ts
+ M apps/web/src/features/capacity/view.tsx
+ M apps/web/src/features/multirole/pages.tsx
+ M apps/web/src/features/operator/actions.ts
+ M apps/web/src/features/operator/demo-runtime.mjs
+ M apps/web/src/features/operator/journey.ts
+ M apps/web/src/features/operator/quote-composer.tsx
+ M apps/web/tsconfig.json
+ M supabase/migrations/20261119180708_offer_capital_reservations.sql
+ M tests/offer-capital.test.mjs
+?? apps/web/postcss.config.mjs
+?? apps/web/src/app/admin-workspace.css
+?? apps/web/src/app/admin/archivos/
+?? apps/web/src/app/admin/importadores/
+?? apps/web/src/app/admin/operaciones/
+?? apps/web/src/app/admin/perfil/
+?? apps/web/src/app/admin/reclamos/
+?? apps/web/src/app/demo/admin/importadores/
+?? apps/web/src/app/demo/admin/operaciones/
+?? apps/web/src/app/demo/admin/perfil/
+?? apps/web/src/app/demo/admin/reclamos/
+?? apps/web/src/features/admin/
+?? apps/web/src/features/capacity/request-action.ts
+?? apps/web/src/features/capacity/request-form.tsx
+?? apps/web/src/features/operator/capital-sql.json
+?? docs/informes/bloque-15-capital-administracion/
+?? scripts/prepare-capital-demo.mjs
+?? scripts/start-capital-local.ps1
+?? supabase/.temp/
+?? supabase/demo/capital-admin-isolated-seed.sql
+?? supabase/migrations/20261119181203_capital_requests_admin_workbench.sql
+?? tests/capital-admin-browser.mjs
+?? tests/capital-admin.test.mjs

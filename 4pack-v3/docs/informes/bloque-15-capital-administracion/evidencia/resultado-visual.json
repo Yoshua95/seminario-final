@@ -1,0 +1,22 @@
+{
+  "base": "http://localhost:3015",
+  "environment": "Local PGlite; Auth y Storage simulados, sesiones por rol",
+  "results": [
+    {
+      "name": "navegacion administrativa exclusiva y acceso por rol",
+      "result": "PASS"
+    },
+    {
+      "name": "alta de postulacion con capital inicial desde pantalla",
+      "result": "PASS"
+    },
+    {
+      "name": "importador publica carga nueva con FOB USD 1100",
+      "result": "PASS"
+    },
+    {
+      "result": "FAIL",
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(body.includes('600,00'))\n"
+    }
+  ]
+}

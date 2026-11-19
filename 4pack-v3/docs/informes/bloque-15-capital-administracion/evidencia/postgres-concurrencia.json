@@ -1,0 +1,24 @@
+{
+  "database": "fourpack_capital_1795113387421",
+  "host": "127.0.0.1",
+  "port": 55415,
+  "postgres": "PostgreSQL 17.12 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit",
+  "trials": [
+    {
+      "isolation": "READ COMMITTED",
+      "connections": 2,
+      "successful": 1,
+      "rejected": 1,
+      "error": "ERROR:  Capital insuficiente: faltan ARS 20.00 para respaldar esta oferta\r\nCONTEXT:  PL/pgSQL function reserve_offer_capital(uuid) line 16 at RAISE\r\nSQL statement \"SELECT public.reserve_offer_capital(new.id)\"\r\nPL/pgSQL function offer_capital_insert() line 2 at PERFORM\r\nSQL statement \"insert into public.offers(cargo_id,operator_id,mode,freight_usd,estimated_days,terms,documentation_terms,payment_currency,valid_until,normalized_quote,quote_group_id,revision,replaces_offer_id)\r\n values(target,actor,(q->>'mode')::public.transport_mode,(q->>'amount')::numeric,(q->>'estimated_days')::int,q->>'scope',array_to_string(array(select jsonb_array_elements_text(q->'required_documents')),E'\\n'),q->>'currency',(q->>'valid_until')::timestamptz,q,group_id,revision_number,draft.replaces_offer_id) returning id\"\r\nPL/pgSQL function quote_command_before_ars(text,jsonb) line 51 at SQL statement\r\nPL/pgSQL function quote_command_before_offer_capital(text,jsonb) line 6 at RETURN\r\nPL/pgSQL function quote_command(text,jsonb) line 12 at assignment",
+      "committed": 60
+    },
+    {
+      "isolation": "REPEATABLE READ",
+      "connections": 2,
+      "successful": 1,
+      "rejected": 1,
+      "error": "ERROR:  could not serialize access due to concurrent update\r\nCONTEXT:  SQL statement \"update public.capital_market_mutex set revision=revision+1 where singleton\"\r\nPL/pgSQL function lock_capital_market() line 2 at SQL statement\r\nSQL statement \"SELECT public.lock_capital_market()\"\r\nPL/pgSQL function quote_command(text,jsonb) line 4 at PERFORM",
+      "committed": 60
+    }
+  ]
+}

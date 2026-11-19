@@ -1,0 +1,51 @@
+{
+  "base": "http://127.0.0.1:3015",
+  "results": [
+    {
+      "view": "inicio",
+      "http": 200
+    },
+    {
+      "view": "operadores",
+      "http": 200
+    },
+    {
+      "view": "capacidad",
+      "http": 200
+    },
+    {
+      "view": "operaciones",
+      "http": 200
+    },
+    {
+      "view": "reclamos",
+      "http": 200
+    },
+    {
+      "view": "importadores",
+      "http": 200
+    },
+    {
+      "view": "mi-perfil",
+      "http": 200
+    },
+    {
+      "counter": "Postulaciones nuevas",
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "counter": "Ampliaciones pendientes",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "counter": "Reclamos abiertos",
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "claimResolved": "e0000000-0000-0000-0000-000000000001"
+    }
+  ]
+}
