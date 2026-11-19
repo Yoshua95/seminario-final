@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-19T17:53:33.691Z",
+  "id": "check-final-local",
+  "data": {
+    "balance": "Disponible por operaciones completadas$ 240.750,00Saldo de pruebaLiberaciones netas registradas en el libro, descontando los débitos registrados. No es saldo bancario.Pendiente de liberación$ 780.000,00Saldo de prueba4 operaciones: completar el servicio y confirmar la entrega. Si hay controversia, requiere resolución. Liberación por hitos aún no disponible.",
+    "active": "#OP-1026\nShenzhen → Buenos Aires\n\nPanel operador · ensayo 1795095344823\n\nARS $ 120.000,00\nETAPA ACTUAL\nEn tránsito\nEstado contractual: Confirmada\n\nÚltimo hito: En tránsito\n\n19 de nov de 2026, 14:01 · Operador\nPRÓXIMA ACCIÓN\nAdjuntar Factura comercial\n\nResponsable: Importador\n\nSolicitar documento →",
+    "complete": "#OP-1016\nShenzhen → Buenos Aires\n\nB06 estandar 1794958485748\n\nARS $ 250.000,00\nETAPA ACTUAL\nCompletada\nEstado contractual: Completada\n\nÚltimo hito: Estado: completed\n\n18 de nov de 2026, 01:22 · Importador\nPRÓXIMA ACCIÓN\nCierre y liberación registrados\n\nResponsable: Sin tarea pendiente\n\nVer cobro →",
+    "detail": "Detalle de oferta · LC-10019\nCerrar ✕\n\nSellada el 19 de nov de 2026, 10:36 · Revisión 1\n\nPrecio total\nARS $ 120.000,00\nPlazo estimado\n9 días\nVigente hasta\n22 de nov de 2026, 10:36\nAlcance y servicios\n\nTransporte internacional y entrega nacional de piezas de muestra.\n\nTransporte internacional\nEntrega nacional\nIncluye\nTransporte internacional\nEntrega nacional\nNo incluye\nServicios no seleccionados\nCondiciones y documentación\nPago\nPago de prueba o garantía según la operación; sin liberación por hitos.\nSeguro\nSin seguro incluido\nResponsabilidades\nOperador: servicios cotizados. Importador: datos y documentación de la carga.\nDocumentos requeridos\nPacking list · Factura comercial\nExcepciones y observaciones\n\nSin carga peligrosa. Prueba funcional del panel del operador.",
+    "escapeFocus": true,
+    "anonymousAdminUrl": "http://localhost:3000/admin/acceso",
+    "operatorDeniedUrl": "http://localhost:3000/operador/oportunidades",
+    "adminWorks": true,
+    "payment": [
+      {
+        "provider_payment_id": "189418265535",
+        "status": "approved"
+      }
+    ],
+    "errors": []
+  }
+}
