@@ -1,0 +1,7 @@
+{
+  "http": 500,
+  "errors": [
+    "Cannot read properties of null (reading 'quote')"
+  ],
+  "nullQuoteFailure": true
+}
