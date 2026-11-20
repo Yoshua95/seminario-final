@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "4PACK",
+    "name": "4PACK Candidata",
     "slug": "4pack",
     "owner": "yoshua95",
-    "version": "3.0.4",
+    "version": "3.0.5",
     "orientation": "portrait",
-    "scheme": "fourpack",
+    "scheme": "fourpack-candidate",
     "userInterfaceStyle": "automatic",
     "android": {
-      "package": "com.yoshuachavez.fourpack",
-      "versionCode": 5
+      "package": "com.yoshuachavez.fourpack.candidate",
+      "versionCode": 6
     },
     "plugins": [
       "expo-router"

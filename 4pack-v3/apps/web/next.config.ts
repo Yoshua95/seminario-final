@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
       ? { root: process.env.FOURPACK_TURBOPACK_ROOT }
       : {}),
     resolveAlias: {
+      "@4pack/domain": "../../packages/domain/src/index.ts",
       "./operator.js": "../../packages/domain/src/operator.ts",
       "./quotes.js": "../../packages/domain/src/quotes.ts",
       "./cargo-publication.js":

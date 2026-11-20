@@ -5,7 +5,7 @@ export async function testPayment(
   action: "checkout" | "sync",
 ) {
   if (!supabase) throw new Error("La conexión no está disponible.");
-  const { data, error } = await supabase.functions.invoke("mercado-pago-test", {
+  const { data, error } = await supabase.functions.invoke(process.env.EXPO_PUBLIC_MP_FUNCTION || "mercado-pago-test", {
     body: { operation_id: operationId, action },
   });
   if (error || !data || typeof data.status !== "string") {

@@ -10,6 +10,51 @@ export type Capital = {
   requires_review: number;
 };
 export type Workbench = {
+  protection?: {
+    operation_id: string;
+    provider_payment_id: string | null;
+    state: string;
+    amount: number;
+    commission: number;
+    currency: string;
+    released_at: string | null;
+  }[];
+  delivery_confirmations?: {
+    operation_id: string;
+    importer_id: string;
+    confirmed_at: string;
+  }[];
+  applications?: {
+    operator_id: string;
+    origin: string;
+    destination: string;
+    services: string[];
+    modes: string[];
+    state: string;
+    system_checks: {
+      email_confirmed?: boolean;
+      cuit_format?: boolean;
+      registry_verified?: boolean;
+    };
+    document_ids: string[];
+  }[];
+  authorizations?: {
+    operator_id: string;
+    origin: string;
+    destination: string;
+    services: string[];
+    modes: string[];
+    approved_by: string;
+    approved_at: string;
+    reason: string;
+  }[];
+  payments?: {
+    operation_id: string;
+    provider_payment_id: string;
+    amount: number;
+    currency: string;
+    status: string;
+  }[];
   contracts?: {
     operation_id: string;
     content: { quote?: { required_documents?: string[] | null } | null } | null;
@@ -47,6 +92,8 @@ export type Workbench = {
     created_at: string;
   }[];
   operations: {
+    workflow_version?: string;
+    payment_mode?: string;
     id: string;
     operator_id: string;
     importer_id: string;
@@ -84,6 +131,8 @@ export type Workbench = {
     document_type: string;
   }[];
   claims: {
+    opened_by?: string | null;
+    resolution_policy?: string | null;
     id: string;
     operation_id: string | null;
     operator_id: string;

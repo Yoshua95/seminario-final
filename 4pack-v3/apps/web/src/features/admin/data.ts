@@ -23,11 +23,15 @@ export async function adminRpc(
   const actor = await rehearsalSession("admin");
   const allowed: Record<string, string> = {
     admin_workbench: "select public.admin_workbench() data",
+    admin_review_company:
+      "select public.admin_review_company($1,$2,$3,$4::jsonb,$5) data",
     admin_review_capital:
       "select public.admin_review_capital($1,$2,$3::numeric,$4,$5) data",
     admin_review_operator:
       "select public.admin_review_operator($1,$2,$3::numeric,$4,$5::jsonb,$6) data",
     admin_manage_claim: "select public.admin_manage_claim($1,$2,$3,$4,$5) data",
+    admin_resolve_operation_claim:
+      "select public.admin_resolve_operation_claim($1,$2,$3,$4,$5,$6) data",
     admin_activate_importer:
       "select public.admin_activate_importer($1,$2,$3) data",
     set_approved_capital:

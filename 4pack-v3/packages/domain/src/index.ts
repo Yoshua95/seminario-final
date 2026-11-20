@@ -5,6 +5,8 @@ export { validateMsdsFile, publishCargoWithMsds } from "./cargo-publication.js";
 export type { MsdsFile, PublicationAttempt } from "./cargo-publication.js";
 export { serviceTaxonomy, sameQuoteScope, validateQuote, NEW_CONTRACT_CURRENCY, assertNewContractCurrency } from "./quotes.js";
 export type { ServiceKind, ContractCurrency, NormalizedQuote } from "./quotes.js";
+export {deriveOperationTask} from "./operation-work.mjs";
+export type {OperationTaskInput,OperationTask} from "./operation-work.mjs";
 
 export type CargoStatus =
   | "draft"

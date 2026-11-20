@@ -62,7 +62,10 @@ export async function localDatabase() {
   return localGlobal.operatorDemoDb;
 }
 export async function demoIdentity() {
-  if(isMultiroleDemo()) return (await (await import("../multirole/session")).rehearsalSession("operator")).id;
+  if (isMultiroleDemo())
+    return (
+      await (await import("../multirole/session")).rehearsalSession("operator")
+    ).id;
   assertDemo();
   const identity = (await cookies()).get("fourpack-demo")?.value;
   if (!identity || !["operator", "pending", "suspended"].includes(identity))
@@ -100,7 +103,11 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
     snapshot.multirole = isMultiroleDemo();
     snapshot.profile.email =
       user === demoUsers.operator ? "operador@4pack.demo" : "cuenta@4pack.demo";
-    const capacity = await asUser<{data: Snapshot["capacity"]}>(db,user,"select public.operator_capacity_snapshot() as data");
+    const capacity = await asUser<{ data: Snapshot["capacity"] }>(
+      db,
+      user,
+      "select public.operator_capacity_snapshot() as data",
+    );
     snapshot.capacity = capacity.rows[0].data;
     return snapshot;
   }
@@ -115,9 +122,19 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
   const capacity = await client.rpc("operator_capacity_snapshot");
   if (capacity.error) throw new Error("No pudimos cargar capacidad.");
   snapshot.capacity = capacity.data;
-  const payments = await client.from("mp_test_payments").select("operation_id,status,amount,currency,provider_payment_id");
+  const payments = await client
+    .from("mp_test_payments")
+    .select("operation_id,status,amount,currency,provider_payment_id");
   snapshot.payments = payments.data ?? [];
   snapshot.paymentsUnavailable = !!payments.error;
+  const [protection, delivery] = await Promise.all([
+    client.from("test_operation_protection").select("*"),
+    client
+      .from("operation_delivery_confirmations")
+      .select("operation_id,importer_id,confirmed_at"),
+  ]);
+  snapshot.protection = protection.data ?? [];
+  snapshot.deliveryConfirmations = delivery.data ?? [];
   return snapshot;
 });
 export async function executeCommand(
@@ -150,25 +167,67 @@ export async function executeCommand(
   return data as { id?: string };
 }
 
-export async function executeQuoteCommand(demo: boolean, command: string, payload: Record<string, unknown>) {
+export async function executeQuoteCommand(
+  demo: boolean,
+  command: string,
+  payload: Record<string, unknown>,
+) {
   if (demo) {
     const actor = await demoIdentity();
     const db = await localDatabase();
-    const result = await asUser<{result:{id:string}}>(db,actor,"select public.quote_command($1,$2::jsonb) as result",[command,JSON.stringify(payload)]);
+    const result = await asUser<{ result: { id: string } }>(
+      db,
+      actor,
+      "select public.quote_command($1,$2::jsonb) as result",
+      [command, JSON.stringify(payload)],
+    );
     return result.rows[0].result;
   }
-  const {client} = await operatorSession();
-  const {data,error} = await client.rpc("quote_command",{command,payload});
-  if (error) throw new Error(error.code==="P0001"?error.message:"No pudimos guardar la cotización.");
-  return data as {id:string};
+  const { client } = await operatorSession();
+  const { data, error } = await client.rpc("quote_command", {
+    command,
+    payload,
+  });
+  if (error)
+    throw new Error(
+      error.code === "P0001"
+        ? error.message
+        : "No pudimos guardar la cotización.",
+    );
+  return data as { id: string };
 }
-export async function executeVolumeProposal(demo:boolean,cargo:string,volume:number){
- if(demo){const actor=await demoIdentity(),db=await localDatabase();const r=await asUser<{id:string}>(db,actor,'select public.propose_cargo_volume($1,$2) id',[cargo,volume]);return r.rows[0].id;}
- const{client}=await operatorSession();const r=await client.rpc('propose_cargo_volume',{target_cargo:cargo,proposed_volume:volume});
- if(r.error)throw new Error(r.error.code==='P0001'?r.error.message:'No pudimos proponer el volumen.');return r.data as string;
+export async function executeVolumeProposal(
+  demo: boolean,
+  cargo: string,
+  volume: number,
+) {
+  if (demo) {
+    const actor = await demoIdentity(),
+      db = await localDatabase();
+    const r = await asUser<{ id: string }>(
+      db,
+      actor,
+      "select public.propose_cargo_volume($1,$2) id",
+      [cargo, volume],
+    );
+    return r.rows[0].id;
+  }
+  const { client } = await operatorSession();
+  const r = await client.rpc("propose_cargo_volume", {
+    target_cargo: cargo,
+    proposed_volume: volume,
+  });
+  if (r.error)
+    throw new Error(
+      r.error.code === "P0001"
+        ? r.error.message
+        : "No pudimos proponer el volumen.",
+    );
+  return r.data as string;
 }
 export async function demoAward(offerId: string) {
-  if(isMultiroleDemo()) throw new Error("La adjudicacion corresponde a la sesion del importador.");
+  if (isMultiroleDemo())
+    throw new Error("La adjudicacion corresponde a la sesion del importador.");
   const snapshot = await loadSnapshot(true);
   if (
     snapshot.operator.verification_status !== "approved" ||
@@ -195,39 +254,92 @@ export async function demoAward(offerId: string) {
   return result.rows[0].id;
 }
 
-export async function submitOperatorRating(demo:boolean,operationId:string,score:number,comment:string){
-  if(!Number.isInteger(score)||score<1||score>5||comment.length>500)throw new Error('Puntaje o comentario inválido.');
-  if(demo){
-    const actor=await demoIdentity();
-    const result=await asUser<{id:string}>(await localDatabase(),actor,`with eligible as (
+export async function submitOperatorRating(
+  demo: boolean,
+  operationId: string,
+  score: number,
+  comment: string,
+) {
+  if (
+    !Number.isInteger(score) ||
+    score < 1 ||
+    score > 5 ||
+    comment.length > 500
+  )
+    throw new Error("Puntaje o comentario inválido.");
+  if (demo) {
+    const actor = await demoIdentity();
+    const result = await asUser<{ id: string }>(
+      await localDatabase(),
+      actor,
+      `with eligible as (
       select id,importer_id from public.operations where id=$1 and operator_id=auth.uid() and phase='completed'
     ), inserted as (
       insert into public.ratings(operation_id,author_id,recipient_id,score,comment)
       select id,auth.uid(),importer_id,$2,$3 from eligible
       on conflict(operation_id,author_id) do nothing returning id
-    ) select id from inserted union all select r.id from public.ratings r join eligible e on e.id=r.operation_id where r.author_id=auth.uid() limit 1`,[operationId,score,comment||null]);
-    if(!result.rows[0])throw new Error('La evaluación requiere una operación completada propia.');
+    ) select id from inserted union all select r.id from public.ratings r join eligible e on e.id=r.operation_id where r.author_id=auth.uid() limit 1`,
+      [operationId, score, comment || null],
+    );
+    if (!result.rows[0])
+      throw new Error(
+        "La evaluación requiere una operación completada propia.",
+      );
     return result.rows[0];
   }
-  const {client,user}=await operatorSession();
-  const operation=await client.from('operations').select('importer_id,phase').eq('id',operationId).eq('operator_id',user.id).single();
-  if(operation.error||operation.data.phase!=='completed')throw new Error('La evaluación requiere una operación completada propia.');
-  const existing=await client.from('ratings').select('id').eq('operation_id',operationId).eq('author_id',user.id).maybeSingle();
-  if(existing.error)throw new Error('No se pudo consultar la evaluación.');
-  if(existing.data)return existing.data;
-  const result=await client.from('ratings').insert({operation_id:operationId,author_id:user.id,recipient_id:operation.data.importer_id,score,comment:comment||null}).select('id').single();
-  if(result.error)throw new Error('No se pudo registrar la evaluación.');
+  const { client, user } = await operatorSession();
+  const operation = await client
+    .from("operations")
+    .select("importer_id,phase")
+    .eq("id", operationId)
+    .eq("operator_id", user.id)
+    .single();
+  if (operation.error || operation.data.phase !== "completed")
+    throw new Error("La evaluación requiere una operación completada propia.");
+  const existing = await client
+    .from("ratings")
+    .select("id")
+    .eq("operation_id", operationId)
+    .eq("author_id", user.id)
+    .maybeSingle();
+  if (existing.error) throw new Error("No se pudo consultar la evaluación.");
+  if (existing.data) return existing.data;
+  const result = await client
+    .from("ratings")
+    .insert({
+      operation_id: operationId,
+      author_id: user.id,
+      recipient_id: operation.data.importer_id,
+      score,
+      comment: comment || null,
+    })
+    .select("id")
+    .single();
+  if (result.error) throw new Error("No se pudo registrar la evaluación.");
   return result.data;
 }
 
 // Only local/Preview: mirrors the trusted Edge gateway after byte validation.
-export async function registerDemoDocument(payload: Record<string, unknown>, bytes: Uint8Array) {
+export async function registerDemoDocument(
+  payload: Record<string, unknown>,
+  bytes: Uint8Array,
+) {
   const actor = await demoIdentity();
   const db = await localDatabase();
   const sha256 = createHash("sha256").update(bytes).digest("hex");
-  return db.transaction(async tx => {
-    await tx.query("insert into storage.objects(bucket_id,name,owner_id,metadata,user_metadata) values('documents',$1,$2,$3,$4)",
-      [payload.storage_path,actor,JSON.stringify({size:bytes.length,mimetype:payload.mime_type}),JSON.stringify({uploaded_by:actor,sha256})]);
-    await tx.query("select public.register_document_upload($1,$2::jsonb)",[actor,JSON.stringify({...payload,sha256})]);
+  return db.transaction(async (tx) => {
+    await tx.query(
+      "insert into storage.objects(bucket_id,name,owner_id,metadata,user_metadata) values('documents',$1,$2,$3,$4)",
+      [
+        payload.storage_path,
+        actor,
+        JSON.stringify({ size: bytes.length, mimetype: payload.mime_type }),
+        JSON.stringify({ uploaded_by: actor, sha256 }),
+      ],
+    );
+    await tx.query("select public.register_document_upload($1,$2::jsonb)", [
+      actor,
+      JSON.stringify({ ...payload, sha256 }),
+    ]);
   });
 }

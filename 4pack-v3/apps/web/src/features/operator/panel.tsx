@@ -1586,7 +1586,7 @@ export async function OperatorPanel({
           </section>
         </>
       ) : section === "capacidad" ? (
-        redirect(`${basePath(demo)}/perfil#capital-operativo`)
+        redirect(`${basePath(demo)}/perfil`)
       ) : section === "oportunidades" ? (
         <Opportunities data={data} demo={demo} id={id} search={search} />
       ) : section === "mis-ofertas" ? (

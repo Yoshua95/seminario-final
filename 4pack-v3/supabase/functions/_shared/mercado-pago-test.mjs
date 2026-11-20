@@ -174,6 +174,7 @@ export function createTestProvider({
   token,
   sellerId,
   returnBase,
+  notificationUrl,
   fetcher = fetch,
   diagnostics,
 }) {
@@ -292,6 +293,7 @@ export function createTestProvider({
         () =>
           request("/checkout/preferences", {
             external_reference: intent.external_reference,
+            ...(notificationUrl ? {notification_url:notificationUrl} : {}),
             metadata: {
               operation_id: intent.operation_id,
               fourpack_test: true,

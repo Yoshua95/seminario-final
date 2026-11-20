@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { BrandMark } from "@/components/brand-mark";
 import { loadWorkbench } from "./data";
 import { AdminForm } from "./form";
-import { money, date } from "../operator/types";
+import { date } from "../operator/types";
 import { phaseLabels } from "@4pack/domain";
 import type { Workbench } from "./types";
 import { operationTask, operationStage } from "./operation-task";
@@ -12,7 +12,6 @@ import { SessionProfile } from "@/components/session-profile";
 export type AdminSection =
   | "inicio"
   | "operadores"
-  | "capacidad"
   | "operaciones"
   | "reclamos"
   | "importadores"
@@ -20,7 +19,6 @@ export type AdminSection =
 const navigation = [
   ["inicio", "Inicio"],
   ["operadores", "Operadores"],
-  ["capacidad", "Capacidad"],
   ["operaciones", "Operaciones"],
   ["reclamos", "Reclamos"],
   ["importadores", "Importadores"],
@@ -143,6 +141,9 @@ export async function AdminWorkspace({
   const docs = (id: string) =>
       data.documents.filter((d) => d.operator_id === id).map((d) => d.id),
     selected = data.operators.find((o) => o.user_id === p.id);
+  const application = data.applications?.find(
+    (a) => a.operator_id === selected?.user_id,
+  );
   return (
     <main className="shell admin-workspace">
       <aside className="sidebar">
@@ -191,9 +192,11 @@ export async function AdminWorkspace({
                 url("operadores", "?tab=postulaciones&status=pending"),
               ],
               [
-                "Ampliaciones pendientes",
-                data.requests.filter((r) => r.status === "submitted").length,
-                url("capacidad", "?status=submitted"),
+                "Correcciones pendientes",
+                data.operators.filter(
+                  (o) => o.application_state === "correction",
+                ).length,
+                url("operadores", "?tab=postulaciones&status=correction"),
               ],
               [
                 "Reclamos abiertos",
@@ -293,6 +296,63 @@ export async function AdminWorkspace({
                   CUIT: {selected.tax_id} · {selected.description}
                 </p>
                 <p>{selected.application_note}</p>
+                {application && (
+                  <section className="op-panel">
+                    <h3>Alcance declarado</h3>
+                    <p>
+                      {application.origin} → {application.destination}
+                    </p>
+                    <p>
+                      Modalidades:{" "}
+                      {application.modes
+                        .map(
+                          (m) =>
+                            ({
+                              air: "Aéreo",
+                              sea: "Marítimo",
+                              consolidated: "Consolidado",
+                            })[m] ?? m,
+                        )
+                        .join(" · ")}
+                    </p>
+                    <p>
+                      Servicios:{" "}
+                      {application.services
+                        .map(
+                          (s) =>
+                            ({
+                              international_transport:
+                                "Transporte internacional",
+                              origin_handling: "Gestión en origen",
+                              customs_coordination: "Coordinación aduanera",
+                              destination_handling: "Gestión en destino",
+                              domestic_delivery: "Entrega nacional",
+                              storage: "Almacenamiento",
+                              insurance: "Seguro",
+                              integrated_service: "Servicio integral",
+                              other: "Otro",
+                            })[s] ?? s,
+                        )
+                        .join(" · ")}
+                    </p>
+                    <h4>Comprobaciones del sistema</h4>
+                    <p>
+                      Correo:{" "}
+                      {application.system_checks.email_confirmed
+                        ? "Confirmado"
+                        : "Pendiente"}{" "}
+                      · Formato de CUIT:{" "}
+                      {application.system_checks.cuit_format
+                        ? "Válido"
+                        : "Pendiente"}
+                    </p>
+                    <p>
+                      Inscripción o identidad en registros externos: no
+                      verificada automáticamente. La decisión manual queda
+                      identificada con responsable, fecha y motivo.
+                    </p>
+                  </section>
+                )}
                 <DocList data={data} ids={docs(selected.user_id)} demo={demo} />
                 {["approved", "suspended"].includes(
                   selected.verification_status,
@@ -326,10 +386,6 @@ export async function AdminWorkspace({
                       </label>
                     ))}
                     <Choices />
-                    <label>
-                      Capital inicial en ARS
-                      <input type="number" name="amount" min="0" step="0.01" />
-                    </label>
                     <Reason />
                   </AdminForm>
                 )}
@@ -343,175 +399,6 @@ export async function AdminWorkspace({
                   ))}
               </article>
             )}
-          </>
-        )}
-        {section === "capacidad" && (
-          <>
-            <form className="admin-filters">
-              <label>
-                Buscar empresa registrada
-                <input name="q" defaultValue={p.q} />
-              </label>
-              <button className="op-button secondary">Buscar</button>
-            </form>
-            <table className="op-table">
-              <thead>
-                <tr>
-                  <th>Empresa</th>
-                  <th>Aprobado ARS</th>
-                  <th>Comprometido ARS</th>
-                  <th>Disponible ARS</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.operators
-                  .filter(
-                    (o) =>
-                      ["approved", "suspended"].includes(
-                        o.verification_status,
-                      ) &&
-                      o.company_name
-                        .toLowerCase()
-                        .includes((p.q ?? "").toLowerCase()),
-                  )
-                  .map((o) => (
-                    <tr key={o.user_id}>
-                      <td>{o.company_name}</td>
-                      <td>{money(o.capital.approved, "ARS")}</td>
-                      <td>
-                        {money(o.capital.committed, "ARS")}
-                        {o.capital.inconsistent && (
-                          <p className="admin-state red">
-                            Inconsistencia: revisar límites y reservas
-                          </p>
-                        )}
-                        {o.capital.requires_review > 0 && (
-                          <p>Pendiente de revisión histórica</p>
-                        )}
-                      </td>
-                      <td>
-                        {o.capital.available === null
-                          ? "Requiere revisión"
-                          : money(o.capital.available, "ARS")}
-                      </td>
-                      <td>
-                        <Link href={url("capacidad", "?id=" + o.user_id)}>
-                          Revisar capital →
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-            {selected &&
-              ["approved", "suspended"].includes(
-                selected.verification_status,
-              ) && (
-                <article className="op-panel">
-                  <h2>{selected.company_name}</h2>
-                  <p>
-                    Ofertas vigentes: {money(selected.capital.offers, "ARS")} ·
-                    Operaciones: {money(selected.capital.operations, "ARS")}
-                  </p>
-                  <details>
-                    <summary>Ajustar capital aprobado</summary>
-                    <AdminForm demo={demo} label="Guardar nuevo total">
-                      <Meta command="adjust" id={selected.user_id} />
-                      <label>
-                        Nuevo total ARS
-                        <input
-                          name="amount"
-                          type="number"
-                          min={selected.capital.committed}
-                          step="0.01"
-                          defaultValue={selected.capital.approved}
-                          required
-                        />
-                      </label>
-                      <Reason />
-                      <p>
-                        El servidor impide reducirlo por debajo de los
-                        compromisos vigentes.
-                      </p>
-                    </AdminForm>
-                  </details>
-                </article>
-              )}
-            <h2>Solicitudes de ampliación</h2>
-            {data.requests
-              .filter(
-                (r) =>
-                  (!p.id || r.operator_id === p.id) &&
-                  (!p.status || r.status === p.status),
-              )
-              .map((r) => (
-                <article className="op-panel" key={r.id}>
-                  <h3>{company(r.operator_id)}</h3>
-                  {tag(r.status)}
-                  {r.reviewed_at && (
-                    <p>
-                      Decidió{" "}
-                      {r.reviewed_by ? name(r.reviewed_by) : "Administración"} ·{" "}
-                      {date(r.reviewed_at)} · Total anterior{" "}
-                      {money(r.previous_total, "ARS")}
-                      {r.approved_total !== null &&
-                        ` → ${money(r.approved_total, "ARS")}`}
-                    </p>
-                  )}
-                  <p>
-                    Total vigente:{" "}
-                    {money(
-                      data.operators.find((o) => o.user_id === r.operator_id)
-                        ?.capital.approved ?? r.previous_total,
-                      "ARS",
-                    )}{" "}
-                    · Total al solicitar: {money(r.previous_total, "ARS")} ·
-                    Solicitado: {money(r.requested_total, "ARS")}
-                  </p>
-                  <DocList data={data} ids={r.evidence} demo={demo} />
-                  {r.status === "submitted" ? (
-                    <AdminForm demo={demo}>
-                      <Meta command="capital" id={r.id} />
-                      <Choices />
-                      <label>
-                        Nuevo total a aprobar · ARS
-                        <input
-                          name="amount"
-                          type="number"
-                          min={
-                            Number(
-                              data.operators.find(
-                                (o) => o.user_id === r.operator_id,
-                              )?.capital.approved ?? r.previous_total,
-                            ) + 0.01
-                          }
-                          max={r.requested_total}
-                          step="0.01"
-                          defaultValue={r.requested_total}
-                        />
-                      </label>
-                      <Reason />
-                    </AdminForm>
-                  ) : (
-                    <p>
-                      {r.reason}{" "}
-                      {r.approved_total !== null &&
-                        money(r.approved_total, "ARS")}
-                    </p>
-                  )}
-                </article>
-              ))}
-            <details>
-              <summary>Revisar ofertas anteriores al cambio</summary>
-              <p>
-                Se respaldan por antigüedad solo las que alcancen con el capital
-                vigente. Las restantes no estarán disponibles para adjudicar.
-              </p>
-              <AdminForm demo={demo} label="Reconciliar respaldos">
-                <Meta command="reconcile" />
-              </AdminForm>
-            </details>
           </>
         )}
         {section === "operaciones" && (
@@ -748,7 +635,8 @@ export async function AdminWorkspace({
                   <h2>{t.subject}</h2>
                   {tag(t.status)}
                   <p>
-                    Presentado por {company(t.operator_id)} ·{" "}
+                    Presentado por{" "}
+                    {t.opened_by ? name(t.opened_by) : company(t.operator_id)} ·{" "}
                     {date(t.created_at)} · {t.category}
                   </p>
                   {t.operation_id && (
@@ -775,6 +663,22 @@ export async function AdminWorkspace({
                   ) : (
                     <AdminForm demo={demo}>
                       <Meta command="claim" id={t.id} />
+                      <label>
+                        Consecuencia al resolver
+                        <select name="resolution_policy">
+                          <option value="resume">
+                            Continuar el servicio; mantener la condición de
+                            entrega
+                          </option>
+                          <option value="release_test">
+                            Liberar en prueba después de entrega confirmada
+                          </option>
+                          <option value="refund_test">
+                            Registrar reintegro en prueba, sin ordenar
+                            devolución al proveedor
+                          </option>
+                        </select>
+                      </label>
                       <label>
                         Responsable
                         <select

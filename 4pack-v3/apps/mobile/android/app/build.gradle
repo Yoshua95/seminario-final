@@ -94,11 +94,11 @@ android {
 
     namespace 'com.yoshuachavez.fourpack'
     defaultConfig {
-        applicationId 'com.yoshuachavez.fourpack'
+        applicationId 'com.yoshuachavez.fourpack.candidate'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "3.0.4"
+        versionCode 6
+        versionName "3.0.5"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

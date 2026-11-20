@@ -8,27 +8,15 @@ export async function adminAction(
   form: FormData,
 ) {
   try {
-    const t = (k: string) => String(form.get(k) ?? "").trim(),
-      amount = (k: string) => t(k) || null;
+    const t = (k: string) => String(form.get(k) ?? "").trim();
     let name = "",
       args: Record<string, unknown> = {};
     switch (t("command")) {
-      case "capital":
-        name = "admin_review_capital";
-        args = {
-          target_request: t("id"),
-          decision: t("decision"),
-          approved_total: amount("amount"),
-          reason: t("reason"),
-          request_key: t("request_key"),
-        };
-        break;
       case "operator":
-        name = "admin_review_operator";
+        name = "admin_review_company";
         args = {
           target_operator: t("id"),
           decision: t("decision"),
-          initial_capital: amount("amount"),
           reason: t("reason"),
           checklist: {
             identity: form.has("identity"),
@@ -39,12 +27,13 @@ export async function adminAction(
         };
         break;
       case "claim":
-        name = "admin_manage_claim";
+        name = "admin_resolve_operation_claim";
         args = {
           target_ticket: t("id"),
           next_status: t("status"),
           responsible: t("responsible"),
           reason: t("reason"),
+          resolution_policy: t("resolution_policy") || "resume",
           request_key: t("request_key"),
         };
         break;
@@ -55,17 +44,6 @@ export async function adminAction(
           reason: t("reason"),
           request_key: t("request_key"),
         };
-        break;
-      case "adjust":
-        name = "set_approved_capital";
-        args = {
-          target_operator: t("id"),
-          new_total: amount("amount"),
-          reason: t("reason"),
-        };
-        break;
-      case "reconcile":
-        name = "reconcile_offer_capital";
         break;
       case "terminal":
         name = "admin_capacity_terminal_transition";

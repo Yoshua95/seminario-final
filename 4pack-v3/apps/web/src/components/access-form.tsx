@@ -113,6 +113,7 @@ export default function AccessForm({ admin = false }: { admin?: boolean }) {
               {loading ? "Validando…" : "Ingresar"}
             </button>
           </form>
+          {!admin && <p><Link href="/empresa/registro">Registrar mi empresa</Link></p>}
         </div>
       </section>
     </main>

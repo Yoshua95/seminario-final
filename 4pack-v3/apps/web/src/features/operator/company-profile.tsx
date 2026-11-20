@@ -4,7 +4,7 @@ import type { Snapshot } from "./types";
 import { Badge, PageHeader } from "./ui";
 import { ActionForm, DocumentButton } from "./forms";
 import { CommercialEditor } from "./commercial-editor";
-import { CapacityView } from "../capacity/view";
+import { CompanyApplication } from "./company-application";
 export function CompanyProfile({
   data,
   demo,
@@ -28,14 +28,14 @@ export function CompanyProfile({
     <>
       <PageHeader
         title="Perfil empresarial"
-        description="Tu empresa, su documentación y el capital que respalda tus ofertas."
+        description="Tu empresa, sus rutas, servicios y documentación."
         action={<Badge status={c.verification_status} />}
       />
       <section className="op-panel profile-overview">
         <h2>{c.company_name}</h2>
         <p>
           {c.verification_status === "approved"
-            ? "Empresa verificada. Podés cotizar con el capital disponible."
+            ? "Empresa habilitada. Podés cotizar en tus rutas y servicios autorizados."
             : c.verification_status === "suspended"
               ? "Cuenta suspendida. Contactá a Administración para su revisión."
               : "Administración debe revisar tu postulación."}
@@ -49,10 +49,16 @@ export function CompanyProfile({
         <nav aria-label="Secciones del perfil">
           <a href="#empresa">Datos de la empresa</a>
           <a href="#documentacion">Documentación</a>
-          <a href="#capital-operativo">Capital operativo</a>
         </nav>
         <RefreshProfile />
       </section>
+      {!demo && (
+        <CompanyApplication
+          companyName={c.company_name}
+          taxId={c.tax_id}
+          documentIds={docs.map((d) => d.id)}
+        />
+      )}
       <section className="op-panel" id="empresa">
         <h2>Datos de la empresa</h2>
         <dl className="profile-facts">
@@ -188,12 +194,6 @@ export function CompanyProfile({
         <Link className="op-text-link" href={base + "/documentos?empresa=1"}>
           Consultar versiones o reemplazar un archivo →
         </Link>
-      </section>
-      <section id="capital-operativo">
-        <CapacityView
-          data={data.capacity}
-          operationBase={base + "/operaciones"}
-        />
       </section>
     </>
   );

@@ -11,7 +11,7 @@ const js = ts.transpileModule(source, {
     target: ts.ScriptTarget.ES2022,
     module: ts.ModuleKind.ES2022,
   },
-}).outputText;
+}).outputText.replace('from "@4pack/domain"','from "'+new URL('../packages/domain/src/operation-work.mjs',import.meta.url).href+'"');
 const { operationTask } = await import(
   "data:text/javascript;base64," + Buffer.from(js).toString("base64")
 );

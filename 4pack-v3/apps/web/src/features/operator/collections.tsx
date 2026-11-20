@@ -39,8 +39,17 @@ export function Collections({ data, demo }: { data: Snapshot; demo: boolean }) {
           <small className="op-balance-source">Saldo de prueba</small>
           <p>
             {amounts.pendingCount} operaciones: completar el servicio y
-            confirmar la entrega. Si hay controversia, requiere resolución.
-            Liberación por hitos aún no disponible.
+            confirmar la entrega. Los reclamos abiertos mantienen la liberación
+            en revisión.
+          </p>
+        </section>
+        <section className="op-panel balance-pending">
+          <span>En revisión</span>
+          <strong className="mono">{money(amounts.inReview, "ARS")}</strong>
+          <small className="op-balance-source">Saldo de prueba</small>
+          <p>
+            {amounts.reviewCount} operaciones con pago confirmado y reclamo
+            abierto. Administración debe resolver con motivo.
           </p>
         </section>
       </div>
@@ -126,9 +135,32 @@ export function Collections({ data, demo }: { data: Snapshot; demo: boolean }) {
                                 ? payments.map((p) => p.status).join(" · ")
                                 : "Sin pago verificado"}
                         </p>
+                        <p>
+                          {(
+                            {
+                              pending_payment: "Esperando pago del importador",
+                              pending_delivery:
+                                "Pendiente de liberación: falta entrega confirmada",
+                              in_review:
+                                "En revisión: hay un reclamo pendiente",
+                              released_test: "Liberado en prueba",
+                              refunded_test: "Reintegro registrado en prueba",
+                            } as Record<string, string>
+                          )[
+                            data.protection?.find(
+                              (p) => p.operation_id === o.id,
+                            )?.state ?? ""
+                          ] ?? "Consultar condición de entrega"}
+                        </p>
+                        {payments.map((p) => (
+                          <small key={p.provider_payment_id}>
+                            Pago {p.provider_payment_id}
+                          </small>
+                        ))}
                         <small>
-                          Liberación por hitos aún no disponible. Un pago
-                          aprobado no acredita un desembolso al operador.
+                          La liberación del MVP se registra en prueba tras
+                          confirmar la entrega y resolver los reclamos. No
+                          acredita un desembolso bancario.
                         </small>
                       </>
                     ) : (

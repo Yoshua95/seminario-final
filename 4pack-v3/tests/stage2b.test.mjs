@@ -602,7 +602,9 @@ test("upgrade 0019 con datos: no inventa limites ni capital; revision explicita 
         "utf8",
       ),
     );
-    for (const f of files.filter((f) => f >= "0020"))
+    // This regression targets the historical monetary model before its retirement.
+    // The new migration/privilege behavior is covered by mvp-nonfinancial.test.mjs.
+    for (const f of files.filter((f) => f.startsWith("0020_")))
       await old.exec(
         await readFile(
           new URL("../supabase/migrations/" + f, import.meta.url),

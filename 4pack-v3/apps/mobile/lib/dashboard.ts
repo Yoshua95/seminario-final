@@ -62,6 +62,13 @@ export type MobileCargoDetail = MobileCargo & {
 };
 
 export type MobileOperationDetail = MobileOperation & {
+  workflowVersion?: string;
+  protection?: {state:string;provider_payment_id:string|null;amount:number;commission:number;currency:string;released_at:string|null}|null;
+  requiredDocuments?: string[]|null;
+  documents?: {id:string;type:string;status:string}[];
+  openClaims?: number;
+  deliveryProof?: boolean;
+  deliveryConfirmed?: boolean;
   paymentMode?: "legacy_simulated" | "mercado_pago_test";
   paymentStatus?: string;
   role: UserRole;
@@ -409,6 +416,19 @@ export async function loadOperationDetail(
   const offer = offerResult.data;
   const guarantee = guaranteeResult.data;
   let paymentStatus: string | undefined;
+  let extra:Partial<MobileOperationDetail>={};
+  if(operation.workflow_version==="mvp_delivery_v1"){
+    const [protection,docs,contract,claims,delivery]=await Promise.all([
+      supabase.from("test_operation_protection").select("*").eq("operation_id",operation.id).maybeSingle(),
+      supabase.from("documents").select("id,document_type,validation_status").eq("operation_id",operation.id),
+      supabase.from("operation_contract_snapshots").select("content").eq("operation_id",operation.id).maybeSingle(),
+      supabase.from("support_tickets").select("id,status").eq("operation_id",operation.id),
+      supabase.from("operation_delivery_confirmations").select("operation_id").eq("operation_id",operation.id).maybeSingle()]);
+    if(protection.error||docs.error||contract.error||claims.error||delivery.error)throw Error("No pudimos consultar los pendientes de la operación. Reintentá.");
+    extra={workflowVersion:operation.workflow_version,protection:protection.data,requiredDocuments:contract.data?.content?.quote?.required_documents??null,
+      documents:(docs.data??[]).map(d=>({id:d.id,type:d.document_type,status:d.validation_status})),openClaims:(claims.data??[]).filter(c=>!["closed","resolved"].includes(c.status)).length,
+      deliveryConfirmed:!!delivery.data,deliveryProof:(eventsResult.data??[]).some(e=>e.title==="Entregada"&&!!e.attachment_id)};
+  }
   if (operation.payment_mode === "mercado_pago_test") {
     const payment = await supabase
       .from("mp_test_checkouts")
@@ -419,6 +439,7 @@ export async function loadOperationDetail(
     paymentStatus = payment.data?.status ?? "pending";
   }
   return {
+    ...extra,
     paymentMode: operation.payment_mode ?? "legacy_simulated",
     paymentStatus,
     id: operation.id,
@@ -483,6 +504,17 @@ export async function confirmDelivery(operationId: string) {
     supabase!.rpc(name, args),
   );
 }
+export async function uploadOperationDocument(operationId:string,documentType:string,file:NativeMsds,uploadId:string){
+ await importerSession();if(!supabase)throw Error("Conexión no disponible.");
+ if(file.mimeType!=="application/pdf"||!file.name.toLowerCase().endsWith(".pdf")||file.size<=0||file.size>10*1024*1024)throw Error("Seleccioná un PDF válido de hasta 10 MB.");
+ const form=new FormData();form.append("target_type","operation");form.append("id",operationId);form.append("document_type",documentType);form.append("kind",documentType==="Packing list"?"packing_list":"other");form.append("upload_request_id",uploadId);
+ form.append("file",{uri:file.uri,name:file.name,type:file.mimeType} as unknown as Blob);
+ const r=await supabase.functions.invoke("document-upload",{body:form});if(r.error||!r.data?.id)throw Error("No se pudo subir el documento. Reintentá para conservar el mismo envío y archivo.");return r.data.id as string;
+}
+export async function openOperationClaim(operationId:string,requestId:string,subject:string,body:string){
+ await importerSession();if(!supabase)throw Error("Conexión no disponible.");
+ const r=await supabase.rpc("open_operation_claim",{target_operation:operationId,request_id:requestId,subject,body});if(r.error)throw Error(r.error.message);return r.data as string;
+}
 
 export async function sendOperationMessage(operationId: string, body: string) {
   if (!supabase) throw new Error("La conexión no está disponible.");
@@ -532,7 +564,7 @@ export async function loadImporterOffers(
     ),
   );
   return (data ?? []).map((o) => ({
-    capitalBacked: backed.get(o.id)?.backed === true,
+    eligible: backed.get(o.id)?.backed === true,
     backingReason: backed.get(o.id)?.reason ?? "Respaldo no verificado",
     id: o.id,
     operatorId: o.operator_id,

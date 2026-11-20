@@ -22,7 +22,6 @@ const navigation = [
 const adminNavigation = [
   { key: "admin", href: "/admin", label: "Inicio" },
   { key: "operators", href: "/admin/operadores", label: "Operadores" },
-  { key: "capacity", href: "/admin/capacidad", label: "Capacidad" },
   { key: "operations", href: "/admin/operaciones", label: "Operaciones" },
   { key: "claims", href: "/admin/reclamos", label: "Reclamos" },
   { key: "importers", href: "/admin/importadores", label: "Importadores" },

@@ -1,0 +1,12 @@
+project_id = "4pack-candidate-mvp"
+
+[functions.document-upload]
+verify_jwt = true
+
+[functions.mercado-pago-mvp-test]
+verify_jwt = true
+
+# Provider cannot send a user JWT; the handler instead requires its signed HMAC
+# and re-fetches the registered payment/order/preference with the seller token.
+[functions.mercado-pago-mvp-webhook]
+verify_jwt = false

@@ -247,7 +247,7 @@ function VolumeProposalForm({
       <h3>Volumen por confirmar</h3>
       <p>
         El importador todavía no conoce el volumen. Proponé una medición
-        estimada; no reserva capacidad hasta que la confirme.
+        estimada para que pueda confirmarla antes de aceptar la oferta.
       </p>
       <input type="hidden" name="cargo_id" value={cargoId} />
       <label>

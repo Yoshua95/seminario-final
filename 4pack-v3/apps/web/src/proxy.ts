@@ -10,6 +10,7 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   // Public return only: this page never changes or confirms payment state.
   if (request.nextUrl.pathname === "/pagos/retorno") return response;
+  if (request.nextUrl.pathname === "/empresa/registro") return response;
   if (isMultiroleDemo()) {
     const alias: Record<string, string> = {
       "/acceso": "/demo/acceso",
@@ -55,7 +56,10 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const { data } = await supabase.auth.getUser();
+  const { data, error: authError } = await supabase.auth.getUser();
+  if (process.env.FOURPACK_AUTH_DIAGNOSTICS === "1") {
+    console.info(JSON.stringify({event:"fourpack.auth.proxy",host:new URL(url).hostname,path:request.nextUrl.pathname,userFound:!!data.user,errorCode:authError?.code??null,errorName:authError?.name??null,cookies:request.cookies.getAll().map(c=>({name:c.name,length:c.value.length}))}));
+  }
   const isAccessPage = ["/acceso", "/admin/acceso"].includes(
     request.nextUrl.pathname,
   );

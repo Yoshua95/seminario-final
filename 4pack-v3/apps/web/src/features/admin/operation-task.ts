@@ -1,4 +1,5 @@
 import type { Workbench } from "./types";
+import { deriveOperationTask } from "@4pack/domain";
 export function operationStage(
   data: Workbench,
   op: Workbench["operations"][number],
@@ -30,6 +31,16 @@ export function operationTask(
   data: Workbench,
   op: Workbench["operations"][number],
 ) {
+  if(op.workflow_version==="mvp_delivery_v1"){
+    const next=deriveOperationTask({role:"admin",phase:op.phase,paymentMode:op.payment_mode,
+      paymentApproved:(data.payments??[]).some(p=>p.operation_id===op.id&&p.status==="approved"),
+      openClaims:data.claims.filter(c=>c.operation_id===op.id&&!["closed","resolved"].includes(c.status)).length,
+      deliveryProof:data.events.some(e=>e.operation_id===op.id&&e.event_type==="Entregada"&&!!e.attachment_id),
+      deliveryConfirmed:(data.delivery_confirmations??[]).some(d=>d.operation_id===op.id),protectionState:data.protection?.find(p=>p.operation_id===op.id)?.state,
+      requiredDocuments:data.contracts?.find(c=>c.operation_id===op.id)?.content?.quote?.required_documents??null,
+      documents:data.documents.filter(d=>d.operation_id===op.id).map(d=>({type:d.document_type,status:d.validation_status}))});
+    return {label:next.label,owner:{importer:"Importador",operator:"Operador",admin:"Administración",none:"Sin tarea pendiente"}[next.responsible]};
+  }
   if (["completed", "cancelled", "failed"].includes(op.phase))
     return {
       label: "Consultar cierre e historial",

@@ -14,6 +14,7 @@
     "build:mobile": "npm run export:android --workspace=@4pack/mobile",
     "test": "npm run test:domain && npm run test:database && npm run test:stage2a && npm run test:stage2b && npm run test:preview && npm run test:multirole && npm run test:hazmat && npm run test:mobile:importer && npm run test:mobile:visual && npm run test:payments",
     "test:payments": "node --test tests/mercado-pago-test.test.mjs tests/mercado-pago-database.test.mjs tests/mercado-pago-http.test.mjs tests/payment-return-access.test.mjs",
+    "test:mvp": "node --test tests/mvp-nonfinancial.test.mjs tests/mvp-provider.test.mjs tests/mvp-payment-http.test.mjs tests/operation-work.test.mjs tests/admin-contract-task.test.mjs tests/operator-delivery.test.mjs",
     "test:preview": "node --test tests/demo-preview.test.mjs",
     "test:database": "node --test tests/database.test.mjs tests/stage1.test.mjs",
     "test:web": "node tests/operator-browser.test.mjs",

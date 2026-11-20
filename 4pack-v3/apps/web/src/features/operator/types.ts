@@ -1,13 +1,36 @@
 import type { CapacitySnapshot } from "../capacity/types";
-import type { OperationPhase, OperatorStatus, NormalizedQuote } from "@4pack/domain";
+import type {
+  OperationPhase,
+  OperatorStatus,
+  NormalizedQuote,
+} from "@4pack/domain";
 export type CommercialProfile = {
-  public_id: string; trade_name: string; logo_url: string | null; description: string;
-  city: string | null; province: string | null; country: string | null;
-  modes: string[]; specialties: string[]; coverage: string[]; categories: string[];
-  experience_years: number | null; published: boolean; admin_hidden: boolean;
+  public_id: string;
+  trade_name: string;
+  logo_url: string | null;
+  description: string;
+  city: string | null;
+  province: string | null;
+  country: string | null;
+  modes: string[];
+  specialties: string[];
+  coverage: string[];
+  categories: string[];
+  experience_years: number | null;
+  published: boolean;
+  admin_hidden: boolean;
 };
-export type QuoteDraft = { id: string; cargo_id: string; content: Partial<NormalizedQuote>; replaces_offer_id: string | null };
-export type ContractSnapshot = { operation_id: string; state: "complete" | "requires_review"; content: {quote:NormalizedQuote;revision:number} | null };
+export type QuoteDraft = {
+  id: string;
+  cargo_id: string;
+  content: Partial<NormalizedQuote>;
+  replaces_offer_id: string | null;
+};
+export type ContractSnapshot = {
+  operation_id: string;
+  state: "complete" | "requires_review";
+  content: { quote: NormalizedQuote; revision: number } | null;
+};
 export type Profile = {
   id: string;
   full_name: string;
@@ -75,6 +98,7 @@ export type Offer = {
   review_started_at: string | null;
 };
 export type Operation = {
+  workflow_version?: string;
   payment_mode?: "legacy_simulated" | "mercado_pago_test";
   contract_currency?: string;
   id: string;
@@ -181,7 +205,27 @@ export type SupportMessage = {
   created_at: string;
 };
 export type Snapshot = {
-  payments?: {operation_id:string;status:string;amount:number;currency:string;provider_payment_id:string}[];
+  protection?: {
+    operation_id: string;
+    provider_payment_id: string | null;
+    state: string;
+    amount: number;
+    commission: number;
+    currency: string;
+    released_at: string | null;
+  }[];
+  deliveryConfirmations?: {
+    operation_id: string;
+    importer_id: string;
+    confirmed_at: string;
+  }[];
+  payments?: {
+    operation_id: string;
+    status: string;
+    amount: number;
+    currency: string;
+    provider_payment_id: string;
+  }[];
   paymentsUnavailable?: boolean;
   multirole?: boolean;
   capacity: CapacitySnapshot;
@@ -232,11 +276,13 @@ export const sections: readonly Section[] = [
   "perfil",
 ];
 export const money = (n: number, currency = "USD") =>
-  !["USD","ARS"].includes(currency) ? "Moneda por revisar" : new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(Number(n));
+  !["USD", "ARS"].includes(currency)
+    ? "Moneda por revisar"
+    : new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 2,
+      }).format(Number(n));
 export const date = (s: string | null) =>
   s
     ? new Intl.DateTimeFormat("es-AR", {

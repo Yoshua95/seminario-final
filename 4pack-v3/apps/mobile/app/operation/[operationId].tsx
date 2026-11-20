@@ -2,7 +2,10 @@ import { TrackingView } from "../../features/importer/views";
 import { testPayment } from '../../lib/test-payments';
 import { phaseLabels } from "@4pack/domain";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
+import * as DocumentPicker from "expo-document-picker";
+import {randomUUID} from "expo-crypto";
+import type {NativeMsds} from "../../lib/cargo-publication";
 import {
   ActivityIndicator,
   AppState,
@@ -26,6 +29,8 @@ import {
   sendOperationMessage,
   simulateGuarantee,
   type MobileOperationDetail,
+  uploadOperationDocument,
+  openOperationClaim,
 } from "../../lib/dashboard";
 
 const guaranteeLabels = {
@@ -53,6 +58,17 @@ export default function OperationDetailScreen() {
   const [score, setScore] = useState(5),
     [comment, setComment] = useState("");
   const [showMessages, setShowMessages] = useState(false);
+  const pendingUpload=useRef<{file:NativeMsds;key:string;type:string}|null>(null);
+  const claimKey=useRef(randomUUID());
+  async function attachDocument(type:string){
+    setActionLoading(true);setError("");try{
+      if(!pendingUpload.current||pendingUpload.current.type!==type){const picked=await DocumentPicker.getDocumentAsync({type:"application/pdf",copyToCacheDirectory:true,multiple:false});if(picked.canceled)return;const f=picked.assets[0];pendingUpload.current={file:{uri:f.uri,name:f.name,mimeType:f.mimeType??"application/pdf",size:f.size??0},key:randomUUID(),type};}
+      const pending=pendingUpload.current;await uploadOperationDocument(operationId,type,pending.file,pending.key);pendingUpload.current=null;await refresh(true);
+    }catch(e){setError(e instanceof Error?e.message:"No se pudo subir el documento. Reintentá con el mismo archivo.");}finally{setActionLoading(false);}
+  }
+  async function reportClaim(subject:string,body:string){
+    setActionLoading(true);setError("");try{await openOperationClaim(operationId,claimKey.current,subject,body);claimKey.current=randomUUID();await refresh(true);}catch(e){setError(e instanceof Error?e.message:"No se pudo registrar el reclamo.");}finally{setActionLoading(false);}
+  }
   async function openEvidence(id: string) {
     try {
       await Linking.openURL(await operationEvidenceUrl(id));
@@ -108,7 +124,7 @@ export default function OperationDetailScreen() {
   useEffect(() => {
     if (operation?.paymentMode !== 'mercado_pago_test') return;
     const subscription = AppState.addEventListener('change', state => {
-      if (state === 'active') void syncPayment();
+      if (state === 'active') void refresh(true);
     });
     return () => subscription.remove();
   }, [operation?.paymentMode, operationId]);
@@ -140,7 +156,7 @@ export default function OperationDetailScreen() {
     if (!operationId || !operation) return;
     if (
       operation.role !== "importer" ||
-      operation.phase !== "awaiting_delivery_confirmation"
+      !["awaiting_delivery_confirmation","disputed"].includes(operation.phase)
     )
       return;
     setActionLoading(true);
@@ -148,9 +164,9 @@ export default function OperationDetailScreen() {
     try {
       await confirmDelivery(operationId);
       await refresh(true);
-    } catch {
+    } catch (e) {
       setError(
-        "No pudimos registrar el hito. La garantía debe estar confirmada y el estado debe ser válido.",
+        e instanceof Error ? e.message : "No pudimos confirmar la entrega. Revisá el pago y la evidencia.",
       );
     } finally {
       setActionLoading(false);
@@ -189,10 +205,12 @@ export default function OperationDetailScreen() {
         error={error}
         onGuarantee={() => void runGuarantee()}
         onPaymentSync={() => void syncPayment()}
+        onDocument={(type)=>void attachDocument(type)}
+        onClaim={(subject,body)=>void reportClaim(subject,body)}
         onComplete={() =>
           Alert.alert(
             "Confirmar entrega",
-            "Finaliza la operacion y libera la garantia simulada.",
+            "Confirma que recibiste la carga. La liberación de prueba exige pago verificado y queda en revisión si hay un reclamo abierto.",
             [
               { text: "Volver", style: "cancel" },
               {

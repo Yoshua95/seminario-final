@@ -43,7 +43,7 @@ export async function proposeVolume(
       ok: true,
       id,
       message:
-        "Volumen propuesto. El importador debe confirmarlo antes de reservar capacidad.",
+        "Volumen propuesto. El importador debe confirmarlo antes de aceptar la oferta.",
     };
   } catch (error) {
     unstable_rethrow(error);
@@ -145,12 +145,6 @@ export async function operatorAction(
       if (validUntil && !/Z$|[+-]\d{2}:\d{2}$/.test(validUntil))
         validUntil += (validUntil.length === 16 ? ":00" : "") + "-03:00";
       const quote = {
-        working_capital_amount: String(
-          form.get("working_capital_amount") ?? "",
-        ),
-        working_capital_currency: String(
-          form.get("working_capital_currency") ?? "",
-        ),
         mode: String(form.get("mode") ?? ""),
         services: form.getAll("services").map(String),
         scope: String(form.get("scope") ?? ""),
@@ -168,7 +162,7 @@ export async function operatorAction(
       } as NormalizedQuote;
       if (intent !== "withdraw") {
         assertNewContractCurrency(quote.currency);
-        assertNewContractCurrency(quote.working_capital_currency);
+
         if (intent !== "save") {
           const error = validateQuote(quote);
           if (error) throw new Error(error);

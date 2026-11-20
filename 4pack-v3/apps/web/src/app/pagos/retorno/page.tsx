@@ -4,6 +4,7 @@ export default async function PaymentReturn({
   searchParams: Promise<{ operation?: string }>;
 }) {
   const { operation } = await searchParams;
+  const scheme=process.env.FOURPACK_MOBILE_SCHEME === "fourpack-candidate" ? "fourpack-candidate" : "fourpack";
   const valid =
     typeof operation === "string" &&
     /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
@@ -17,7 +18,7 @@ export default async function PaymentReturn({
         desde 4PACK. Esta página no acredita un pago.
       </p>
       {valid && (
-        <a href={`fourpack://operation/${operation}`}>
+        <a href={`${scheme}://operation/${operation}`}>
           Abrir 4PACK y verificar el pago de prueba
         </a>
       )}

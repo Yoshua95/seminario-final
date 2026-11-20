@@ -4,7 +4,7 @@ export type ServiceKind = keyof typeof services;
 export type ContractCurrency = "USD" | "ARS";
 export const NEW_CONTRACT_CURRENCY = "ARS" as const;
 export function assertNewContractCurrency(currency: unknown): asserts currency is "ARS" {
-  if (currency !== NEW_CONTRACT_CURRENCY) throw new Error("Las nuevas ofertas, adjudicaciones y limites monetarios deben estar en ARS.");
+  if (currency !== NEW_CONTRACT_CURRENCY) throw new Error("Las nuevas ofertas y adjudicaciones deben estar en ARS.");
 }
 export type NormalizedQuote = {
   mode: "air" | "sea" | "consolidated";
@@ -30,8 +30,6 @@ export function sameQuoteScope(a: NormalizedQuote | null, b: NormalizedQuote | n
   return scope(a) === scope(b);
 }
 export function validateQuote(q: NormalizedQuote): string | null {
-  if (!q.working_capital_amount || !/^[0-9]+(\.[0-9]{1,2})?$/.test(q.working_capital_amount) || Number(q.working_capital_amount)>Number(q.amount)) return "Declarar capital de trabajo estimado entre cero y el precio del servicio.";
-  if (q.working_capital_currency !== q.currency) return "La moneda del capital debe coincidir con la contractual.";
   if (!["air","sea","consolidated"].includes(q.mode)) return "Elegí una modalidad válida.";
   if (!["USD","ARS"].includes(q.currency)) return "Elegí USD o ARS, sin combinar monedas.";
   if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(q.amount) || Number(q.amount)<=0 || Number(q.amount)>999999999) return "Revisá el precio.";

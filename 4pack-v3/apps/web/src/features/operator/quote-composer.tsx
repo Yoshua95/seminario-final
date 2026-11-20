@@ -8,7 +8,6 @@ import {
 import type { CapacitySnapshot } from "../capacity/types";
 import { QuoteTerms } from "../marketplace/quote-terms";
 import { operatorAction } from "./actions";
-import { capacityWarnings } from "./journey";
 import { localDateTime, money } from "./types";
 
 export function QuoteComposer({
@@ -18,9 +17,6 @@ export function QuoteComposer({
   replacesOfferId,
   initial = {},
   deadline,
-  capacity,
-  weight = 0,
-  volume = 0,
   requestedMode,
 }: {
   demo: boolean;
@@ -45,11 +41,8 @@ export function QuoteComposer({
   const [scope, setScope] = useState(initial.scope ?? ""),
     [scopeEdited, setScopeEdited] = useState(!!initial.scope);
   const [price, setPrice] = useState(
-      initial.currency === "ARS" ? (initial.amount ?? "") : "",
-    ),
-    [capital, setCapital] = useState(
-      initial.currency === "ARS" ? (initial.working_capital_amount ?? "") : "",
-    );
+    initial.currency === "ARS" ? (initial.amount ?? "") : "",
+  );
   const [expiry, setExpiry] = useState(
     initial.valid_until
       ? localDateTime(new Date(initial.valid_until)).slice(0, 16)
@@ -70,13 +63,6 @@ export function QuoteComposer({
     confirmed = useRef(false);
   const submissionInput = useRef<HTMLInputElement>(null);
   const selectedLabels = services.map((s) => serviceTaxonomy[s]);
-  const reasons = capacityWarnings(
-    capacity,
-    Number(price),
-    Number(capital),
-    weight,
-    volume,
-  );
   function selectService(key: NormalizedQuote["services"][number]) {
     const next = services.includes(key)
       ? services.filter((s) => s !== key)
@@ -111,8 +97,6 @@ export function QuoteComposer({
       scope: value("scope"),
       amount: value("amount"),
       currency: "ARS",
-      working_capital_amount: value("working_capital_amount"),
-      working_capital_currency: "ARS",
       estimated_days: value("estimated_days"),
       valid_until: value("valid_until") + ":00-03:00",
       insurance: value("insurance"),
@@ -397,46 +381,6 @@ export function QuoteComposer({
           maxLength={2000}
         />
       </label>
-      <section className="op-capital-internal">
-        <h3>Tu capital de trabajo · uso interno</h3>
-        <p>
-          Disponible según backend:{" "}
-          {capacity?.capital?.available == null
-            ? "Pendiente de revisión"
-            : money(capacity.capital.available, "ARS")}{" "}
-          · Requerido por esta oferta: {money(Number(capital || 0), "ARS")}
-        </p>
-        <label>
-          ¿Cuánto capital propio necesitás comprometer para realizar este
-          servicio? (ARS)
-          <input
-            name="working_capital_amount"
-            type="number"
-            min="0"
-            max={price || undefined}
-            step="0.01"
-            value={capital}
-            onChange={(e) => setCapital(e.target.value)}
-          />
-        </label>
-        <input type="hidden" name="working_capital_currency" value="ARS" />
-        <p className="op-small">
-          Estimación entre cero y el precio. No es un cobro al importador. Al
-          enviar, ese capital queda reservado mientras la oferta esté vigente.
-        </p>
-        {reasons.length ? (
-          <ul role="status" className="op-capacity-warning">
-            {reasons.map((r) => (
-              <li key={r}>{r}</li>
-            ))}
-          </ul>
-        ) : (
-          <p role="status">
-            Capital suficiente según la última consulta. El servidor confirma y
-            reserva al enviar.
-          </p>
-        )}
-      </section>
       <p className="op-small">
         La oferta queda sellada al enviar. La coordinación aduanera no equivale
         a actuar como despachante habilitado.

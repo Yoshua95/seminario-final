@@ -1,5 +1,6 @@
 import { sameQuoteScope, type NormalizedQuote } from "@4pack/domain";
 export type ImporterOffer = {
+  eligible?: boolean;
   capitalBacked?: boolean;
   backingReason?: string;
   id: string;

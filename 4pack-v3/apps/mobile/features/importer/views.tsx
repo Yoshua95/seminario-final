@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, TouchableOpacity } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { phaseLabels, type TransportMode } from "@4pack/domain";
+import { phaseLabels, deriveOperationTask, type TransportMode } from "@4pack/domain";
 import type {
   MobileOperation,
   MobileOperationDetail,
@@ -458,7 +458,7 @@ export function OffersView({
           <Tag tone="yellow">Volumen por confirmar</Tag>
           <Copy>
             El operador propone el volumen. Confirmalo antes de elegir una
-            oferta; todavía no se reserva Capacity.
+            oferta. La medición confirmada se conserva en la operación.
           </Copy>
           {cargo.volumeProposals
             ?.filter((p) => p.status === "proposed")
@@ -492,7 +492,7 @@ export function OffersView({
       )}
       {offers.map((o, i) => {
         const eligible =
-          o.capitalBacked === true &&
+          (o.eligible ?? o.capitalBacked) === true &&
           o.status === "submitted" &&
           o.currency === "ARS" &&
           Date.parse(o.validUntil) > Date.now();
@@ -509,7 +509,7 @@ export function OffersView({
               <View style={s.row}>
                 <Copy muted>PROPUESTA {String(i + 1).padStart(2, "0")}</Copy>
                 <Tag tone={eligible ? "green" : "yellow"}>
-                  {eligible ? "Capital reservado" : "No disponible"}
+                  {eligible ? "Oferta vigente" : (o.backingReason ?? "No disponible")}
                 </Tag>
               </View>
               {!eligible && (
@@ -638,8 +638,12 @@ export function TrackingView({
   onSend,
   onRefresh,
   onBack,
+  onDocument,
+  onClaim,
 }: {
   operation: MobileOperationDetail | null;
+  onDocument?: (type:string)=>void;
+  onClaim?: (subject:string,body:string)=>void;
   rating: { id: string } | null;
   score: number;
   comment: string;
@@ -659,8 +663,10 @@ export function TrackingView({
   onBack: () => void;
 }) {
   const [tab, setTab] = useState("Hitos");
+  const [claimBody,setClaimBody]=useState("");
   const o = operation;
-  const next = !o
+  const task=o?.workflowVersion==="mvp_delivery_v1"?deriveOperationTask({role:"importer",phase:o.phase,paymentMode:o.paymentMode,paymentApproved:o.paymentStatus==="approved",openClaims:o.openClaims,deliveryProof:o.deliveryProof,deliveryConfirmed:o.deliveryConfirmed,requiredDocuments:o.requiredDocuments,documents:o.documents,protectionState:o.protection?.state}):null;
+  const next = task?.label ?? (!o
     ? "Cargando operación"
     : o.guaranteeStatus === "pending"
       ? o.paymentMode === "mercado_pago_test"
@@ -674,7 +680,7 @@ export function TrackingView({
             : "La entrega está confirmada. Contanos cómo fue el servicio."
           : o.phase === "disputed"
             ? "Hay una controversia en revisión. Consultá los mensajes de la operación."
-            : "El operador registra el avance. Acá vas a encontrar cada actualización.";
+            : "El operador registra el avance. Acá vas a encontrar cada actualización.");
   return (
     <Page
       title="Seguimiento"
@@ -712,9 +718,8 @@ export function TrackingView({
                       : (o.paymentStatus ?? "Pendiente")}
                 </Tag>
                 <Copy muted>
-                  Sin dinero real. El retorno del checkout no confirma el pago.
-                  La liberación por entrega continúa siendo una simulación
-                  académica.
+                  Pago de prueba. El retorno del checkout no confirma el pago.
+                  La liberación por entrega se registra en el libro de prueba; no es un retiro bancario.
                 </Copy>
                 <LinkAction
                   label="Verificar pago con Mercado Pago"
@@ -722,7 +727,7 @@ export function TrackingView({
                 />
               </>
             )}
-            {o.guaranteeStatus === "pending" && o.role === "importer" ? (
+            {task?.action==="upload_document" ? <Action label={task.label} disabled={busy} onPress={()=>onDocument?.(task.documentType??"Packing list")} /> : o.guaranteeStatus === "pending" && o.role === "importer" ? (
               <>
                 <Tag tone="yellow">Garantía pendiente</Tag>
                 <Copy muted>
@@ -732,14 +737,14 @@ export function TrackingView({
                 <Action
                   label={
                     o.paymentMode === "mercado_pago_test"
-                      ? "Pagar con Mercado Pago · prueba"
+                      ? "Continuar pago"
                       : "Confirmar garantía simulada"
                   }
                   disabled={busy}
                   onPress={onGuarantee}
                 />
               </>
-            ) : o.phase === "awaiting_delivery_confirmation" &&
+            ) : (task?.action==="confirm_delivery" || (!task && o.phase === "awaiting_delivery_confirmation")) &&
               o.role === "importer" ? (
               <Action
                 label="Confirmar entrega"
@@ -756,6 +761,8 @@ export function TrackingView({
               )
             )}
           </Card>
+          {o.protection && <Card><Copy style={s.section}>Protección del pago · prueba</Copy><Tag tone={o.protection.state==="released_test"?"green":"yellow"}>{({pending_payment:"Esperando pago",pending_delivery:"Pendiente de entrega confirmada",in_review:"En revisión",released_test:"Liberado en prueba",refunded_test:"Reintegro registrado en prueba"} as Record<string,string>)[o.protection.state]??"Por verificar"}</Tag><Copy muted>Pago {o.protection.provider_payment_id??"pendiente"} · {o.protection.currency} {Number(o.protection.amount).toLocaleString("es-AR")}</Copy></Card>}
+          {o.workflowVersion==="mvp_delivery_v1" && !["completed","cancelled","failed"].includes(o.phase) && <Card><Copy style={s.section}>Reclamo de esta operación</Copy><Copy muted>{o.openClaims ? "Administración está revisando el reclamo. La liberación de prueba permanece en revisión." : "Si hay una diferencia con el servicio, registrá el motivo y Administración revisará la liberación."}</Copy>{!o.openClaims && <><Field label="Motivo y detalle" value={claimBody} onChange={setClaimBody} multiline /><LinkAction label="Presentar reclamo" onPress={()=>onClaim?.("Reclamo de entrega",claimBody)} /></>}</Card>}
           {o.phase === "completed" && !rating && (
             <Card>
               <Copy style={s.section}>Evaluar al operador</Copy>

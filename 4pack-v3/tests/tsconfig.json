@@ -6,10 +6,12 @@
     "outDir": "../.test-dist",
     "rootDir": "../packages/domain/src",
     "strict": true,
+    "allowJs": true,
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
   "files": [
-    "../packages/domain/src/index.ts"
+    "../packages/domain/src/index.ts",
+    "../packages/domain/src/operation-work.mjs"
   ]
 }
