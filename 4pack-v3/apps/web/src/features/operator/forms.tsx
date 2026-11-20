@@ -200,7 +200,7 @@ export function OfferForm({
   alreadyOffered,
   capacity,
 }: {
-  capacity: CapacitySnapshot;
+  capacity?: CapacitySnapshot;
   demo: boolean;
   cargo: Cargo;
   alreadyOffered: boolean;

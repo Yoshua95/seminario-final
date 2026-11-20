@@ -220,7 +220,7 @@ export function operationWork(data: Snapshot, id: string) {
       "Ver soporte",
     );
   if (
-    data.capacity.reservations.some(
+    data.capacity?.reservations.some(
       (r) => r.operation_id === id && r.state === "requires_review",
     )
   )

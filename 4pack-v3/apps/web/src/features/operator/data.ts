@@ -119,9 +119,13 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
     );
   const snapshot = data as Snapshot;
   snapshot.profile.email = user.email;
-  const capacity = await client.rpc("operator_capacity_snapshot");
-  if (capacity.error) throw new Error("No pudimos cargar capacidad.");
-  snapshot.capacity = capacity.data;
+  // Only historical operations need their original reservation for review.
+  // New opportunities/offers must load without depending on the retired model.
+  if (snapshot.operations.some((op) => op.workflow_version !== "mvp_delivery_v1")) {
+    const capacity = await client.rpc("operator_capacity_snapshot");
+    if (capacity.error) throw new Error("No pudimos cargar la reserva histórica.");
+    snapshot.capacity = capacity.data;
+  }
   const payments = await client
     .from("mp_test_payments")
     .select("operation_id,status,amount,currency,provider_payment_id");

@@ -228,7 +228,7 @@ export type Snapshot = {
   }[];
   paymentsUnavailable?: boolean;
   multirole?: boolean;
-  capacity: CapacitySnapshot;
+  capacity?: CapacitySnapshot;
   commercial: CommercialProfile | null;
   drafts: QuoteDraft[];
   contracts: ContractSnapshot[];
