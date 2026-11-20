@@ -10,6 +10,7 @@ import type { CapacitySnapshot } from "../capacity/types";
 import { QuoteTerms } from "../marketplace/quote-terms";
 import { operatorAction } from "./actions";
 import { localDateTime, money } from "./types";
+import {useRouter} from "next/navigation";
 
 export function QuoteComposer({
   demo,
@@ -23,6 +24,8 @@ export function QuoteComposer({
   authorization,
   chinaPlan,
   warehouses=[],
+  argentinaDepots=[],
+  initialDestination,
 }: {
   demo: boolean;
   cargoId: string;
@@ -38,7 +41,16 @@ export function QuoteComposer({
   authorization?: QuoteAuthorization | null;
   chinaPlan?: import("@4pack/domain").ChinaPlan;
   warehouses?: import("@4pack/domain").ChinaWarehouse[];
+  argentinaDepots?:import("@4pack/domain").ArgentinaDepot[];
+  initialDestination?:import("@4pack/domain").DestinationSummary;
 }) {
+  const router=useRouter();
+  const newDelivery=chinaPlan?.version===2;
+  const [argentinaDepotId,setArgentinaDepotId]=useState(argentinaDepots.find(d=>d.active&&d.is_default)?.id??argentinaDepots.find(d=>d.active)?.id??"");
+  const [destinationMode,setDestinationMode]=useState<"pickup"|"home">(initialDestination?.agreed_mode??"pickup");
+  const [deliveryFee,setDeliveryFee]=useState(String(initialDestination?.delivery_fee??""));
+  const canHome=chinaPlan?.destination.delivery_mode==="home"&&authorization?.services.includes("domestic_delivery")&&argentinaDepots.find(d=>d.id===argentinaDepotId)?.delivery_provinces.includes(chinaPlan?.destination.province);
+  const home=newDelivery&&destinationMode==="home"&&canHome;
   const [state, action, pending] = useActionState(
     operatorAction.bind(null, demo, "quote"),
     { ok: false, message: "", id: undefined as string | undefined },
@@ -46,13 +58,13 @@ export function QuoteComposer({
   const allowed = authorization ?? (demo ? {modes:["air","sea","consolidated"],services:Object.keys(serviceTaxonomy)} : null);
   const selection = initialQuoteSelection(initial,{mode:requestedMode,services:requestedServices},allowed);
   const [services, setServices] = useState<NormalizedQuote["services"]>(
-      selection.services as NormalizedQuote["services"],
+      selection.services.filter(s=>s!=="origin_pickup") as NormalizedQuote["services"],
     ),
     [search, setSearch] = useState("");
   const [scope, setScope] = useState(initial.scope ?? selection.services.map(s=>serviceTaxonomy[s as keyof typeof serviceTaxonomy] ?? s).join(". ")),
     [scopeEdited, setScopeEdited] = useState(!!initial.scope);
   const [price, setPrice] = useState(
-    initial.currency === "ARS" ? (initial.amount ?? "") : "",
+    initialDestination?String(initialDestination.import_fee):initial.currency === "ARS" ? (initial.amount ?? "") : "",
   );
   const [expiry, setExpiry] = useState(
     initial.valid_until
@@ -75,6 +87,7 @@ export function QuoteComposer({
   const submissionInput = useRef<HTMLInputElement>(null);
   const [submissionKey,setSubmissionKey]=useState("");
   const feedback = useRef<HTMLParagraphElement>(null);
+  useEffect(()=>{if(state.ok&&state.message==="Oferta presentada y sellada.")router.replace((demo?"/demo/operador":"/operador")+"/mis-ofertas");},[state,demo,router]);
   useEffect(() => {
     if (!error && (!state.message || state.ok)) return;
     const outer = form.current?.closest<HTMLDialogElement>("dialog.op-drawer");
@@ -146,11 +159,11 @@ export function QuoteComposer({
       <input type="hidden" name="cargo_id" value={cargoId} />
       {chinaPlan&&<fieldset className="op-wide"><legend>Recepción en China</legend>
         <input type="hidden" name="china_origin" value="1"/>
-        <p>{chinaPlan.kind==="agent"?"Desde agente o depósito":"Envío directo del proveedor"} · {chinaPlan.origin.city||chinaPlan.origin.province} · {chinaPlan.measurements.estimated?"Medidas estimadas":"Medidas confirmadas"}</p>
+        <p>{chinaPlan.version===2?chinaPlan.sender_name:chinaPlan.kind==="agent"?"Desde agente o depósito":"Envío directo del proveedor"} · {chinaPlan.origin.city||chinaPlan.origin.province} · {chinaPlan.version===2?chinaPlan.measurements.weight_kg+" kg / "+chinaPlan.measurements.volume_m3+" m³ declarados":chinaPlan.measurements.estimated?"Medidas históricas estimadas":"Medidas históricas confirmadas"}</p>
         <label>Depósito receptor<select name="warehouse_id" required defaultValue={warehouses.find(w=>w.active&&w.is_default)?.id??warehouses.find(w=>w.active)?.id??""}><option value="">Elegí un depósito activo</option>{warehouses.filter(w=>w.active).map(w=><option key={w.id} value={w.id}>{w.alias} · {w.city}</option>)}</select></label>
         {!warehouses.some(w=>w.active)&&<p role="alert">Agregá un depósito activo en Perfil empresarial antes de enviar.</p>}
         <label>Condiciones de recepción<textarea name="receiving_conditions" required minLength={5} maxLength={2000} placeholder="Horario, rotulado y requisitos para recibir el paquete"/></label>
-        {chinaPlan.handoff==="pickup"&&<><label><input type="checkbox" name="pickup_included" required/> Incluyo el retiro solicitado</label><label>Condiciones del retiro<textarea name="pickup_conditions" required minLength={5} maxLength={2000}/></label></>}
+        {chinaPlan.handoff==="pickup"&&<p role="alert">Solicitud histórica de retiro en origen. No se admiten nuevas ofertas de retiro en China.</p>}
         <p>El importador verá el resumen y las condiciones. La dirección completa se habilita al adjudicar.</p>
       </fieldset>}
       <input
@@ -211,7 +224,7 @@ export function QuoteComposer({
           />
         </label>
         <div className="op-checkboxes">
-          {Object.entries(serviceTaxonomy).map(([k, label]) => (
+          {Object.entries(serviceTaxonomy).filter(([k])=>k!=="origin_pickup").map(([k, label]) => (
             <label
               key={k}
               hidden={
@@ -240,11 +253,20 @@ export function QuoteComposer({
           {selectedLabels.length ? `: ${selectedLabels.join(" · ")}` : ""}
         </p>
       </fieldset>
+      {newDelivery&&<fieldset className="op-wide"><legend>Entrega en Argentina</legend>
+       <p>Solicitada: {chinaPlan.destination.delivery_mode==="home"?"Envío a domicilio":"Retiro en el depósito del operador"} · {chinaPlan.destination.province}, {chinaPlan.destination.city}</p>
+       {chinaPlan.destination.delivery_mode==="home"&&<p>Dirección de entrega: {chinaPlan.destination.address}</p>}
+       <label>Depósito de retiro en Argentina<select name="argentina_depot_id" required value={argentinaDepotId} onChange={e=>{setArgentinaDepotId(e.target.value);setDestinationMode("pickup");setServices(current=>current.filter(s=>s!=="domestic_delivery"));}}><option value="">Elegí un depósito activo</option>{argentinaDepots.filter(d=>d.active).map(d=><option value={d.id} key={d.id}>{d.alias} · {d.city}, {d.province}</option>)}</select></label>
+       {!argentinaDepots.some(d=>d.active)&&<p role="alert">Agregá un depósito de Argentina en Perfil empresarial.</p>}
+       <label>Modalidad que ofrecés<select name="destination_mode" value={home?"home":"pickup"} onChange={e=>{const mode=e.target.value as "home"|"pickup";setDestinationMode(mode);setServices(current=>mode==="home"?[...new Set([...current,"domestic_delivery" as NormalizedQuote["services"][number]])]:current.filter(s=>s!=="domestic_delivery"));}}><option value="pickup">Solo retiro en el depósito del operador</option>{canHome&&<option value="home">Envío a domicilio</option>}</select></label>
+       {home?<label><input type="checkbox" name="home_address_confirmed" required/> Confirmo que presto entrega para esta dirección y cobertura</label>:chinaPlan.destination.delivery_mode==="home"&&<p>Solo retiro en el depósito del operador. No realiza envíos dentro de Argentina. El importador deberá aceptarlo expresamente.</p>}
+       <input type="hidden" name="origin_version" value="2"/>
+      </fieldset>}
       <div className="op-form-grid">
         <label>
-          Precio total (ARS)
+          {newDelivery?"Tarifa de importación (ARS)":"Precio total (ARS)"}
           <input
-            name="amount"
+            name={newDelivery?"import_fee":"amount"}
             type="number"
             min="0.01"
             max="999999999"
@@ -253,6 +275,7 @@ export function QuoteComposer({
             onChange={(e) => setPrice(e.target.value)}
           />
         </label>
+        {newDelivery&&<>{home?<label>Envío a domicilio en Argentina (ARS)<input name="delivery_fee" type="number" min="0.01" step="0.01" required value={deliveryFee} onChange={e=>setDeliveryFee(e.target.value)}/></label>:<input name="delivery_fee" type="hidden" value="0"/>}<label>Total de la oferta (ARS)<input name="amount" readOnly value={(Number(price||0)+(home?Number(deliveryFee||0):0)).toFixed(2)}/></label></>}
         <label>
           Moneda contractual
           <input name="currency" value="ARS" readOnly />
@@ -455,6 +478,7 @@ export function QuoteComposer({
           alcance y condiciones antes de enviar.
         </p>
         {preview && <QuoteTerms quote={preview} />}
+        {newDelivery&&<section><h3>Entrega acordada en Argentina</h3><p>Importación: {money(Number(price),"ARS")}</p>{home&&<p>Envío a domicilio: {money(Number(deliveryFee),"ARS")}</p>}<p>{home?"Envío a domicilio":"Solo retiro en el depósito del operador"}</p>{!home&&chinaPlan.destination.delivery_mode==="home"&&<p>No realiza envíos dentro de Argentina. Requiere aceptación expresa del importador.</p>}</section>}
         {chinaPlan&&<section><h3>Recepción en China</h3><p>{warehouses.find(w=>w.id===(form.current?.elements.namedItem("warehouse_id") as HTMLSelectElement|null)?.value)?.alias} · {warehouses.find(w=>w.id===(form.current?.elements.namedItem("warehouse_id") as HTMLSelectElement|null)?.value)?.city}</p><p>{(form.current?.elements.namedItem("receiving_conditions") as HTMLTextAreaElement|null)?.value}</p>{chinaPlan.handoff==="pickup"&&<p>Retiro incluido · {(form.current?.elements.namedItem("pickup_conditions") as HTMLTextAreaElement|null)?.value}</p>}</section>}
         <div className="op-modal-actions">
           <button

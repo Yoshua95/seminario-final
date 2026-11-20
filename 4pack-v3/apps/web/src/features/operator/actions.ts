@@ -167,10 +167,11 @@ export async function operatorAction(
           const error = validateQuote(quote);
           if (error) throw new Error(error);
         }
-        input.quote = form.get("china_origin")==="1" && intent!=="save" ? {...quote,china_warehouse_id:String(form.get("warehouse_id")??""),receiving_conditions:String(form.get("receiving_conditions")??""),pickup_included:form.get("pickup_included")==="on",pickup_conditions:String(form.get("pickup_conditions")??"")} : quote;
+        input.quote = form.get("china_origin")==="1" && intent!=="save" ? {...quote,china_warehouse_id:String(form.get("warehouse_id")??""),receiving_conditions:String(form.get("receiving_conditions")??""),...(form.get("origin_version")==="2"?{argentina_depot_id:String(form.get("argentina_depot_id")??""),destination_mode:String(form.get("destination_mode")??""),import_fee:String(form.get("import_fee")??""),delivery_fee:String(form.get("delivery_fee")??"0"),home_address_confirmed:form.get("home_address_confirmed")==="on"}:{pickup_included:false,pickup_conditions:""})} : quote;
       }
       const result = await executeQuoteCommand(demo, intent, input);
       revalidatePath(demo ? "/demo/operador" : "/operador", "layout");
+      if(intent==="submit")redirect((demo?"/demo/operador":"/operador")+"/mis-ofertas");
       return {
         ok: true,
         message:

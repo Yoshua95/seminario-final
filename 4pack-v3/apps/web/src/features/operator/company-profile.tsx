@@ -1,5 +1,6 @@
 import { RefreshProfile } from "./refresh-profile";
 import {ChinaWarehouses} from "./china-panels";
+import {ArgentinaDepots} from "./argentina-depots";
 import Link from "next/link";
 import type { Snapshot } from "./types";
 import { Badge, PageHeader } from "./ui";
@@ -62,6 +63,7 @@ export function CompanyProfile({
       )}
       <section className="op-panel" id="empresa">
         {!demo&&<ChinaWarehouses warehouses={data.chinaWarehouses??[]}/>}
+        {!demo&&<ArgentinaDepots depots={data.argentinaDepots??[]}/>}
         <h2>Datos de la empresa</h2>
         <dl className="profile-facts">
           <div>

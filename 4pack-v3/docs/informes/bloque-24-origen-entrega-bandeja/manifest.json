@@ -1,0 +1,18 @@
+{
+  "projectRef": "khtfjogqvtjuxhmzkmue",
+  "migration": "supabase/migrations/20261120223102_origin_receiving_argentina_delivery.sql",
+  "originalGeneratedVersion": "20261120220613",
+  "recordedVersion": "20261120223102",
+  "applied": true,
+  "sha256": "6171d1dd1b70e65ce1703b5490160cb59fc5500508f1c996e2011ea2e13e5e0a",
+  "historyUnchanged": true,
+  "preflight": {
+    "cargos": 6,
+    "offers": 5,
+    "operations": 0,
+    "authUsers": 4,
+    "cargoFingerprint": "b12e3a5e9dbe84705c2dc48bc71f4a65",
+    "offerFingerprint": "c4a97a5755a065d396269cd45ff8e90f"
+  },
+  "checkoutEnabled": false
+}

@@ -25,6 +25,8 @@ import {
 } from "./ui";
 import { JourneyMap } from "./journey-map";
 import {ChinaOperationCard} from "./china-operation";
+import {ArgentinaDeliveryCard} from "./argentina-delivery";
+import {AddressCopy} from "./address-copy";
 import { homeAction, categories } from "../../lib/journey";
 export function HomeView({
   operation,
@@ -433,13 +435,15 @@ export function OffersView({
   loading?: boolean;
   busy: boolean;
   error: string;
-  onAward: (id: string) => void;
+  onAward: (id: string,acceptPickupOnly:boolean) => void;
   onTrack: () => void;
   onBack: () => void;
   onConfirmVolume?: (proposalId: string, volume: number) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null),
     [details, setDetails] = useState<string | null>(null);
+  const [acceptPickupOnly,setAcceptPickupOnly]=useState(false);
+  const selectedDestination=offers.find(o=>o.id===selected)?.chinaReceipt?.destination;
   const [selectedVolume, setSelectedVolume] = useState<{
     id: string;
     volumeM3: number;
@@ -520,6 +524,7 @@ export function OffersView({
                 {o.currency} {o.amount.toLocaleString("es-AR")}
               </Copy>
               <Copy>{o.days} días estimados</Copy>
+              {o.chinaReceipt?.destination&&<><Copy>Tarifa de importación: ARS {Number(o.chinaReceipt.destination.import_fee).toLocaleString("es-AR")}</Copy>{o.chinaReceipt.destination.agreed_mode==="home"?<Copy>Envío a domicilio en Argentina: ARS {Number(o.chinaReceipt.destination.delivery_fee).toLocaleString("es-AR")}</Copy>:<Copy>Solo retiro en el depósito del operador</Copy>}{o.chinaReceipt.destination.acceptance_required&&<Copy style={{color:colors.yellow}}>No realiza envíos dentro de Argentina</Copy>}</>}
               {o.chinaReceipt&&<><Copy>Recepción en China · {o.chinaReceipt.warehouse.alias} · {o.chinaReceipt.warehouse.city}, {o.chinaReceipt.warehouse.province}</Copy><Copy>{o.chinaReceipt.receiving_conditions}</Copy>{o.chinaReceipt.pickup_included&&<Copy>Retiro incluido: {o.chinaReceipt.pickup_conditions}</Copy>}<Copy muted>Dirección completa disponible después de adjudicar.</Copy></>}
               <Copy muted>
                 {o.quote?.scope ?? "Consultá los términos de esta propuesta."}
@@ -561,7 +566,7 @@ export function OffersView({
                   icon={
                     selected === o.id ? "checkmark-circle" : "ellipse-outline"
                   }
-                  onPress={() => setSelected(o.id)}
+                  onPress={() => {setSelected(o.id);setAcceptPickupOnly(false);}}
                 />
               )}
             </Card>
@@ -584,11 +589,13 @@ export function OffersView({
                   : `${cargo.volumeM3} m³`}
               </Copy>
               <Copy>FOB USD {cargo.fobUsd.toLocaleString("es-AR")}</Copy>
+              {cargo.originPlan&&<><Copy>Dirección de origen: {cargo.originPlan.origin.address}</Copy><AddressCopy address={cargo.originPlan.origin.address??""} label="Copiar dirección de origen"/>{cargo.originPlan.version===2&&<><Copy>Remitente: {cargo.originPlan.sender_name}</Copy><Copy>{cargo.originPlan.destination.delivery_mode==="home"?"Envío a domicilio solicitado: "+cargo.originPlan.destination.address:"Retiro en el depósito del operador en Argentina"}</Copy></>}</>}
               {cargo.msdsRequired && <Tag tone="yellow">MSDS requerido</Tag>}
             </Card>
           )}
         </>
       )}
+      {!operationId&&selectedDestination?.acceptance_required&&<Card><Copy>Solicitaste domicilio. Esta propuesta es solo retiro en el depósito del operador.</Copy><Copy>No realiza envíos dentro de Argentina.</Copy><Action label={acceptPickupOnly?"Condición de solo retiro aceptada":"Acepto expresamente retirar en el depósito del operador"} secondary icon={acceptPickupOnly?"checkbox":"square-outline"} onPress={()=>setAcceptPickupOnly(!acceptPickupOnly)}/></Card>}
       {operationId ? (
         <Action label="Ir al seguimiento" onPress={onTrack} />
       ) : cargo?.volumeM3 === null ? (
@@ -609,8 +616,9 @@ export function OffersView({
             !selected ||
             busy ||
             offers.find((o) => o.id === selected)?.currency !== "ARS"
+            || (!!selectedDestination?.acceptance_required&&!acceptPickupOnly)
           }
-          onPress={() => selected && onAward(selected)}
+          onPress={() => selected && onAward(selected,acceptPickupOnly)}
         />
       )}
       <Copy muted>
@@ -697,6 +705,7 @@ export function TrackingView({
       ) : (
         <>
           {o.chinaCoordination&&<ChinaOperationCard coord={o.chinaCoordination} revisions={o.chinaRevisions??[]} refresh={onRefresh}/>}
+          {o.destinationAgreement&&<ArgentinaDeliveryCard agreement={o.destinationAgreement} operationId={o.id}/>}
           <Card>
             <Tag tone={o.phase === "disputed" ? "yellow" : "green"}>
               {phaseLabels[o.phase]}

@@ -1,6 +1,11 @@
 allprojects { project ->
     project.plugins.withId('com.android.library') {
         project.android.defaultConfig.externalNativeBuild.cmake.arguments '-DCMAKE_CXX_FLAGS=--driver-mode=g++'
+        // On Windows, deep worktrees can exceed Ninja's path limit for prefab.
+        // Opt into a short generated directory without moving source or caches.
+        if (project.hasProperty('fourpackNativeDir') && project.name in ['expo-modules-core', 'react-native-screens']) {
+            project.android.externalNativeBuild.cmake.buildStagingDirectory = new File(project.property('fourpackNativeDir').toString(), project.name)
+        }
     }
     project.plugins.withId('com.android.application') {
         project.android.defaultConfig.externalNativeBuild.cmake.arguments '-DCMAKE_CXX_FLAGS=--driver-mode=g++'

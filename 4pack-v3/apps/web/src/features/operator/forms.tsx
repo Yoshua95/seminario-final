@@ -195,6 +195,7 @@ export function ActionForm({
   );
 }
 export function OfferForm({
+  argentinaDepots,
   warehouses,
   demo,
   cargo,
@@ -208,6 +209,7 @@ export function OfferForm({
   alreadyOffered: boolean;
   authorization?: Snapshot["quoteAuthorization"];
   warehouses?: Snapshot["chinaWarehouses"];
+  argentinaDepots?:Snapshot["argentinaDepots"];
 }) {
   return (
     <aside className="op-quote"><p className="op-caption">TU PRÓXIMO PASO</p><h2>{alreadyOffered ? "Oferta presentada" : "Prepará tu cotización"}</h2>
@@ -223,6 +225,7 @@ export function OfferForm({
         </p>
       ) : (
         <QuoteEditor
+          argentinaDepots={argentinaDepots}
           chinaPlan={cargo.origin_plan}
           warehouses={warehouses}
           capacity={capacity}

@@ -133,6 +133,10 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
   snapshot.chinaWarehouses=china[0].data??[];
   snapshot.chinaCoordination=china[1].data??[];
   snapshot.chinaRevisions=china[2].data??[];
+  const [depots,terms,agreements,inbox]=await Promise.all([client.from("operator_argentina_depots").select("*"),client.from("offer_destination_terms").select("*"),client.from("operation_destination_terms").select("*"),client.rpc("operator_available_cargos")]);
+  if(depots.error||terms.error||agreements.error||inbox.error)throw Error("No pudimos cargar la entrega acordada o la bandeja. Reintentá.");
+  snapshot.argentinaDepots=depots.data??[];snapshot.destinationTerms=terms.data??[];snapshot.destinationAgreements=agreements.data??[];
+  snapshot.availableCargoIds=(inbox.data??[]).map((r:{cargo_id:string})=>r.cargo_id);
   // Only historical operations need their original reservation for review.
   // New opportunities/offers must load without depending on the retired model.
   if (snapshot.operations.some((op) => op.workflow_version !== "mvp_delivery_v1")) {

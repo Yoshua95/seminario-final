@@ -208,6 +208,10 @@ export type SupportMessage = {
   created_at: string;
 };
 export type Snapshot = {
+  availableCargoIds?:string[];
+  argentinaDepots?:import("@4pack/domain").ArgentinaDepot[];
+  destinationTerms?:({offer_id:string}&import("@4pack/domain").DestinationAgreement)[];
+  destinationAgreements?:{operation_id:string;content:import("@4pack/domain").DestinationAgreement}[];
   chinaWarehouses?: import("@4pack/domain").ChinaWarehouse[];
   chinaCoordination?: import("@4pack/domain").ChinaCoordination[];
   chinaRevisions?: import("@4pack/domain").ChinaRevision[];

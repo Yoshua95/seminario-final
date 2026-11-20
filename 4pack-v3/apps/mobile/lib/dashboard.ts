@@ -46,6 +46,7 @@ export type MobileOperation = {
 };
 
 export type MobileCargoDetail = MobileCargo & {
+  originPlan?:import("@4pack/domain").ChinaPlan;
   description: string;
   category: string;
   fobUsd: number;
@@ -62,6 +63,7 @@ export type MobileCargoDetail = MobileCargo & {
 };
 
 export type MobileOperationDetail = MobileOperation & {
+  destinationAgreement?:import("@4pack/domain").DestinationAgreement|null;
   chinaCoordination?: import("@4pack/domain").ChinaCoordination|null;
   chinaRevisions?: import("@4pack/domain").ChinaRevision[];
   workflowVersion?: string;
@@ -220,7 +222,7 @@ export async function loadCargoDetail(
   const { data: cargo, error } = await supabase
     .from("cargo_requests")
     .select(
-      "id, title, description, origin, destination, category, weight_kg, volume_m3, fob_usd, preferred_mode, hazmat_review_required, msds_required, bidding_deadline",
+      "id, title, description, origin, destination, category, weight_kg, volume_m3, fob_usd, preferred_mode, hazmat_review_required, msds_required, bidding_deadline, origin_plan",
     )
     .eq("id", cargoId)
     .maybeSingle();
@@ -250,6 +252,7 @@ export async function loadCargoDetail(
       volumeM3: Number(p.volume_m3),
       status: p.status,
     })),
+    originPlan:cargo.origin_plan,
     title: cargo.title,
     description: cargo.description,
     route: `${cargo.origin} → ${cargo.destination}`,
@@ -425,10 +428,15 @@ export async function loadOperationDetail(
   const guarantee = guaranteeResult.data;
   let paymentStatus: string | undefined;
   let extra:Partial<MobileOperationDetail>={};
-  if(cargo.corridor_version==="china_origin_v1"){
+  if(["china_origin_v1","china_origin_v2"].includes(cargo.corridor_version)){
     const [coord,revisions]=await Promise.all([supabase.from("china_operation_coordination").select("*").eq("operation_id",operation.id).maybeSingle(),supabase.from("china_receipt_revisions").select("*").eq("operation_id",operation.id).order("created_at",{ascending:false})]);
     if(coord.error||revisions.error)throw Error("No pudimos cargar la coordinación en China.");
     extra.chinaCoordination=coord.data;extra.chinaRevisions=revisions.data??[];
+    if(cargo.corridor_version==="china_origin_v2"){
+      const destination=await supabase.from("operation_destination_terms").select("content").eq("operation_id",operation.id).maybeSingle();
+      if(destination.error)throw Error("No pudimos cargar la entrega acordada.");
+      extra.destinationAgreement=destination.data?.content;
+    }
   }
   if(operation.workflow_version==="mvp_delivery_v1"){
     const [protection,docs,contract,claims,delivery]=await Promise.all([
@@ -579,7 +587,7 @@ export async function loadImporterOffers(
   const cargo=await supabase!.from("cargo_requests").select("*").eq("id",cargoId).single();
   if(cargo.error)throw Error("No pudimos verificar el corredor de la carga.");
   let chinaTerms:({offer_id:string}&NonNullable<ImporterOffer["chinaReceipt"]>)[]=[];
-  if(cargo.data.corridor_version==="china_origin_v1"){
+  if(["china_origin_v1","china_origin_v2"].includes(cargo.data.corridor_version)){
     const summaries=await supabase!.rpc("china_offer_summaries",{target_cargo:cargoId});
     if(summaries.error)throw Error("No pudimos consultar las condiciones de recepción.");
     chinaTerms=summaries.data??[];
@@ -612,6 +620,7 @@ export async function loadCargoOperation(cargoId: string) {
 export async function awardImporterOffer(
   id: string,
   paymentIntent: "legacy" | "checkout-test" = "legacy",
+  acceptPickupOnly = false,
 ) {
   await importerSession();
   const offer = await supabase!
@@ -624,6 +633,7 @@ export async function awardImporterOffer(
   if (paymentIntent === "checkout-test") {
     const result = await supabase!.rpc("award_offer_for_test_checkout", {
       target_offer_id: id,
+      accept_pickup_only:acceptPickupOnly,
     });
     if (result.error) throw Error(result.error.message);
     return result.data as string;

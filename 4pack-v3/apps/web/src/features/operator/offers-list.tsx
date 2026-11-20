@@ -41,6 +41,7 @@ export function OffersList({
             Borrador · {data.cargos.find((c) => c.id === d.cargo_id)?.title}
           </summary>
           <QuoteEditor
+            argentinaDepots={data.argentinaDepots}
             warehouses={data.chinaWarehouses}
             chinaPlan={data.cargos.find(c=>c.id===d.cargo_id)?.origin_plan}
             authorization={data.quoteAuthorization}
@@ -158,7 +159,7 @@ export function OffersList({
                           Sellada el {date(o.created_at)} · Revisión{" "}
                           {o.revision}
                         </p>
-                        <OfferDetail quote={o.normalized_quote} />
+                        <OfferDetail quote={o.normalized_quote} destination={data.destinationTerms?.find(t=>t.offer_id===o.id)}/>
                         {editable && (
                           <>
                             {o.status === "submitted" && (
@@ -167,6 +168,8 @@ export function OffersList({
                             <details>
                               <summary>Reemplazar con nueva revisión</summary>
                               <QuoteEditor
+                                argentinaDepots={data.argentinaDepots}
+                                initialDestination={data.destinationTerms?.find(t=>t.offer_id===o.id)}
                                 warehouses={data.chinaWarehouses}
                                 chinaPlan={c?.origin_plan}
                                 authorization={data.quoteAuthorization}

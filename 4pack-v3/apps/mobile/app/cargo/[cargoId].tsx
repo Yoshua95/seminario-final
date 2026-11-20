@@ -61,12 +61,12 @@ export default function CargoDetailScreen() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
-  async function award(id: string) {
+  async function award(id: string,acceptPickupOnly:boolean) {
     setBusy(true);
     setError("");
     try {
       const payment = await acceptOfferAndPay(id, {
-        award: (id) => awardImporterOffer(id, "checkout-test"),
+        award: (id) => awardImporterOffer(id, "checkout-test",acceptPickupOnly),
         checkout: (id) => testPayment(id, "checkout"),
       });
       const op = payment.operationId;
@@ -125,13 +125,13 @@ export default function CargoDetailScreen() {
             params: { operationId: operation },
           })
         }
-        onAward={(id) =>
+        onAward={(id,acceptPickupOnly) =>
           Alert.alert(
             "Aceptar oferta y pagar",
             "Se creará una operación en ARS y se abrirá Mercado Pago en modo de prueba. El backend debe verificar el pago; volver del checkout no lo aprueba.",
             [
               { text: "Volver", style: "cancel" },
-              { text: "Aceptar oferta y pagar", onPress: () => void award(id) },
+              { text: "Aceptar oferta y pagar", onPress: () => void award(id,acceptPickupOnly) },
             ],
           )
         }
