@@ -1,0 +1,21 @@
+[
+  {
+    "verification": {
+      "cargo": "43d2e5b7-4667-4f6f-a1a6-99f3d0c14200",
+      "offer": {
+        "id": "8b77607c-affe-41ce-bb94-891e8635bacf",
+        "mode": "air",
+        "amount": "135000",
+        "status": "submitted",
+        "currency": "ARS",
+        "services": [
+          "international_transport"
+        ],
+        "estimated_days": "9"
+      },
+      "project": "khtfjogqvtjuxhmzkmue",
+      "offer_count": 1,
+      "registered_submission_count": 1
+    }
+  }
+]

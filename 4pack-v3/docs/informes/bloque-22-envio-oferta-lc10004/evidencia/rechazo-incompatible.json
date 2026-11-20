@@ -1,0 +1,25 @@
+{
+  "stage": "incompatible",
+  "url": "https://4pack-candidata-mvp.vercel.app",
+  "cargo": "43d2e5b7-4667-4f6f-a1a6-99f3d0c14200",
+  "amount": 135000,
+  "days": 9,
+  "defaults": {
+    "mode": "air",
+    "services": [
+      "international_transport"
+    ]
+  },
+  "sent": {
+    "mode": "air",
+    "services": [
+      "international_transport",
+      "storage"
+    ]
+  },
+  "unauthorizedOptionDisabled": true,
+  "alert": "El servidor rechazó los servicios o la modalidad de la oferta. Actualizá la página para cargar tus habilitaciones vigentes, quitá las opciones no habilitadas y volvé a enviar. Revisá Perfil empresarial si necesitás otra habilitación.",
+  "alertVisible": true,
+  "actionHTTP": 200,
+  "result": "PASS"
+}

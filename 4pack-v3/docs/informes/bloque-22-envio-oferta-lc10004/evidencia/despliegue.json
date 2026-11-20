@@ -1,0 +1,20 @@
+[
+  {
+    "requested": "dpl_7rHDBWdzea4pRRUaXzsNTfKka9Xf",
+    "id": "dpl_7rHDBWdzea4pRRUaXzsNTfKka9Xf",
+    "url": "4pack-candidata-obr8y2h8w-yoshua-s-projects.vercel.app",
+    "readyState": "READY",
+    "sourceCommit": "379737882fe49d59de55e283c8f04222b53a5029",
+    "gitDirty": null,
+    "projectId": "prj_97maq4W852s5VTlo4tgASXhOhbfv"
+  },
+  {
+    "requested": "seminario-final-five.vercel.app",
+    "id": "dpl_HyRbgPCKD2R4bCVUKAhUeYovnGUH",
+    "url": "seminario-final-dh8bxeru6-yoshua-s-projects.vercel.app",
+    "readyState": "READY",
+    "sourceCommit": "e3ed41606e20df02c96230a202a06ebfd9898918",
+    "gitDirty": "1",
+    "projectId": "prj_7dVApQD3cgyrVflBllqW4unrYAFK"
+  }
+]

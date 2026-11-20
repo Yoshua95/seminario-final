@@ -1,0 +1,22 @@
+{
+  "stage": "before",
+  "url": "https://4pack-candidata-mvp.vercel.app",
+  "cargo": "43d2e5b7-4667-4f6f-a1a6-99f3d0c14200",
+  "amount": 135000,
+  "days": 9,
+  "defaults": {
+    "mode": "air",
+    "services": []
+  },
+  "sent": {
+    "mode": "air",
+    "services": [
+      "international_transport",
+      "origin_handling"
+    ]
+  },
+  "alert": "La oferta excede los servicios o modalidades habilitados",
+  "alertVisible": true,
+  "actionHTTP": 200,
+  "result": "PASS"
+}
