@@ -86,7 +86,20 @@ export function QuoteComposer({
     confirmed = useRef(false);
   const submissionInput = useRef<HTMLInputElement>(null);
   const [submissionKey,setSubmissionKey]=useState("");
+  const submittedFields=useRef<Record<string,string[]>>({});
   const feedback = useRef<HTMLParagraphElement>(null);
+  useEffect(()=>{
+    if(state.ok||!state.message||!form.current)return;
+    // React resets uncontrolled fields when a Server Action returns normally,
+    // including our recoverable {ok:false} responses. Keep the operator's work.
+    for(const element of Array.from(form.current.elements)){
+      if(!(element instanceof HTMLInputElement||element instanceof HTMLSelectElement||element instanceof HTMLTextAreaElement))continue;
+      if(["hidden","submit","button"].includes(element.type))continue;
+      const values=submittedFields.current[element.name];if(!values)continue;
+      if(element instanceof HTMLInputElement&&["checkbox","radio"].includes(element.type))element.checked=values.includes(element.value);
+      else element.value=values[0]??"";
+    }
+  },[state]);
   useEffect(()=>{if(state.ok&&state.message==="Oferta presentada y sellada.")router.replace((demo?"/demo/operador":"/operador")+"/mis-ofertas");},[state,demo,router]);
   useEffect(() => {
     if (!error && (!state.message || state.ok)) return;
@@ -113,6 +126,8 @@ export function QuoteComposer({
       "included",
     ) as HTMLTextAreaElement;
     if (!included.value.trim()) included.value = selectedLabels.join("\n");
+    const snapshot=new FormData(event.currentTarget);
+    submittedFields.current=Object.fromEntries([...new Set(snapshot.keys())].map(key=>[key,snapshot.getAll(key).map(String)]));
     const submitter = (event.nativeEvent as SubmitEvent)
       .submitter as HTMLButtonElement | null;
     if (submitter?.value === "save" || confirmed.current) {

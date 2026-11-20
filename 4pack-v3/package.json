@@ -31,7 +31,8 @@
     "test:mobile:importer": "tsc -p tests/tsconfig.json && node --test tests/mobile-importer.test.mjs",
     "test:mobile:visual": "node --test tests/mobile-visual-environment.test.mjs",
     "test:mobile:visual:emulator": "node tests/mobile-visual-emulator.mjs",
-    "check:mobile:release": "node scripts/check-mobile-visual-release.mjs"
+    "check:mobile:release": "node scripts/check-mobile-visual-release.mjs",
+    "test:origin-delivery": "node --test tests/origin-destination.test.mjs"
   },
   "overrides": {
     "react": "19.1.0",
