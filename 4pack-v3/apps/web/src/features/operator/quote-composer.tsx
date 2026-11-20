@@ -73,6 +73,7 @@ export function QuoteComposer({
     send = useRef<HTMLButtonElement>(null),
     confirmed = useRef(false);
   const submissionInput = useRef<HTMLInputElement>(null);
+  const [submissionKey,setSubmissionKey]=useState("");
   const feedback = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     if (!error && (!state.message || state.ok)) return;
@@ -90,8 +91,11 @@ export function QuoteComposer({
     if (!scopeEdited) setScope(next.map((s) => serviceTaxonomy[s]).join(". "));
   }
   function review(event: FormEvent<HTMLFormElement>) {
-    if (submissionInput.current && !submissionInput.current.value)
-      submissionInput.current.value = crypto.randomUUID();
+    if (submissionInput.current && !submissionInput.current.value){
+      const key=crypto.randomUUID();
+      submissionInput.current.value=key;
+      setSubmissionKey(key);
+    }
     const included = event.currentTarget.elements.namedItem(
       "included",
     ) as HTMLTextAreaElement;
@@ -152,7 +156,7 @@ export function QuoteComposer({
       <input
         type="hidden"
         name="submission_key"
-        defaultValue=""
+        value={submissionKey}
         ref={submissionInput}
       />
       <input
