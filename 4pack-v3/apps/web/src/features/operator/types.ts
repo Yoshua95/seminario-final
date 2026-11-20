@@ -57,6 +57,8 @@ export type Company = {
   completed_operations: number;
 };
 export type Cargo = {
+  corridor_version?: string;
+  origin_plan?: import("@4pack/domain").ChinaPlan;
   id: string;
   public_code: string | null;
   title: string;
@@ -206,6 +208,9 @@ export type SupportMessage = {
   created_at: string;
 };
 export type Snapshot = {
+  chinaWarehouses?: import("@4pack/domain").ChinaWarehouse[];
+  chinaCoordination?: import("@4pack/domain").ChinaCoordination[];
+  chinaRevisions?: import("@4pack/domain").ChinaRevision[];
   protection?: {
     operation_id: string;
     provider_payment_id: string | null;

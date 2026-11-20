@@ -1,5 +1,6 @@
 import { sameQuoteScope, type NormalizedQuote } from "@4pack/domain";
 export type ImporterOffer = {
+  chinaReceipt?: {warehouse:{alias:string;province:string;city:string;district:string};receiving_conditions:string;pickup_included:boolean;pickup_conditions:string};
   eligible?: boolean;
   capitalBacked?: boolean;
   backingReason?: string;

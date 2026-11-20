@@ -51,6 +51,13 @@ export function deriveOperationTask(input) {
     );
   if (!Array.isArray(requiredDocuments))
     return task("Contrato pendiente de revisión", "admin", "review_contract");
+  if(input.chinaOrigin){
+    const origin=input.chinaOrigin;
+    if(origin.revisionPending)return task(role==="importer"?"Decidir ajuste de recepción":"Esperando aceptación del importador","importer","china_revision");
+    if(origin.economicAdjustment)return task("Conciliación adicional del ajuste pendiente","admin","review_adjustment");
+    if(origin.state==="awaiting_dispatch")return task(origin.handoff==="pickup"?"Registrar retiro en China":"Registrar envío al depósito de China",origin.handoff==="pickup"?"operator":"importer","china_dispatch");
+    if(origin.state==="in_transit_to_warehouse")return task("Confirmar recepción y medidas en China","operator","china_receipt");
+  }
   const normalize = (s) =>
     s
       .normalize("NFD")

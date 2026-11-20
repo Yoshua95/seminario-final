@@ -1,0 +1,10 @@
+export const argentinaProvinces: string[];
+export type ChinaMeasurements={packages:number;weight_kg:number;length_cm:number;width_cm:number;height_cm:number;estimated:boolean;volume_m3?:number};
+export type ChinaLocation={province:string;city:string;district?:string;address?:string};
+export type ChinaPlan={kind:'agent'|'supplier';handoff:'agent_sends'|'supplier_sends'|'pickup';agent_name?:string;package_reference?:string;origin:ChinaLocation;destination:ChinaLocation;measurements:ChinaMeasurements};
+export type ChinaWarehouse={id:string;operator_id?:string;alias:string;recipient:string;phone:string;province:string;city:string;district:string;postal_code:string;address_zh:string;instructions:string;active:boolean;is_default:boolean};
+export type ChinaCoordination={operation_id:string;state:'awaiting_dispatch'|'in_transit_to_warehouse'|'received_in_china';origin_plan:ChinaPlan;warehouse_snapshot:ChinaWarehouse;tracking_reference:string|null;measured:ChinaMeasurements|null;dispatched_at:string|null;received_at:string|null};
+export type ChinaRevision={id:string;operation_id:string;status:'proposed'|'accepted'|'rejected';amount_ars:number;estimated_days:number;conditions:string;reason:string;previous_terms:Record<string,unknown>;created_at:string;accepted_at:string|null};
+export function measuredVolume(measurements:Pick<ChinaMeasurements,'packages'|'length_cm'|'width_cm'|'height_cm'>):number;
+export function validateChinaPlan(plan:ChinaPlan|null):string|null;
+export function warehouseAddress(warehouse:Partial<ChinaWarehouse>|null,reference?:string):string;

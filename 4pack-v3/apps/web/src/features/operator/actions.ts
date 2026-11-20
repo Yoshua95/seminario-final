@@ -167,7 +167,7 @@ export async function operatorAction(
           const error = validateQuote(quote);
           if (error) throw new Error(error);
         }
-        input.quote = quote;
+        input.quote = form.get("china_origin")==="1" && intent!=="save" ? {...quote,china_warehouse_id:String(form.get("warehouse_id")??""),receiving_conditions:String(form.get("receiving_conditions")??""),pickup_included:form.get("pickup_included")==="on",pickup_conditions:String(form.get("pickup_conditions")??"")} : quote;
       }
       const result = await executeQuoteCommand(demo, intent, input);
       revalidatePath(demo ? "/demo/operador" : "/operador", "layout");

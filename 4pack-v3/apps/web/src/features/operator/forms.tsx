@@ -195,6 +195,7 @@ export function ActionForm({
   );
 }
 export function OfferForm({
+  warehouses,
   demo,
   cargo,
   alreadyOffered,
@@ -206,6 +207,7 @@ export function OfferForm({
   cargo: Cargo;
   alreadyOffered: boolean;
   authorization?: Snapshot["quoteAuthorization"];
+  warehouses?: Snapshot["chinaWarehouses"];
 }) {
   return (
     <aside className="op-quote"><p className="op-caption">TU PRÓXIMO PASO</p><h2>{alreadyOffered ? "Oferta presentada" : "Prepará tu cotización"}</h2>
@@ -221,6 +223,8 @@ export function OfferForm({
         </p>
       ) : (
         <QuoteEditor
+          chinaPlan={cargo.origin_plan}
+          warehouses={warehouses}
           capacity={capacity}
           weight={cargo.weight_kg}
           volume={cargo.volume_m3}

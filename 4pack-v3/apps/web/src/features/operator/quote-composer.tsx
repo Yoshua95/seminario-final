@@ -21,6 +21,8 @@ export function QuoteComposer({
   requestedMode,
   requestedServices,
   authorization,
+  chinaPlan,
+  warehouses=[],
 }: {
   demo: boolean;
   cargoId: string;
@@ -34,6 +36,8 @@ export function QuoteComposer({
   requestedMode?: string | null;
   requestedServices?: string[];
   authorization?: QuoteAuthorization | null;
+  chinaPlan?: import("@4pack/domain").ChinaPlan;
+  warehouses?: import("@4pack/domain").ChinaWarehouse[];
 }) {
   const [state, action, pending] = useActionState(
     operatorAction.bind(null, demo, "quote"),
@@ -136,6 +140,15 @@ export function QuoteComposer({
       className="op-form op-quote-editor"
     >
       <input type="hidden" name="cargo_id" value={cargoId} />
+      {chinaPlan&&<fieldset className="op-wide"><legend>Recepción en China</legend>
+        <input type="hidden" name="china_origin" value="1"/>
+        <p>{chinaPlan.kind==="agent"?"Desde agente o depósito":"Envío directo del proveedor"} · {chinaPlan.origin.city||chinaPlan.origin.province} · {chinaPlan.measurements.estimated?"Medidas estimadas":"Medidas confirmadas"}</p>
+        <label>Depósito receptor<select name="warehouse_id" required defaultValue={warehouses.find(w=>w.active&&w.is_default)?.id??warehouses.find(w=>w.active)?.id??""}><option value="">Elegí un depósito activo</option>{warehouses.filter(w=>w.active).map(w=><option key={w.id} value={w.id}>{w.alias} · {w.city}</option>)}</select></label>
+        {!warehouses.some(w=>w.active)&&<p role="alert">Agregá un depósito activo en Perfil empresarial antes de enviar.</p>}
+        <label>Condiciones de recepción<textarea name="receiving_conditions" required minLength={5} maxLength={2000} placeholder="Horario, rotulado y requisitos para recibir el paquete"/></label>
+        {chinaPlan.handoff==="pickup"&&<><label><input type="checkbox" name="pickup_included" required/> Incluyo el retiro solicitado</label><label>Condiciones del retiro<textarea name="pickup_conditions" required minLength={5} maxLength={2000}/></label></>}
+        <p>El importador verá el resumen y las condiciones. La dirección completa se habilita al adjudicar.</p>
+      </fieldset>}
       <input
         type="hidden"
         name="submission_key"
@@ -438,6 +451,7 @@ export function QuoteComposer({
           alcance y condiciones antes de enviar.
         </p>
         {preview && <QuoteTerms quote={preview} />}
+        {chinaPlan&&<section><h3>Recepción en China</h3><p>{warehouses.find(w=>w.id===(form.current?.elements.namedItem("warehouse_id") as HTMLSelectElement|null)?.value)?.alias} · {warehouses.find(w=>w.id===(form.current?.elements.namedItem("warehouse_id") as HTMLSelectElement|null)?.value)?.city}</p><p>{(form.current?.elements.namedItem("receiving_conditions") as HTMLTextAreaElement|null)?.value}</p>{chinaPlan.handoff==="pickup"&&<p>Retiro incluido · {(form.current?.elements.namedItem("pickup_conditions") as HTMLTextAreaElement|null)?.value}</p>}</section>}
         <div className="op-modal-actions">
           <button
             type="button"

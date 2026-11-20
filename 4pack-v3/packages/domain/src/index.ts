@@ -75,3 +75,4 @@ export function calculateCommission(totalUsd: number, rate = 0.025): number {
   return Math.round(totalUsd * rate * 100) / 100;
 }
 
+export * from "./china-origin.mjs";

@@ -12,6 +12,7 @@
   },
   "files": [
     "../packages/domain/src/index.ts",
-    "../packages/domain/src/operation-work.mjs"
+    "../packages/domain/src/operation-work.mjs",
+    "../packages/domain/src/china-origin.mjs"
   ]
 }

@@ -141,6 +141,7 @@ export function operationWork(data: Snapshot, id: string) {
   const g = data.guarantees.find((g) => g.operation_id === id);
   if (op.workflow_version === "mvp_delivery_v1") {
     const next = deriveOperationTask({
+      chinaOrigin:(()=>{const c=data.chinaCoordination?.find(c=>c.operation_id===id);if(!c)return undefined;const revisions=data.chinaRevisions?.filter(r=>r.operation_id===id)??[];return {state:c.state,handoff:c.origin_plan.handoff,revisionPending:revisions.some(r=>r.status==="proposed"),economicAdjustment:Number(revisions.find(r=>r.status==="accepted")?.amount_ars??data.offers.find(f=>f.id===op.accepted_offer_id)?.total_usd)!==Number(data.offers.find(f=>f.id===op.accepted_offer_id)?.total_usd)};})(),
       role: "operator",
       phase: op.phase,
       paymentMode: op.payment_mode,

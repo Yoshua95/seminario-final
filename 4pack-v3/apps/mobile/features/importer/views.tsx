@@ -24,6 +24,7 @@ import {
   s,
 } from "./ui";
 import { JourneyMap } from "./journey-map";
+import {ChinaOperationCard} from "./china-operation";
 import { homeAction, categories } from "../../lib/journey";
 export function HomeView({
   operation,
@@ -519,6 +520,7 @@ export function OffersView({
                 {o.currency} {o.amount.toLocaleString("es-AR")}
               </Copy>
               <Copy>{o.days} días estimados</Copy>
+              {o.chinaReceipt&&<><Copy>Recepción en China · {o.chinaReceipt.warehouse.alias} · {o.chinaReceipt.warehouse.city}, {o.chinaReceipt.warehouse.province}</Copy><Copy>{o.chinaReceipt.receiving_conditions}</Copy>{o.chinaReceipt.pickup_included&&<Copy>Retiro incluido: {o.chinaReceipt.pickup_conditions}</Copy>}<Copy muted>Dirección completa disponible después de adjudicar.</Copy></>}
               <Copy muted>
                 {o.quote?.scope ?? "Consultá los términos de esta propuesta."}
               </Copy>
@@ -665,7 +667,7 @@ export function TrackingView({
   const [tab, setTab] = useState("Hitos");
   const [claimBody,setClaimBody]=useState("");
   const o = operation;
-  const task=o?.workflowVersion==="mvp_delivery_v1"?deriveOperationTask({role:"importer",phase:o.phase,paymentMode:o.paymentMode,paymentApproved:o.paymentStatus==="approved",openClaims:o.openClaims,deliveryProof:o.deliveryProof,deliveryConfirmed:o.deliveryConfirmed,requiredDocuments:o.requiredDocuments,documents:o.documents,protectionState:o.protection?.state}):null;
+  const task=o?.workflowVersion==="mvp_delivery_v1"?deriveOperationTask({chinaOrigin:o.chinaCoordination?{state:o.chinaCoordination.state,handoff:o.chinaCoordination.origin_plan.handoff,revisionPending:o.chinaRevisions?.some(r=>r.status==="proposed"),economicAdjustment:Number(o.chinaRevisions?.find(r=>r.status==="accepted")?.amount_ars??o.totalUsd)!==o.totalUsd}:undefined,role:"importer",phase:o.phase,paymentMode:o.paymentMode,paymentApproved:o.paymentStatus==="approved",openClaims:o.openClaims,deliveryProof:o.deliveryProof,deliveryConfirmed:o.deliveryConfirmed,requiredDocuments:o.requiredDocuments,documents:o.documents,protectionState:o.protection?.state}):null;
   const next = task?.label ?? (!o
     ? "Cargando operación"
     : o.guaranteeStatus === "pending"
@@ -694,6 +696,7 @@ export function TrackingView({
         <Copy muted>Cargando seguimiento…</Copy>
       ) : (
         <>
+          {o.chinaCoordination&&<ChinaOperationCard coord={o.chinaCoordination} revisions={o.chinaRevisions??[]} refresh={onRefresh}/>}
           <Card>
             <Tag tone={o.phase === "disputed" ? "yellow" : "green"}>
               {phaseLabels[o.phase]}

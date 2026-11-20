@@ -1,0 +1,10 @@
+{
+  "projectRef": "khtfjogqvtjuxhmzkmue",
+  "migration": "supabase/migrations/20261120205426_china_origin_coordination.sql",
+  "sha256": "3c5fec2c3788367364b76e3967b8ba80cbd2eab841f3db5a9374d6def6cc857f",
+  "remoteObservedVersion": "20261120205426",
+  "expectedSourceVersion": "20261120205426",
+  "historyReconciliation": "No remote history changes: user instruction. Local filename aligned with recorded version.",
+  "checkoutEnabled": false,
+  "originalApprovedFile": "supabase/migrations/20261120202217_china_origin_coordination.sql"
+}

@@ -1,4 +1,5 @@
 export type OperationTaskInput = {
+  chinaOrigin?: {state:string;handoff:string;revisionPending?:boolean;economicAdjustment?:boolean};
   role: "importer" | "operator" | "admin";
   phase: string;
   paymentMode?: string;

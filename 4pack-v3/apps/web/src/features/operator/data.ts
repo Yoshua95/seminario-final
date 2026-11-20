@@ -122,12 +122,17 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
   snapshot.profile.email = user.email;
   const [authorization, requested] = await Promise.all([
     client.from("operator_authorizations").select("modes,services").eq("operator_id", user.id).maybeSingle(),
-    client.from("cargo_requests").select("id,requested_services").order("created_at", {ascending:false}).limit(500),
+    client.from("cargo_requests").select("id,requested_services,corridor_version,origin_plan").order("created_at", {ascending:false}).limit(500),
   ]);
   if (authorization.error || requested.error) throw new Error("No pudimos cargar las habilitaciones para cotizar. Actualizá la página.");
   snapshot.quoteAuthorization = authorization.data;
-  const requestedById = new Map((requested.data ?? []).map(c => [c.id,c.requested_services]));
-  snapshot.cargos = snapshot.cargos.map(c => ({...c,requested_services:requestedById.get(c.id) ?? []}));
+  const requestedById = new Map((requested.data ?? []).map(c => [c.id,c]));
+  snapshot.cargos = snapshot.cargos.map(c => ({...c,...requestedById.get(c.id)}));
+  const china=await Promise.all([client.from("china_warehouses").select("*"),client.from("china_operation_coordination").select("*"),client.from("china_receipt_revisions").select("*").order("created_at",{ascending:false})]);
+  if(china.some(r=>r.error))throw Error("No pudimos cargar la coordinación en China. Reintentá.");
+  snapshot.chinaWarehouses=china[0].data??[];
+  snapshot.chinaCoordination=china[1].data??[];
+  snapshot.chinaRevisions=china[2].data??[];
   // Only historical operations need their original reservation for review.
   // New opportunities/offers must load without depending on the retired model.
   if (snapshot.operations.some((op) => op.workflow_version !== "mvp_delivery_v1")) {

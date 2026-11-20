@@ -5,7 +5,8 @@ import {quoteFixture} from "./quote-fixture.mjs";
 test("cotización completa exige moneda, conceptos, cobertura y responsabilidades",()=>{
  assert.equal(validateQuote(quoteFixture()),null);
  for(const changes of [{currency:"USD/ARS"},{amount:"NaN"},{amount:"1.234"},{mode:"truck"},{included:[]},{insurance:""},{responsibilities:""},{services:["unknown"]}])assert.ok(validateQuote(quoteFixture(changes)));
- assert.equal(Object.keys(serviceTaxonomy).length,9);
+ assert.equal(Object.keys(serviceTaxonomy).length,10);
+ assert.equal(serviceTaxonomy.origin_pickup,"Retiro en China");
 });
 test("comparación advierte alcances distintos sin confundir precio o moneda",()=>{
  const a=quoteFixture();assert.equal(sameQuoteScope(a,quoteFixture({amount:"2000",currency:"ARS"})),true);

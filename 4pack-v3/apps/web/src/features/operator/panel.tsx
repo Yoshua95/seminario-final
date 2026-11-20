@@ -4,6 +4,7 @@ import { OffersList } from "./offers-list";
 import { Collections } from "./collections";
 import { nextOperationStep, isProviderTest } from "./journey";
 import { CompanyProfile } from "./company-profile";
+import {ChinaOperationPanel} from "./china-panels";
 
 import { QuoteTerms } from "@/features/marketplace/quote-terms";
 import Link from "next/link";
@@ -367,6 +368,7 @@ function Opportunities({
       </div>
       {selected && (
         <OfferForm
+          warehouses={data.chinaWarehouses}
           authorization={data.quoteAuthorization}
           capacity={data.capacity}
           key={selected.id}
@@ -505,6 +507,7 @@ function Operations({
       </section>
       <div className="op-operation-layout">
         <div className="op-stack">
+          {data.chinaCoordination?.find(c=>c.operation_id===operation.id)&&<ChinaOperationPanel coord={data.chinaCoordination.find(c=>c.operation_id===operation.id)!} revisions={data.chinaRevisions?.filter(r=>r.operation_id===operation.id)??[]}/>}
           <section className="op-panel">
             <div className="op-panel-heading">
               <Icon name="history" />

@@ -62,6 +62,8 @@ export type MobileCargoDetail = MobileCargo & {
 };
 
 export type MobileOperationDetail = MobileOperation & {
+  chinaCoordination?: import("@4pack/domain").ChinaCoordination|null;
+  chinaRevisions?: import("@4pack/domain").ChinaRevision[];
   workflowVersion?: string;
   protection?: {state:string;provider_payment_id:string|null;amount:number;commission:number;currency:string;released_at:string|null}|null;
   requiredDocuments?: string[]|null;
@@ -281,6 +283,7 @@ export async function createCargo(
     volumeM3: number | null;
     fobUsd: number;
     preferredMode: TransportMode;
+    originPlan?: import("@4pack/domain").ChinaPlan;
   },
   attempt: PublicationAttempt,
   msds: NativeMsds | null,
@@ -289,6 +292,10 @@ export async function createCargo(
   const profile = await loadCurrentProfile();
   if (!profile || profile.role !== "importer")
     throw new Error("Sólo un importador puede publicar cargas.");
+  if(input.originPlan){
+    const capability=await supabase.from("cargo_requests").select("corridor_version").limit(0);
+    if(capability.error)throw Error(capability.error.code==="42703"?"La coordinación en China todavía no está habilitada en este entorno. No se creó ninguna carga.":"No pudimos verificar la configuración. Reintentá antes de publicar.");
+  }
 
   return publishMobileCargo(
     {
@@ -302,6 +309,7 @@ export async function createCargo(
       volume_unknown: input.volumeM3 === null,
       fob_usd: input.fobUsd,
       preferred_mode: input.preferredMode,
+      ...(input.originPlan ? {origin_plan:input.originPlan} : {}),
     },
     attempt,
     msds,
@@ -379,7 +387,7 @@ export async function loadOperationDetail(
   ] = await Promise.all([
     supabase
       .from("cargo_requests")
-      .select("title, origin, destination")
+      .select("*")
       .eq("id", operation.cargo_id)
       .single(),
     supabase
@@ -417,6 +425,11 @@ export async function loadOperationDetail(
   const guarantee = guaranteeResult.data;
   let paymentStatus: string | undefined;
   let extra:Partial<MobileOperationDetail>={};
+  if(cargo.corridor_version==="china_origin_v1"){
+    const [coord,revisions]=await Promise.all([supabase.from("china_operation_coordination").select("*").eq("operation_id",operation.id).maybeSingle(),supabase.from("china_receipt_revisions").select("*").eq("operation_id",operation.id).order("created_at",{ascending:false})]);
+    if(coord.error||revisions.error)throw Error("No pudimos cargar la coordinación en China.");
+    extra.chinaCoordination=coord.data;extra.chinaRevisions=revisions.data??[];
+  }
   if(operation.workflow_version==="mvp_delivery_v1"){
     const [protection,docs,contract,claims,delivery]=await Promise.all([
       supabase.from("test_operation_protection").select("*").eq("operation_id",operation.id).maybeSingle(),
@@ -425,7 +438,7 @@ export async function loadOperationDetail(
       supabase.from("support_tickets").select("id,status").eq("operation_id",operation.id),
       supabase.from("operation_delivery_confirmations").select("operation_id").eq("operation_id",operation.id).maybeSingle()]);
     if(protection.error||docs.error||contract.error||claims.error||delivery.error)throw Error("No pudimos consultar los pendientes de la operación. Reintentá.");
-    extra={workflowVersion:operation.workflow_version,protection:protection.data,requiredDocuments:contract.data?.content?.quote?.required_documents??null,
+    extra={...extra,workflowVersion:operation.workflow_version,protection:protection.data,requiredDocuments:contract.data?.content?.quote?.required_documents??null,
       documents:(docs.data??[]).map(d=>({id:d.id,type:d.document_type,status:d.validation_status})),openClaims:(claims.data??[]).filter(c=>!["closed","resolved"].includes(c.status)).length,
       deliveryConfirmed:!!delivery.data,deliveryProof:(eventsResult.data??[]).some(e=>e.title==="Entregada"&&!!e.attachment_id)};
   }
@@ -563,7 +576,16 @@ export async function loadImporterOffers(
       ],
     ),
   );
+  const cargo=await supabase!.from("cargo_requests").select("*").eq("id",cargoId).single();
+  if(cargo.error)throw Error("No pudimos verificar el corredor de la carga.");
+  let chinaTerms:({offer_id:string}&NonNullable<ImporterOffer["chinaReceipt"]>)[]=[];
+  if(cargo.data.corridor_version==="china_origin_v1"){
+    const summaries=await supabase!.rpc("china_offer_summaries",{target_cargo:cargoId});
+    if(summaries.error)throw Error("No pudimos consultar las condiciones de recepción.");
+    chinaTerms=summaries.data??[];
+  }
   return (data ?? []).map((o) => ({
+    chinaReceipt:chinaTerms.find(t=>t.offer_id===o.id),
     eligible: backed.get(o.id)?.backed === true,
     backingReason: backed.get(o.id)?.reason ?? "Respaldo no verificado",
     id: o.id,
