@@ -349,6 +349,16 @@ function Opportunities({
         </section>
         {selected && (
           <Manifest cargo={selected}>
+            {selected.origin_plan&&<section className="op-panel"><h3>Coordinación de origen</h3>
+              <dl className="profile-facts">
+                <div><dt>Quién entrega</dt><dd>{selected.origin_plan.kind==="agent"?"Agente o depósito":"Proveedor directo"}{selected.origin_plan.agent_name?": "+selected.origin_plan.agent_name:""}</dd></div>
+                <div><dt>Acción solicitada</dt><dd>{selected.origin_plan.handoff==="pickup"?"Retiro en el agente · requiere habilitación específica":"Envío al depósito del operador"}</dd></div>
+                <div><dt>Ubicación actual o de despacho</dt><dd>{[selected.origin_plan.origin.province,selected.origin_plan.origin.city,selected.origin_plan.origin.district,selected.origin_plan.origin.address].filter(Boolean).join(" · ")}</dd></div>
+                <div><dt>Referencia del paquete</dt><dd>{selected.origin_plan.package_reference||"No informada"}</dd></div>
+                <div><dt>Bultos y dimensiones</dt><dd>{selected.origin_plan.measurements.packages} bultos iguales · {selected.origin_plan.measurements.length_cm} × {selected.origin_plan.measurements.width_cm} × {selected.origin_plan.measurements.height_cm} cm por bulto</dd></div>
+                <div><dt>Tipo de medición</dt><dd>{selected.origin_plan.measurements.estimated?"Medidas estimadas · verificar al recibir":"Medidas confirmadas por el importador"}</dd></div>
+              </dl><p>El destino de recepción es tu depósito seleccionado en la oferta; no es la ubicación actual del paquete.</p>
+            </section>}
             {data.documents.filter((d) => d.cargo_id === selected.id).length >
               0 && (
               <div className="op-linked-docs">
