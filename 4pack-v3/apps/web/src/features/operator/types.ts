@@ -75,6 +75,7 @@ export type Cargo = {
   required_documents: string[];
   restrictions: string;
   preferred_mode: string | null;
+  requested_services?: string[];
   bidding_deadline: string | null;
   created_at: string;
   reputation: { average: number | null; count: number; completed: number };
@@ -229,6 +230,7 @@ export type Snapshot = {
   paymentsUnavailable?: boolean;
   multirole?: boolean;
   capacity?: CapacitySnapshot;
+  quoteAuthorization?: import("./quote-authorization.mjs").QuoteAuthorization | null;
   commercial: CommercialProfile | null;
   drafts: QuoteDraft[];
   contracts: ContractSnapshot[];

@@ -367,6 +367,7 @@ function Opportunities({
       </div>
       {selected && (
         <OfferForm
+          authorization={data.quoteAuthorization}
           capacity={data.capacity}
           key={selected.id}
           demo={demo}

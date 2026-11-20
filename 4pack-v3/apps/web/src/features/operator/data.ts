@@ -10,6 +10,7 @@ import { mkdir } from "node:fs/promises";
 import type { PGlite } from "@electric-sql/pglite";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Snapshot } from "./types";
+import { quoteRejectionMessage } from "./quote-authorization.mjs";
 import {
   createLocalDatabase,
   asUser,
@@ -119,6 +120,14 @@ export const loadSnapshot = cache(async (demo = false): Promise<Snapshot> => {
     );
   const snapshot = data as Snapshot;
   snapshot.profile.email = user.email;
+  const [authorization, requested] = await Promise.all([
+    client.from("operator_authorizations").select("modes,services").eq("operator_id", user.id).maybeSingle(),
+    client.from("cargo_requests").select("id,requested_services").order("created_at", {ascending:false}).limit(500),
+  ]);
+  if (authorization.error || requested.error) throw new Error("No pudimos cargar las habilitaciones para cotizar. Actualizá la página.");
+  snapshot.quoteAuthorization = authorization.data;
+  const requestedById = new Map((requested.data ?? []).map(c => [c.id,c.requested_services]));
+  snapshot.cargos = snapshot.cargos.map(c => ({...c,requested_services:requestedById.get(c.id) ?? []}));
   // Only historical operations need their original reservation for review.
   // New opportunities/offers must load without depending on the retired model.
   if (snapshot.operations.some((op) => op.workflow_version !== "mvp_delivery_v1")) {
@@ -195,8 +204,8 @@ export async function executeQuoteCommand(
   if (error)
     throw new Error(
       error.code === "P0001"
-        ? error.message
-        : "No pudimos guardar la cotización.",
+        ? quoteRejectionMessage(error.message)
+        : "No pudimos guardar la cotización. Revisá la conexión y volvé a intentar.",
     );
   return data as { id: string };
 }

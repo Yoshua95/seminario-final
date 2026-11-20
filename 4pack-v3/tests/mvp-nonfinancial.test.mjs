@@ -80,6 +80,16 @@ test('oferta ARS sin capital se publica sin cupo ni reserva monetaria',async()=>
  assert.equal(snapshot.quote.amount,'250000');assert.equal(snapshot.quote.currency,'ARS');assert.equal(snapshot.quote.working_capital_amount,undefined);
  assert.equal((await db.query('select fob_usd from public.cargo_requests where id=$1',[c])).rows[0].fob_usd,'1100.00');
 });
+test('servicio incompatible se rechaza sin guardar; corregir y repetir guarda una sola oferta',async()=>{
+ const id=await cargo(),key=randomUUID();
+ const payload={cargo_id:id,submission_key:key,quote:terms({services:['international_transport','origin_handling']})};
+ const send=()=>q('operator',"select public.quote_command('submit',$1::jsonb) r",[JSON.stringify(payload)]);
+ await assert.rejects(send(),/servicios o modalidades habilitados/);
+ assert.equal((await db.query('select count(*)::int n from public.offers where cargo_id=$1',[id])).rows[0].n,0);
+ payload.quote.services=['international_transport'];
+ const first=(await send()).rows[0].r.id;assert.equal((await send()).rows[0].r.id,first);
+ assert.equal((await db.query('select count(*)::int n from public.offers where cargo_id=$1',[id])).rows[0].n,1);
+});
 test('rechaza USD, ruta incompatible y permiso directo para insertar ofertas',async()=>{
  const c=await cargo();await assert.rejects(submit(c,{currency:'USD'}),/ARS/);
  await db.query("update public.cargo_requests set destination='Brasil' where id=$1",[c]);

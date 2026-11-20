@@ -41,6 +41,9 @@ export function OffersList({
             Borrador · {data.cargos.find((c) => c.id === d.cargo_id)?.title}
           </summary>
           <QuoteEditor
+            authorization={data.quoteAuthorization}
+            requestedMode={data.cargos.find(c=>c.id===d.cargo_id)?.preferred_mode}
+            requestedServices={data.cargos.find(c=>c.id===d.cargo_id)?.requested_services}
             demo={demo}
             cargoId={d.cargo_id}
             draftId={d.id}
@@ -162,6 +165,9 @@ export function OffersList({
                             <details>
                               <summary>Reemplazar con nueva revisión</summary>
                               <QuoteEditor
+                                authorization={data.quoteAuthorization}
+                                requestedMode={c?.preferred_mode}
+                                requestedServices={c?.requested_services}
                                 demo={demo}
                                 cargoId={o.cargo_id}
                                 replacesOfferId={o.id}

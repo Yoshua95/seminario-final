@@ -14,7 +14,7 @@ import type { ReactNode, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { operatorAction, documentUrl } from "./actions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import type { ActionResult, Cargo, DocumentRecord } from "./types";
+import type { ActionResult, Cargo, DocumentRecord, Snapshot } from "./types";
 import { money, modeLabel } from "./types";
 import { phaseLabels } from "@4pack/domain";
 import { Icon } from "./ui";
@@ -199,11 +199,13 @@ export function OfferForm({
   cargo,
   alreadyOffered,
   capacity,
+  authorization,
 }: {
   capacity?: CapacitySnapshot;
   demo: boolean;
   cargo: Cargo;
   alreadyOffered: boolean;
+  authorization?: Snapshot["quoteAuthorization"];
 }) {
   return (
     <aside className="op-quote"><p className="op-caption">TU PRÓXIMO PASO</p><h2>{alreadyOffered ? "Oferta presentada" : "Prepará tu cotización"}</h2>
@@ -225,6 +227,8 @@ export function OfferForm({
           demo={demo}
           cargoId={cargo.id}
           requestedMode={cargo.preferred_mode}
+          requestedServices={cargo.requested_services}
+          authorization={authorization}
           deadline={cargo.bidding_deadline}
         />
       )}

@@ -1,5 +1,6 @@
 "use client";
-import { useActionState, useRef, useState, type FormEvent } from "react";
+import { useActionState, useEffect, useRef, useState, type FormEvent } from "react";
+import { initialQuoteSelection, quoteAuthorizationError, type QuoteAuthorization } from "./quote-authorization.mjs";
 import {
   serviceTaxonomy,
   validateQuote,
@@ -18,6 +19,8 @@ export function QuoteComposer({
   initial = {},
   deadline,
   requestedMode,
+  requestedServices,
+  authorization,
 }: {
   demo: boolean;
   cargoId: string;
@@ -29,16 +32,20 @@ export function QuoteComposer({
   weight?: number;
   volume?: number | null;
   requestedMode?: string | null;
+  requestedServices?: string[];
+  authorization?: QuoteAuthorization | null;
 }) {
   const [state, action, pending] = useActionState(
     operatorAction.bind(null, demo, "quote"),
     { ok: false, message: "", id: undefined as string | undefined },
   );
+  const allowed = authorization ?? (demo ? {modes:["air","sea","consolidated"],services:Object.keys(serviceTaxonomy)} : null);
+  const selection = initialQuoteSelection(initial,{mode:requestedMode,services:requestedServices},allowed);
   const [services, setServices] = useState<NormalizedQuote["services"]>(
-      initial.services ?? [],
+      selection.services as NormalizedQuote["services"],
     ),
     [search, setSearch] = useState("");
-  const [scope, setScope] = useState(initial.scope ?? ""),
+  const [scope, setScope] = useState(initial.scope ?? selection.services.map(s=>serviceTaxonomy[s as keyof typeof serviceTaxonomy] ?? s).join(". ")),
     [scopeEdited, setScopeEdited] = useState(!!initial.scope);
   const [price, setPrice] = useState(
     initial.currency === "ARS" ? (initial.amount ?? "") : "",
@@ -62,6 +69,14 @@ export function QuoteComposer({
     send = useRef<HTMLButtonElement>(null),
     confirmed = useRef(false);
   const submissionInput = useRef<HTMLInputElement>(null);
+  const feedback = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (!error && (!state.message || state.ok)) return;
+    const outer = form.current?.closest<HTMLDialogElement>("dialog.op-drawer");
+    if (outer && !outer.open) outer.showModal();
+    feedback.current?.focus();
+    feedback.current?.scrollIntoView({block:"center"});
+  }, [error,state.message,state.ok]);
   const selectedLabels = services.map((s) => serviceTaxonomy[s]);
   function selectService(key: NormalizedQuote["services"][number]) {
     const next = services.includes(key)
@@ -107,7 +122,7 @@ export function QuoteComposer({
       responsibilities: value("responsibilities"),
       observations: value("observations"),
     } as NormalizedQuote;
-    const invalid = validateQuote(q);
+    const invalid = quoteAuthorizationError(q,allowed,serviceTaxonomy) ?? validateQuote(q);
     setError(invalid ?? "");
     if (invalid) return;
     setPreview(q);
@@ -146,11 +161,12 @@ export function QuoteComposer({
           Modalidad
           <select
             name="mode"
-            defaultValue={initial.mode ?? requestedMode ?? "sea"}
+            defaultValue={selection.mode}
           >
-            <option value="sea">Marítimo</option>
-            <option value="air">Aéreo</option>
-            <option value="consolidated">Consolidado</option>
+            <option value="" disabled>Elegí una modalidad habilitada</option>
+            <option value="sea" disabled={!allowed?.modes.includes("sea")}>Marítimo</option>
+            <option value="air" disabled={!allowed?.modes.includes("air")}>Aéreo</option>
+            <option value="consolidated" disabled={!allowed?.modes.includes("consolidated")}>Consolidado</option>
           </select>
         </label>
         <label>
@@ -167,6 +183,7 @@ export function QuoteComposer({
       </div>
       <fieldset className="op-service-picker">
         <legend>Servicios incluidos</legend>
+        <p className="op-small">Se precargan los servicios solicitados para los que tu empresa está habilitada. Las otras opciones requieren habilitación en Perfil empresarial.</p>
         <label>
           Buscar servicios
           <input
@@ -188,12 +205,13 @@ export function QuoteComposer({
             >
               <input
                 type="checkbox"
+                disabled={!allowed?.services.includes(k) && !services.includes(k as keyof typeof serviceTaxonomy)}
                 checked={services.includes(k as keyof typeof serviceTaxonomy)}
                 onChange={() =>
                   selectService(k as keyof typeof serviceTaxonomy)
                 }
               />
-              {label}
+              {label}{!allowed?.services.includes(k) && " · Sin habilitación"}
             </label>
           ))}
         </div>
@@ -386,7 +404,7 @@ export function QuoteComposer({
         a actuar como despachante habilitado.
       </p>
       {(error || state.message) && (
-        <p role={error || !state.ok ? "alert" : "status"}>
+        <p ref={feedback} tabIndex={-1} role={error || !state.ok ? "alert" : "status"}>
           {error || state.message}
         </p>
       )}
