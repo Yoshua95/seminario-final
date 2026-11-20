@@ -1,0 +1,22 @@
+[
+  {
+    "final_state": {
+      "users": 3,
+      "cargos": 1,
+      "offers": 1,
+      "project": "khtfjogqvtjuxhmzkmue",
+      "payments": 0,
+      "versions": [
+        "20261120135235",
+        "20261120135605",
+        "20261120142007",
+        "20261120143457",
+        "20261120165753",
+        "20261120172155"
+      ],
+      "operations": 0,
+      "checkout_enabled": false,
+      "anonymous_definers": 0
+    }
+  }
+]

@@ -1,0 +1,53 @@
+{
+  "database": "fourpack_mvp_1795186154291",
+  "host": "127.0.0.1",
+  "port": 55415,
+  "postgres": "PostgreSQL 17.12 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit",
+  "trials": [
+    {
+      "isolation": "READ COMMITTED",
+      "competingOffers": false,
+      "connections": 2,
+      "successful": 2,
+      "rejected": 0,
+      "retriedSerialization": false,
+      "operationId": "107c78a0-92e4-4582-969b-57b39525022a",
+      "counts": {
+        "operations": 1,
+        "snapshots": 1,
+        "new_reservations": 0
+      },
+      "rejection": null
+    },
+    {
+      "isolation": "REPEATABLE READ",
+      "competingOffers": false,
+      "connections": 2,
+      "successful": 2,
+      "rejected": 0,
+      "retriedSerialization": true,
+      "operationId": "9263e7d3-0a1d-4f61-a383-e213839aa5ff",
+      "counts": {
+        "operations": 1,
+        "snapshots": 1,
+        "new_reservations": 0
+      },
+      "rejection": null
+    },
+    {
+      "isolation": "READ COMMITTED",
+      "competingOffers": true,
+      "connections": 2,
+      "successful": 1,
+      "rejected": 1,
+      "retriedSerialization": false,
+      "operationId": "293172d1-e377-4f17-b313-65da81602b10",
+      "counts": {
+        "operations": 1,
+        "snapshots": 1,
+        "new_reservations": 0
+      },
+      "rejection": "ERROR:  La carga ya fue adjudicada a otra oferta\r\nCONTEXT:  PL/pgSQL function award_offer(uuid) line 11 at RAISE"
+    }
+  ]
+}

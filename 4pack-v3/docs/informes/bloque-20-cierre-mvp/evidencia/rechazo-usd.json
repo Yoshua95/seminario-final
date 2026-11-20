@@ -1,0 +1,16 @@
+{
+  "project": "khtfjogqvtjuxhmzkmue",
+  "cargo": "eb53d6c0-96de-4181-a39d-469916795a6b",
+  "actor": "34d24945-1509-4c62-a705-3bcdc18df463",
+  "error": {
+    "code": "P0001",
+    "message": "Las nuevas ofertas y su capital de trabajo deben estar en ARS"
+  },
+  "before": [
+    "a7b39a46-6e28-4d3d-89ab-a9438d81bc8e"
+  ],
+  "after": [
+    "a7b39a46-6e28-4d3d-89ab-a9438d81bc8e"
+  ],
+  "result": "PASS"
+}

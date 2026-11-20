@@ -1,0 +1,159 @@
+{
+  "date": "2026-11-20",
+  "status": "partial_waiting_private_payment_configuration",
+  "hash_basis": "git_index_bytes_for_public_downloads",
+  "source_commit": "59e58c8dad604dc1048bade1dfecb06ad3128616",
+  "project_ref": "khtfjogqvtjuxhmzkmue",
+  "files": [
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/GUIA_CANDIDATA.md",
+      "sha256": "9e12465b5bd154c744b1ef1e9f35c9c0c14f48ef045558aa020c969ed432e1d8",
+      "bytes": 1561
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/REVISION_REMOTA.md",
+      "sha256": "fa1cc1e448d288c9539e12076d5f303f9d4b8b78148f2b8124da6e777dd53489",
+      "bytes": 2997
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/android-cargo-review.png",
+      "sha256": "7225aef1948107606b1de99bc2035aadb447f34cd0feb646db9686e405d52477",
+      "bytes": 203280
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/android-home.png",
+      "sha256": "e283ed825fb15c2fa0b90ef47fa1da35ea075978ffc201e187447d693dc719ed",
+      "bytes": 229960
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/android-login.json",
+      "sha256": "10ef3c620a320769950ab3a3b9b0c8586b2578d6a4aaae9e5471f80242b91a0b",
+      "bytes": 713
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/android-offers.png",
+      "sha256": "136e431c049e9101d296c68359999e9a22c3538bd5a39e281b91b22531a26d73",
+      "bytes": 232062
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/apk-publicado.json",
+      "sha256": "f7adc903db8dd01868376234959d12937aa896703cc92483749ce7494bbc75d2",
+      "bytes": 460
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/backend-final.json",
+      "sha256": "53fce087ac0eec7eb926182eaf918d02ffebc9d46529f118bb7204205dd2db86",
+      "bytes": 427
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/final-admin-importadores.png",
+      "sha256": "458da4fbef3882a186ca75f50ef6c008063f3a36dd62738354fae0bdb41fe5da",
+      "bytes": 49736
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/final-admin-inicio.png",
+      "sha256": "2fd5e29f3270a50134559fd778a6313d74b230c202e1e227ea1ab890125d7ba0",
+      "bytes": 40913
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/final-admin-operaciones.png",
+      "sha256": "20ce13e184de99e7613b01fc4e996c13800100a948808deea9965efaf810fddb",
+      "bytes": 41813
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/final-admin-operadores.png",
+      "sha256": "6f4457a9df725b53c4c16aa1b4ca8d7c3c048a8f0b6d7045c33d47f59455ec78",
+      "bytes": 44679
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/final-admin-perfil.png",
+      "sha256": "6d85020b927672d032da941bffc142dac0fee4d0b81bd3d6c79d69c14b8a3b35",
+      "bytes": 40632
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/final-admin-reclamos.png",
+      "sha256": "b97b28ce58fb7de00bd9fe48eb3f0317bc2384f21149a745c8e00acb232c9a1f",
+      "bytes": 37129
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/final-operator-approved.png",
+      "sha256": "6a9e06941ff84e1e7247c77e200a9b1e85eb9902d28b55fe33452379990e51bb",
+      "bytes": 194395
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/postgres-concurrencia.json",
+      "sha256": "7970e99e6977eb248bdcf32fd37cff748bfdbeec2139675a883636b05d9b4fc9",
+      "bytes": 1439
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/publicacion.json",
+      "sha256": "5cec50a2a7447e6b8abd3b70232995ee04ed271ad617405a3e1cbaeb1c5815ab",
+      "bytes": 885
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/publicado/final-admin-importadores.png",
+      "sha256": "cfba4780c0a00254539dfd0c01caed550cdc016da10df913bdeaf3c144a51fdd",
+      "bytes": 46213
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/publicado/final-admin-inicio.png",
+      "sha256": "fffc0f0ba37555c1fb92b71e18aecf45d589f3d8b75c985a2f2322b06d9710c4",
+      "bytes": 40972
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/publicado/final-admin-operaciones.png",
+      "sha256": "20ce13e184de99e7613b01fc4e996c13800100a948808deea9965efaf810fddb",
+      "bytes": 41813
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/publicado/final-admin-operadores.png",
+      "sha256": "6f4457a9df725b53c4c16aa1b4ca8d7c3c048a8f0b6d7045c33d47f59455ec78",
+      "bytes": 44679
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/publicado/final-admin-perfil.png",
+      "sha256": "6d85020b927672d032da941bffc142dac0fee4d0b81bd3d6c79d69c14b8a3b35",
+      "bytes": 40632
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/publicado/final-admin-reclamos.png",
+      "sha256": "28da9d1b1f68ff77a3db0bb362223c98947f74ca49d340bed8a82b79206545b2",
+      "bytes": 37189
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/publicado/final-operator-approved.png",
+      "sha256": "6a9e06941ff84e1e7247c77e200a9b1e85eb9902d28b55fe33452379990e51bb",
+      "bytes": 194395
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/publicado/operator-offer.png",
+      "sha256": "8141a34a78172f95daa7eaa123de6e574dfce6694b06e76cc6d60a572f6d5393",
+      "bytes": 73408
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/rechazo-usd.json",
+      "sha256": "6e52b687329cb957cabe9fc77d440f85f7aab4892e677d8782a430b3c613ba25",
+      "bytes": 402
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/web-local.json",
+      "sha256": "73d47f5d288f2c10ff2135db16e7467302780f5ab3cd6b012c943d83af0b4f54",
+      "bytes": 699
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/evidencia/web-publica.json",
+      "sha256": "d930084b27e9eaf592d54c1f8fe9a7b99bedba0230d8473e44c6fbe19c5151fc",
+      "bytes": 743
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/informe.md",
+      "sha256": "b450072d1f9a8d86b49c873db6c83fccd8fa5c3e36bf50537cc007172addfcd1",
+      "bytes": 12990
+    },
+    {
+      "path": "docs/informes/bloque-20-cierre-mvp/manifest-revision.json",
+      "sha256": "3fe0ce1351a5ec95cd81e7cac4e8695d32c6840946c8d87dd91c4e52c8be6a4e",
+      "bytes": 3078
+    }
+  ]
+}

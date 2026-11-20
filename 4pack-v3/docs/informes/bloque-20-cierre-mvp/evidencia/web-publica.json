@@ -1,0 +1,40 @@
+{
+  "projectRef": "khtfjogqvtjuxhmzkmue",
+  "base": "https://4pack-candidata-mvp.vercel.app",
+  "sections": [
+    {
+      "section": "inicio",
+      "http": 200,
+      "result": "PASS"
+    },
+    {
+      "section": "operadores",
+      "http": 200,
+      "result": "PASS"
+    },
+    {
+      "section": "operaciones",
+      "http": 200,
+      "result": "PASS"
+    },
+    {
+      "section": "reclamos",
+      "http": 200,
+      "result": "PASS"
+    },
+    {
+      "section": "importadores",
+      "http": 200,
+      "result": "PASS"
+    },
+    {
+      "section": "perfil",
+      "http": 200,
+      "result": "PASS"
+    }
+  ],
+  "loginRole": "operator",
+  "importerActivated": "PASS",
+  "operatorAdminDenied": "PASS",
+  "operatorProfile": "PASS"
+}

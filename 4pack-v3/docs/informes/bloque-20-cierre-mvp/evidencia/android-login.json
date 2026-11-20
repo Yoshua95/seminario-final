@@ -1,0 +1,29 @@
+{
+  "projectRef": "khtfjogqvtjuxhmzkmue",
+  "package": "com.yoshuachavez.fourpack.candidate",
+  "cleanLogin": "PASS",
+  "metroRequired": false,
+  "login": "PASS",
+  "visible": [
+    "IMPORTADOR",
+    "Tu carga, en movimiento.",
+    "Una vista clara de lo que sigue.",
+    "Tu próxima ruta",
+    "El mapa aparece cuando podemos ubicar el origen y el destino.",
+    "SIN RUTA DISPONIBLE · PODÉS CONTINUAR",
+    "TU PRÓXIMO PASO",
+    "Todo listo para empezar",
+    "Publicá qué querés importar. Vas a poder comparar propuestas antes de elegir.",
+    "Publicar carga",
+    "",
+    "",
+    "Inicio",
+    "",
+    "Cargas",
+    "",
+    "Operaciones",
+    "",
+    "Perfil"
+  ],
+  "reopen": "PASS"
+}

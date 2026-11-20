@@ -1,0 +1,28 @@
+{
+  "deployments": [
+    {
+      "requested": "dpl_G3Ko97jt4p6noPBeG6bMGFuwx3SU",
+      "id": "dpl_G3Ko97jt4p6noPBeG6bMGFuwx3SU",
+      "url": "4pack-candidata-3ku1t9pkk-yoshua-s-projects.vercel.app",
+      "readyState": "READY",
+      "sourceCommit": "59e58c8dad604dc1048bade1dfecb06ad3128616",
+      "gitDirty": null,
+      "projectId": "prj_97maq4W852s5VTlo4tgASXhOhbfv"
+    },
+    {
+      "requested": "seminario-final-five.vercel.app",
+      "id": "dpl_HyRbgPCKD2R4bCVUKAhUeYovnGUH",
+      "url": "seminario-final-dh8bxeru6-yoshua-s-projects.vercel.app",
+      "readyState": "READY",
+      "sourceCommit": "e3ed41606e20df02c96230a202a06ebfd9898918",
+      "gitDirty": "1",
+      "projectId": "prj_7dVApQD3cgyrVflBllqW4unrYAFK"
+    }
+  ],
+  "base": "https://4pack-candidata-mvp.vercel.app",
+  "offerVisible": "PASS",
+  "return": {
+    "http": 200,
+    "candidateScheme": true
+  }
+}

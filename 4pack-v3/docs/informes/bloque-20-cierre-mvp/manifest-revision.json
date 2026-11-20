@@ -1,0 +1,62 @@
+﻿{
+    "project_ref":  "khtfjogqvtjuxhmzkmue",
+    "status":  "applied_and_deployed_candidate_only",
+    "created":  "2026-11-20",
+    "files":  [
+                  {
+                      "path":  "supabase/config.toml",
+                      "sha256":  "59f8b8e9d04ac7b18a5626a8ca49d27fc59f975bf78ea4d11e2ffedd245ec823",
+                      "bytes":  352
+                  },
+                  {
+                      "path":  "supabase/functions/_shared/document-validation.d.mts",
+                      "sha256":  "40464c973c21de800fb0458bc0a53d73778582a398cc652c5365cf23e8794314",
+                      "bytes":  95
+                  },
+                  {
+                      "path":  "supabase/functions/_shared/document-validation.mjs",
+                      "sha256":  "e52908d140b75b37d232a6fe26919b5271add272db99529e5334e63d34f205d5",
+                      "bytes":  752
+                  },
+                  {
+                      "path":  "supabase/functions/_shared/mercado-pago-linked-test.mjs",
+                      "sha256":  "3b6ec13d82060611d552224565b0bc17549a3d80f829075aabac1d227458c8f2",
+                      "bytes":  4588
+                  },
+                  {
+                      "path":  "supabase/functions/_shared/mercado-pago-registered.mjs",
+                      "sha256":  "3b8612fa10359bffe4774a340b99615e6fbe3f8523ba3b42a784c49d3f796e45",
+                      "bytes":  4476
+                  },
+                  {
+                      "path":  "supabase/functions/_shared/mercado-pago-test.mjs",
+                      "sha256":  "0aa1e0aa10abe145ff2708c7004fb7f45702fd645efbb8c6f9a6ddcd84a82e25",
+                      "bytes":  13703
+                  },
+                  {
+                      "path":  "supabase/functions/document-upload/index.ts",
+                      "sha256":  "84914a2ba00ba41388c231e8e9589c96d8b408c9b3c3882c19fbfe0181981078",
+                      "bytes":  3428
+                  },
+                  {
+                      "path":  "supabase/functions/mercado-pago-mvp-test/index.ts",
+                      "sha256":  "a101fafe94d74bf3ad92469fe3b42a1060e0bf0d7b4b144700abe74c15fa724e",
+                      "bytes":  7369
+                  },
+                  {
+                      "path":  "supabase/functions/mercado-pago-mvp-webhook/index.ts",
+                      "sha256":  "8706e85727ec9955b7472c317b3b4c61935a1e2369660457edad3561ee0c5c24",
+                      "bytes":  3820
+                  },
+                  {
+                      "path":  "supabase/migrations/20261120142007_mvp_test_delivery_protection.sql",
+                      "sha256":  "a64290a5c974425747f34c29c90d108f97db0130533348e3d1deec901369371b",
+                      "bytes":  21224
+                  },
+                  {
+                      "path":  "supabase/migrations/20261120143457_mvp_registered_provider_binding.sql",
+                      "sha256":  "bdb3be0939e87ff44209c2b67233639dae79364456016f836581a75569e2f5a5",
+                      "bytes":  7578
+                  }
+              ]
+}
