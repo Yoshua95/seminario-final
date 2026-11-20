@@ -1,0 +1,13 @@
+{
+  "project": "khtfjogqvtjuxhmzkmue",
+  "operator": "34d24945-1509-4c62-a705-3bcdc18df463",
+  "compatible": false,
+  "cargos": [
+    {
+      "id": "eb53d6c0-96de-4181-a39d-469916795a6b",
+      "code": "LC-10002",
+      "title": "MVP candidata 20261120"
+    }
+  ],
+  "stage": "before"
+}

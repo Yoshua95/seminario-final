@@ -19,12 +19,17 @@ before(async()=>{
  await db.exec(await readFile(new URL('../supabase/migrations/20261120143457_mvp_registered_provider_binding.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/migrations/20261120165753_candidate_revoke_anonymous_definer_execution.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/migrations/20261120172155_compatible_route_country_suffix.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migrations/20261120192152_route_country_whitespace_boundary.sql',import.meta.url),'utf8'));
 });
 after(()=>db?.close());
 test('compatibilidad reconoce ciudad y país declarados sin coincidencias parciales',async()=>{
  const row=(await db.query("select public.route_region('Shanghai, China') origin,public.route_region('Buenos Aires, Argentina') destination,public.route_region('Chinatown') deceptive")).rows[0];
  assert.deepEqual(row,{origin:'CN',destination:'AR',deceptive:'chinatown'});
 
+});
+test('LC-10004 reconoce país sin coma sin coincidencias parciales',async()=>{
+ const row=(await db.query("select public.route_region('SHENZENG CHINA') origin, public.route_region('EZEIZA ARGENTINA') destination,public.route_region('  shenzeng   china  ') spaces,public.route_region('Chinatown') deceptive,public.route_region('NEWARGENTINA') joined,public.route_region('Shanghai, China') previous")).rows[0];
+ assert.deepEqual(row,{origin:'CN',destination:'AR',spaces:'CN',deceptive:'chinatown',joined:'newargentina',previous:'CN'});
 });
 test('anon no ejecuta APIs definer; authenticated y servicio conservan sus permisos legítimos',async()=>{
  const result=(await db.query("select count(*)::int n from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prosecdef and has_function_privilege('anon',p.oid,'execute')")).rows[0];
@@ -54,6 +59,15 @@ test('CUIT exige checksum y la habilitación tiene una sola decisión y alcance'
  assert.equal((await db.query("select public.valid_cuit('30-71234567-9') ok")).rows[0].ok,false);
  await authorize();
  assert.equal((await db.query('select count(*)::int n from public.operator_authorizations where operator_id=$1',[users.operator])).rows[0].n,1);
+});
+test('LC-10004 es compatible solo con país, servicio y modalidad autorizados',async()=>{
+ const id=await cargo();
+ await db.query("update public.cargo_requests set origin='SHENZENG CHINA',destination='EZEIZA ARGENTINA' where id=$1",[id]);
+ const compatible=async()=> (await q('operator','select public.operator_compatible($1,$2) ok',[users.operator,id])).rows[0].ok;
+ assert.equal(await compatible(),true);
+ await db.query("update public.cargo_requests set destination='SAO PAULO BRASIL' where id=$1",[id]);assert.equal(await compatible(),false);
+ await db.query("update public.cargo_requests set destination='EZEIZA ARGENTINA',requested_services=array['storage'] where id=$1",[id]);assert.equal(await compatible(),false);
+ await db.query("update public.cargo_requests set requested_services=array['international_transport'],preferred_mode='sea' where id=$1",[id]);assert.equal(await compatible(),false);
 });
 test('oferta ARS sin capital se publica sin cupo ni reserva monetaria',async()=>{
  const c=await cargo(),before=(await db.query('select count(*)::int n from public.operation_capacity_reservations')).rows[0].n;

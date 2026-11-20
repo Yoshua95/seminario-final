@@ -1,0 +1,23 @@
+{
+  "project": "khtfjogqvtjuxhmzkmue",
+  "operator": "34d24945-1509-4c62-a705-3bcdc18df463",
+  "compatible": true,
+  "cargos": [
+    {
+      "id": "43d2e5b7-4667-4f6f-a1a6-99f3d0c14200",
+      "code": "LC-10004",
+      "title": "INDUMENTARIA PRUEBA 1"
+    },
+    {
+      "id": "eb53d6c0-96de-4181-a39d-469916795a6b",
+      "code": "LC-10002",
+      "title": "MVP candidata 20261120"
+    }
+  ],
+  "stage": "after",
+  "web": {
+    "url": "https://4pack-candidata-mvp.vercel.app/operador/oportunidades",
+    "row": "#LC-10004\n• Indumentaria y textiles\n\nSHENZENG CHINA → EZEIZA ARGENTINA · INDUMENTARIA PRUEBA 1 — 50 kg / 3.500,00 m³\n\nAuditando",
+    "result": "PASS"
+  }
+}
