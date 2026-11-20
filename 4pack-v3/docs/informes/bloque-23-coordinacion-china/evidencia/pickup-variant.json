@@ -1,0 +1,12 @@
+{
+  "channel": "authenticated API",
+  "title": "China retiro B23 20261120",
+  "cargoId": "798dfbba-3f09-45b9-b8ab-3f3ba5f9e1fe",
+  "eligible": false,
+  "inboxRows": 0,
+  "directWrite": {
+    "code": "42501",
+    "message": "permission denied for table china_warehouses"
+  },
+  "result": "PASS"
+}

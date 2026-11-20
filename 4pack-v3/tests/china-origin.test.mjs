@@ -80,3 +80,15 @@ test('caso B: proveedor estimado, recepcion real, anexo aceptado conserva ambas 
  await assert.rejects(q('competitor','select * from public.china_operation_coordination where operation_id=$1',[op]).then(r=>{assert.equal(r.rows.length,0);throw Error('foreign_read_denied');}),/foreign_read_denied/);
  await assert.rejects(q('importer',"update public.china_receipt_revisions set amount_ars=1 where id=$1",[rev]),/permission denied/);
 });
+test('retiro contratado: solo el operador registra el retiro y llega a recepcion sin cierre financiero',async()=>{
+ await db.query("update public.operator_authorizations set services=array['international_transport','origin_pickup'] where operator_id=$1",[users.operator]);
+ try{
+  const id=await publish(plan('agent','pickup')),op=await award(await offer(id,{services:['international_transport','origin_pickup'],pickup_included:true,pickup_conditions:'Retiro ficticio acordado con el agente'}));
+  await assert.rejects(q('importer','select public.record_china_dispatch($1,$2,$3)',[op,randomUUID(),'RETIRO-B23']),/responsable/);
+  const key=randomUUID();for(let i=0;i<2;i++)await q('operator','select public.record_china_dispatch($1,$2,$3)',[op,key,'RETIRO-B23']);
+  await q('operator','select public.confirm_china_receipt($1,$2,$3::jsonb)',[op,randomUUID(),JSON.stringify({...measurement,estimated:false})]);
+  assert.equal((await q('importer','select state from public.china_operation_coordination where operation_id=$1',[op])).rows[0].state,'received_in_china');
+  assert.equal((await db.query("select count(*)::int n from public.tracking_events where operation_id=$1 and event_type='china_dispatch'",[op])).rows[0].n,1);
+  assert.equal((await db.query("select count(*)::int n from public.wallet_movements where operation_id=$1 and kind='release'",[op])).rows[0].n,0);
+ }finally{await db.query("update public.operator_authorizations set services=array['international_transport'] where operator_id=$1",[users.operator]);}
+});

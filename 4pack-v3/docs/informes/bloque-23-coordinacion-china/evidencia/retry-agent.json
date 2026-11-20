@@ -1,0 +1,16 @@
+{
+  "result": "PASS",
+  "channel": "authenticated API",
+  "cargoId": "a7a60aab-0f52-4ad4-af62-bf9a053fdaa7",
+  "ids": [
+    "b82070f8-656d-4f54-86d9-9b4e8458ad56",
+    "b82070f8-656d-4f54-86d9-9b4e8458ad56"
+  ],
+  "offers": [
+    {
+      "id": "b82070f8-656d-4f54-86d9-9b4e8458ad56",
+      "total_usd": 120000,
+      "estimated_days": 7
+    }
+  ]
+}

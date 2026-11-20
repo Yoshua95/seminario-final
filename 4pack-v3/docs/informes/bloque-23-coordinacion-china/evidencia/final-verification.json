@@ -1,0 +1,22 @@
+{
+  "deployments": [
+    {
+      "domain": "4pack-candidata-mvp.vercel.app",
+      "id": "dpl_DLuMJpzgAPXYwHeScPH436sEgJbf",
+      "sourceCommit": "fcb5397622b7f33d8c729e8857bad0b876503218",
+      "projectId": "prj_97maq4W852s5VTlo4tgASXhOhbfv",
+      "state": "READY"
+    },
+    {
+      "domain": "seminario-final-five.vercel.app",
+      "id": "dpl_HyRbgPCKD2R4bCVUKAhUeYovnGUH",
+      "sourceCommit": "e3ed41606e20df02c96230a202a06ebfd9898918",
+      "projectId": "prj_7dVApQD3cgyrVflBllqW4unrYAFK",
+      "state": "READY"
+    }
+  ],
+  "regression": "PASS",
+  "agentFacts": "PASS",
+  "supplierFacts": "PASS",
+  "result": "PASS"
+}

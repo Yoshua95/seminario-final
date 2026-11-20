@@ -1,4 +1,6 @@
-# Aplicación exclusiva en candidata
+# Registro de aplicación exclusiva en candidata
+
+**YA APLICADA. No repetir el DDL.** Se verificó una única versión 20261120205426 en el historial; checkout apagado. El texto siguiente conserva el procedimiento de revisión ejecutado.
 
 Destino permitido: 4pack-candidata, khtfjogqvtjuxhmzkmue.
 Destino excluido: defensa umiracgmhjglqoftoljn.

@@ -6,5 +6,10 @@
   "expectedSourceVersion": "20261120205426",
   "historyReconciliation": "No remote history changes: user instruction. Local filename aligned with recorded version.",
   "checkoutEnabled": false,
-  "originalApprovedFile": "supabase/migrations/20261120202217_china_origin_coordination.sql"
+  "originalApprovedFile": "supabase/migrations/20261120202217_china_origin_coordination.sql",
+  "applied": true,
+  "recordedExactlyOnce": true,
+  "functionalCommit": "fcb5397622b7f33d8c729e8857bad0b876503218",
+  "apkSourceCommit": "1e96a7dca32990f6e158a99e41957af3fd59f13e",
+  "status": "partial - real award blocked by disabled unconfigured test payments"
 }

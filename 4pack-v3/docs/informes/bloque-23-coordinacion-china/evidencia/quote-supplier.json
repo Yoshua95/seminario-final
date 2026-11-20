@@ -1,0 +1,23 @@
+{
+  "kind": "supplier",
+  "title": "China supplier B23 20261120",
+  "base": "https://4pack-candidata-mvp.vercel.app",
+  "cargoId": "26eae735-db4b-4095-ae61-f215ed3f6852",
+  "selected": {
+    "warehouse": "5b4c7253-af15-434d-9fff-0a5f770a95ff",
+    "services": [
+      "international_transport"
+    ],
+    "mode": "air"
+  },
+  "row": "Shenzhen, Guangdong, China → Buenos Aires, CABA, Argentina#LC-10008 · China supplier B23 20261120ARS $ 130.000,009 díasPresentadaVer detalleDetalle de oferta · LC-10008Cerrar ✕Sellada el 20 de nov de 2026, 18:14 · Revisión 1Precio totalARS $ 130.000,00Plazo estimado9 díasVigente hasta23 de nov de 2026, 18:00Alcance y serviciosTransporte internacionalTransporte internacionalIncluyeTransporte internacionalNo incluyeServicios no seleccionadosCondiciones y documentaciónPagoPago de prueba o garantía según la operación; sin liberación por hitos.SeguroSin seguro incluidoResponsabilidadesOperador: servicios cotizados. Importador: datos y documentación de la carga.Documentos requeridosPacking list · Factura comercialExcepciones y observacionesSin excepciones adicionales.Retirar ofertaReemplazar con nueva revisiónRecepción en ChinaEnvío directo del proveedor · Shenzhen · Medidas estimadasDepósito receptorElegí un depósito activoDeposito ficticio B23 · ShenzhenCondiciones de recepciónEl importador verá el resumen y las condiciones. La dirección completa se habilita al adjudicar.ModalidadElegí una modalidad habilitadaMarítimoAéreoConsolidadoPlazo estimado (días)Servicios incluidosSe precargan los servicios solicitados para los que tu empresa está habilitada. Las otras opciones requieren habilitación en Perfil empresarial.Buscar serviciosTransporte internacionalManipulación en origen · Sin habilitaciónRetiro en China · Sin habilitaciónCoordinación aduanera · Sin habilitaciónManipulación en destino · Sin habilitaciónEntrega nacional · Sin habilitaciónAlmacenamiento · Sin habilitaciónSeguro · Sin habilitaciónServicio integral · Sin habilitaciónOtro · Sin habilitación1 seleccionados: Transporte internacionalPrecio total (ARS)Moneda contractualAlcance del servicioTransporte internacionalPartimos de tus servicios. Ajustá el alcance a esta carga.Vigencia24 horas3 días7 díasSeguro / coberturaSin seguro incluidoSeguro incluido: detallar cobertura en alcanceOtra coberturaDocumentación requeridaPacking list\nFactura comercial+ Packing list+ Factura comercial+ MSDSExclusiones y condicionesIncluyeTransporte internacionalNo incluyeServicios no seleccionadosCondiciones de pagoPago de prueba o garantía según la operación; sin liberación por hitos.ResponsabilidadesOperador: servicios cotizados. Importador: datos y documentación de la carga.Excepciones y observacionesSin excepciones adicionales.La oferta queda sellada al enviar. La coordinación aduanera no equivale a actuar como despachante habilitado.Guardar borradorRevisar ofertaEsto recibirá el importadorPrecio final $ 0,00. Revisá alcance y condiciones antes de enviar.Recepción en China · Volver a editarEnviar oferta",
+  "retryId": "c3174604-05f8-4827-9460-00f6686473d5",
+  "offers": [
+    {
+      "id": "c3174604-05f8-4827-9460-00f6686473d5",
+      "total_usd": 130000,
+      "estimated_days": 9
+    }
+  ],
+  "result": "PASS"
+}

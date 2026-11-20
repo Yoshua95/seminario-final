@@ -1,0 +1,48 @@
+{
+  "projectRef": "khtfjogqvtjuxhmzkmue",
+  "preawardPrivacy": {
+    "result": "PASS",
+    "warehouses": 0,
+    "privateOfferTerms": 0,
+    "safeSummary": [
+      {
+        "offer_id": "b82070f8-656d-4f54-86d9-9b4e8458ad56",
+        "warehouse": {
+          "id": "5b4c7253-af15-434d-9fff-0a5f770a95ff",
+          "city": "Shenzhen",
+          "alias": "Deposito ficticio B23",
+          "district": "Distrito ficticio",
+          "province": "Guangdong"
+        },
+        "pickup_included": false,
+        "pickup_conditions": "",
+        "receiving_conditions": "Deposito ficticio. Recepcion previa coordinacion; rotular bultos con UUID de operacion."
+      }
+    ]
+  },
+  "award": {
+    "result": "BLOCKED",
+    "code": "P0001",
+    "message": "Pago de prueba no disponible; la oferta no fue adjudicada"
+  },
+  "incompatible": {
+    "result": "PASS",
+    "code": "P0001",
+    "message": "La oferta excede los servicios o modalidades habilitados"
+  },
+  "offers": [
+    {
+      "id": "b82070f8-656d-4f54-86d9-9b4e8458ad56",
+      "total_usd": 120000,
+      "payment_currency": "ARS",
+      "estimated_days": 7
+    },
+    {
+      "id": "c3174604-05f8-4827-9460-00f6686473d5",
+      "total_usd": 130000,
+      "payment_currency": "ARS",
+      "estimated_days": 9
+    }
+  ],
+  "operationCount": 0
+}
