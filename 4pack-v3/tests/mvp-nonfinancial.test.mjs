@@ -18,8 +18,14 @@ before(async()=>{
  await db.exec('alter table auth.users add column if not exists email_confirmed_at timestamptz default now()');
  await db.exec(await readFile(new URL('../supabase/migrations/20261120143457_mvp_registered_provider_binding.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/migrations/20261120165753_candidate_revoke_anonymous_definer_execution.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migrations/20261120172155_compatible_route_country_suffix.sql',import.meta.url),'utf8'));
 });
 after(()=>db?.close());
+test('compatibilidad reconoce ciudad y país declarados sin coincidencias parciales',async()=>{
+ const row=(await db.query("select public.route_region('Shanghai, China') origin,public.route_region('Buenos Aires, Argentina') destination,public.route_region('Chinatown') deceptive")).rows[0];
+ assert.deepEqual(row,{origin:'CN',destination:'AR',deceptive:'chinatown'});
+
+});
 test('anon no ejecuta APIs definer; authenticated y servicio conservan sus permisos legítimos',async()=>{
  const result=(await db.query("select count(*)::int n from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prosecdef and has_function_privilege('anon',p.oid,'execute')")).rows[0];
  assert.equal(result.n,0);
@@ -29,7 +35,7 @@ test('anon no ejecuta APIs definer; authenticated y servicio conservan sus permi
  try{await assert.rejects(db.query('select public.document_upload_target($1,$2::jsonb)',[users.importer,'{}']),/permission denied/);}finally{await db.exec('reset role');}
  assert.equal((await db.query("select has_function_privilege('authenticated','public.award_offer_before_msds(uuid)','execute') ok")).rows[0].ok,false);
 });
-async function cargo(){const id=randomUUID();await db.query("insert into public.cargo_requests(id,importer_id,title,description,origin,destination,category,weight_kg,volume_m3,fob_usd,status,bidding_deadline,preferred_mode)values($1,$2,'Carga MVP','Carga ficticia de prueba','China','Argentina','Otro',10,1,1100,'open',now()+interval '2 days','air')",[id,users.importer]);return id;}
+async function cargo(){const id=randomUUID();await db.query("insert into public.cargo_requests(id,importer_id,title,description,origin,destination,category,weight_kg,volume_m3,fob_usd,status,bidding_deadline,preferred_mode)values($1,$2,'Carga MVP','Carga ficticia de prueba','Shanghai, China','Buenos Aires, Argentina','Otro',10,1,1100,'open',now()+interval '2 days','air')",[id,users.importer]);return id;}
 async function authorize(actor='operator'){
  const id=users[actor]??actor;
  await db.query("update public.operator_profiles set verification_status='pending' where user_id=$1",[id]);
